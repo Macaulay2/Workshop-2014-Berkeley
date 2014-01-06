@@ -16,9 +16,30 @@ newPackage("NCAlgebraV2",
      DebuggingMode => true
      )
 
-export {}
+export {subQuotientAsCokernel}
 
 needsPackage "NCAlgebra"
+
+subQuotientAsCokernel = method()
+subQuotientAsCokernel (NCMatrix, NCMatrix) := (A,B) -> (
+   --- following Algorithm 6.3.1 in Boehm
+   C := A | B;
+   kerC := rightKernelBergman(C);
+   rowsAB := #(A.source);
+   kerC^(toList(0..(rowsAB-1)))
+)
+
+TEST ///
+restart
+needsPackage "NCAlgebraV2"
+needsPackage "NCAlgebra"
+B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
+M = ncMatrix {{x,y}}
+N = ncMatrix {{x^2,y^2}}
+subQuotientAsCokernel(M,N)
+///
+
+end
 
 --- bug fix/performance/interface improvements
 ------------------------------------
@@ -57,4 +78,10 @@ uninstallPackage "NCAlgebraV2"
 installPackage "NCAlgebraV2"
 needsPackage "NCAlgebraV2"
 viewHelp "NCAlgebraV2"
+
+restart
+uninstallPackage "NCAlgebra"
+installPackage "NCAlgebra"
+needsPackage "NCAlgebra"
+viewHelp "NCAlgebra"
 
