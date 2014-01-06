@@ -33,7 +33,8 @@ export{
   	 "divideFraction",
   	 "estFPT",
      "ethRoot",
-     "ethRootSafe",	
+     "ethRootSafe",
+     "fancyEthRoot",	
      "fastExp",
      "FinalCheck",
      "findQGorGen",
@@ -790,6 +791,85 @@ ethRootInternal = (Im,e) -> (
 
 --A short version of ethRoot
 eR = (I1,e1)-> (ethRoot(I1,e1) )
+
+-----------------------------------------------------------------------
+
+--- Find all ORDERED partitions of n with k parts
+allPartitions = (n,k)->
+(
+PP0:=matrix{ toList(1..k) };
+PP:=mutableMatrix PP0;
+allPartitionsInnards (n,k,PP,{})
+)
+
+allPartitionsInnards = (n,k,PP,answer)->
+(
+local i;
+if (k==1) then 
+{
+	PP_(0,k-1)=n;
+	answer=append(answer,first entries (PP));
+}
+else
+{
+	for i from 1 to n-(k-1) do
+	{
+		PP_(0,k-1)=i;
+		answer=allPartitionsInnards (n-i,k-1,PP,answer)	;	
+	};
+};
+answer
+)
+
+
+
+
+--- write n=a*p^e+a_{e-1} p^{e-1} + \dots + a_0 where 0\leq e_j <p 
+baseP1 = (n,p,e)->
+(
+a:=n//(p^e);
+answer:=1:a;
+m:=n-a*(p^e);
+f:=e-1; 
+while (f>=0) do
+{
+	d:=m//(p^f);
+	answer=append(answer,d);
+	m=m-d*(p^f);
+	f=f-1;
+};
+answer
+)	
+
+
+fancyEthRoot = (I,m,e) ->
+(
+G:=first entries mingens I;
+k:=#G;
+P:=allPartitions(m,k);
+R:=ring(I);
+p:=char(R);
+answer:=ideal(0_R);
+apply(P, u->
+{
+---print("Partition: ",u);
+	a:=ideal(1_R);
+	U:=apply(u, v->baseP1(v,p,e));
+	for i from 0 to e do
+	{
+		j:=e-i;
+		g:=1_R;
+		for l from 0 to k-1 do g=g*(G#l)^((U#l)#j); 
+		a=ideal(g)*a;
+		if (i<e) then a=ethRoot(a, ideal(0_R) ,1);
+---print(g,answer);
+	};
+	answer=answer+a;
+});
+ideal(mingens(answer))
+)
+
+-----------------------------------------------------------------------
 
 --Finds the smallest phi-stable ideal containing the given ideal Jk
 --in a polynomial ring Sk
