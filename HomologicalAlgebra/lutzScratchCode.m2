@@ -11,3 +11,8 @@ S = oo
 K = coker map(S^1, , {gens S})
 resolution(K, LengthLimit =>6)
 C = oo
+K1 = dual K
+K2 = dual K1
+presentation K1
+presentation K2
+
