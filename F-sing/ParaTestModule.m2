@@ -6,7 +6,7 @@ canonicalIdeal = (R1) -> (
 	I1 := ideal(R1);
 	d1 := (dim S1) - (dim R1);
 	
-	canModuleMatrix := relations(prune( Ext^d1(S1^1/I1, S^1)));
+	canModuleMatrix := relations(prune( Ext^d1(S1^1/I1, S1^1)));
 	
 	answer:=0;
 	s1:=syz transpose substitute(canModuleMatrix,R1);

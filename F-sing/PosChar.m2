@@ -38,6 +38,7 @@ export{
      "fastExp",
      "FinalCheck",
      "findQGorGen",
+     "findTestElementAmbient",
      "firstCarry", 
      "FPTApproxList",     
      "frobeniusPower",
