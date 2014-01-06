@@ -47,3 +47,18 @@ ambient dual dual m
 
 isIsomorphism map(dual dual m, m, id_(ambient m))
 
+-- returns true because m is supposed
+-- to be reflexive (because is maximal CM over 
+-- Gor ring)
+
+ambient m
+dual dual m
+
+-- example of extend
+
+help extend
+
+C = res(m, LengthLimit => 10)
+
+extend(C,C, id_(C_0))
+
