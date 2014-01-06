@@ -43,5 +43,7 @@ res m
 
 res(m, LengthLimit => 10)
 
+ambient dual dual m
 
+isIsomorphism map(dual dual m, m, id_(ambient m))
 
