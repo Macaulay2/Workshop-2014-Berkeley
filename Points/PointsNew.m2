@@ -306,7 +306,7 @@ separators (Matrix, Matrix) := (stds, Ainv) -> (
 -- p is the polynomial of which we want to compute nf
 -- phi are the ring maps returned from makeRingMaps 
 -- stds are the standard monomials returned by pointsMat
--- Ainv is the inverse of the matrix returned by pointsMat
+-- Ainv is the inverse of the matrix returned by po intsMat
 -- Samuel Lundqvist jan 2010
 
 nfPoints = method()
