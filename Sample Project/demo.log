@@ -1,0 +1,168 @@
+
+einsteinium$ git
+usage: git [--version] [--help] [-c name=value]
+           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
+           [-p|--paginate|--no-pager] [--no-replace-objects] [--bare]
+           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
+           <command> [<args>]
+
+The most commonly used git commands are:
+   add        Add file contents to the index
+   bisect     Find by binary search the change that introduced a bug
+   branch     List, create, or delete branches
+   checkout   Checkout a branch or paths to the working tree
+   clone      Clone a repository into a new directory
+   commit     Record changes to the repository
+   diff       Show changes between commits, commit and working tree, etc
+   fetch      Download objects and refs from another repository
+   grep       Print lines matching a pattern
+   init       Create an empty Git repository or reinitialize an existing one
+   log        Show commit logs
+   merge      Join two or more development histories together
+   mv         Move or rename a file, a directory, or a symlink
+   pull       Fetch from and integrate with another repository or a local branch
+   push       Update remote refs along with associated objects
+   rebase     Forward-port local commits to the updated upstream head
+   reset      Reset current HEAD to the specified state
+   rm         Remove files from the working tree and from the index
+   show       Show various types of objects
+   status     Show the working tree status
+   tag        Create, list, delete or verify a tag object signed with GPG
+
+'git help -a' and 'git help -g' lists available subcommands and some
+concept guides. See 'git help <command>' or 'git help <concept>'
+to read about a specific subcommand or concept.
+einsteinium$ pwd
+/Users/dan/src/M2/demo
+einsteinium$ ls
+einsteinium$ git clone https://github.com/Macaulay2/Workshop-2014-Berkeley
+Cloning into 'Workshop-2014-Berkeley'...
+remote: Reusing existing pack: 15, done.        
+remote: Total 15 (delta 0), reused 0 (delta 0)        
+Unpacking objects:   6% (1/15)   Unpacking objects:  13% (2/15)   Unpacking objects:  20% (3/15)   Unpacking objects:  26% (4/15)   Unpacking objects:  33% (5/15)   Unpacking objects:  40% (6/15)   Unpacking objects:  46% (7/15)   Unpacking objects:  53% (8/15)   Unpacking objects:  60% (9/15)   Unpacking objects:  66% (10/15)   Unpacking objects:  73% (11/15)   Unpacking objects:  80% (12/15)   Unpacking objects:  86% (13/15)   Unpacking objects:  93% (14/15)   Unpacking objects: 100% (15/15)   Unpacking objects: 100% (15/15), done.
+Checking connectivity... done
+einsteinium$ ls
+Workshop-2014-Berkeley
+einsteinium$ cd Workshop-2014-Berkeley/
+einsteinium$ ls
+README.md
+einsteinium$ git status
+# On branch master
+# Changes not staged for commit:
+#   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+#
+#	modified:   README.md
+#
+no changes added to commit (use "git add" and/or "git commit -a")
+einsteinium$ git commit -a
+[master 9b60959] modify README to take into account the location
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+einsteinium$ git log
+commit 9b60959af6dae9bfa862e8dfc44bd063d25ce01e
+Author: Daniel R. Grayson <dan@math.uiuc.edu>
+Date:   Mon Jan 6 10:15:21 2014 -0800
+
+    modify README to take into account the location
+    
+    ... of the workshop
+
+commit 7c874d807e0f5bea48db62019e5377d9297cdf4d
+Author: Daniel R. Grayson <dan@math.uiuc.edu>
+Date:   Wed Dec 18 14:59:38 2013 -0500
+
+    remove link to participants list
+
+commit 3db300d2af0f2a4cc3e68d8651281bc2a6f71c84
+Author: Daniel R. Grayson <dan@math.uiuc.edu>
+Date:   Wed Dec 18 14:48:46 2013 -0500
+
+    fix README after changing name of repository
+
+commit eb8069c1330992dfd2edca6e36a74ca64d2acd94
+Author: Daniel R. Grayson <dan@math.uiuc.edu>
+Date:   Tue Dec 17 22:13:04 2013 -0500
+
+    add organizers
+
+commit f4d97f838bf31aefcc25e893f5ae12389d20e1b9
+Author: Daniel R. Grayson <dan@math.uiuc.edu>
+Date:   Tue Dec 17 15:19:37 2013 -0500
+
+    add link to participants
+
+commit ebe832f877ce33afb2a4259cbb33954e11385499
+Author: Daniel R. Grayson <dan@math.uiuc.edu>
+Date:   Tue Dec 17 12:11:09 2013 -0800
+
+    Initial commit
+einsteinium$ git status
+# On branch master
+# Your branch is ahead of 'origin/master' by 1 commit.
+#   (use "git push" to publish your local commits)
+#
+nothing to commit, working directory clean
+einsteinium$ git push
+Username for 'https://github.com': DanGrayson
+Password for 'https://DanGrayson@github.com': 
+Counting objects: 5, done.
+Delta compression using up to 8 threads.
+Compressing objects:  50% (1/2)   Compressing objects: 100% (2/2)   Compressing objects: 100% (2/2), done.
+Writing objects:  33% (1/3)   Writing objects:  66% (2/3)   Writing objects: 100% (3/3)   Writing objects: 100% (3/3), 387 bytes | 0 bytes/s, done.
+Total 3 (delta 1), reused 0 (delta 0)
+To https://github.com/Macaulay2/Workshop-2014-Berkeley
+   7c874d8..9b60959  master -> master
+einsteinium$ git pull
+Already up-to-date.
+einsteinium$ git log -1
+commit 9b60959af6dae9bfa862e8dfc44bd063d25ce01e
+Author: Daniel R. Grayson <dan@math.uiuc.edu>
+Date:   Mon Jan 6 10:15:21 2014 -0800
+
+    modify README to take into account the location
+    
+    ... of the workshop
+einsteinium$ mkdir "Sample Project"
+einsteinium$ cd Sample\ Project/
+einsteinium$ git status
+# On branch master
+# Untracked files:
+#   (use "git add <file>..." to include in what will be committed)
+#
+#	./
+nothing added to commit but untracked files present (use "git add" to track)
+einsteinium$ cd ..
+einsteinium$ git status
+# On branch master
+# Untracked files:
+#   (use "git add <file>..." to include in what will be committed)
+#
+#	Sample Project/
+nothing added to commit but untracked files present (use "git add" to track)
+einsteinium$ git add Sample\ Project/
+einsteinium$ git add Sample\ Project/README 
+einsteinium$ git status
+# On branch master
+# Changes to be committed:
+#   (use "git reset HEAD <file>..." to unstage)
+#
+#	new file:   Sample Project/README
+#
+einsteinium$ git commit -a -m 'add a sample project'
+[master c5b13ef] add a sample project
+ 1 file changed, 2 insertions(+)
+ create mode 100644 Sample Project/README
+einsteinium$ git push
+Username for 'https://github.com': DanGrayson
+Password for 'https://DanGrayson@github.com': 
+Counting objects: 5, done.
+Delta compression using up to 8 threads.
+Compressing objects:  33% (1/3)   Compressing objects:  66% (2/3)   Compressing objects: 100% (3/3)   Compressing objects: 100% (3/3), done.
+Writing objects:  25% (1/4)   Writing objects:  50% (2/4)   Writing objects:  75% (3/4)   Writing objects: 100% (4/4)   Writing objects: 100% (4/4), 416 bytes | 0 bytes/s, done.
+Total 4 (delta 0), reused 0 (delta 0)
+To https://github.com/Macaulay2/Workshop-2014-Berkeley
+   9b60959..c5b13ef  master -> master
+einsteinium$ git pull
+Already up-to-date.
+einsteinium$ cd Sample\ Project/
+einsteinium$ 
