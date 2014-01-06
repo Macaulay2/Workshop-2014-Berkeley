@@ -1,0 +1,95 @@
+  i i i i i i i       ooooo    o        ooooooo   ooooo   ooooo
+  I I I I I I I      8     8   8           8     8     o  8    8
+  I  \ `+' /  I      8         8           8     8        8    8
+   \  `-+-'  /       8         8           8      ooooo   8oooo
+    `-__|__-'        8         8           8           8  8
+        |            8     o   8           8     o     8  8
+  ------+------       ooooo    8oooooo  ooo8ooo   ooooo   8
+
+Welcome to GNU CLISP 2.49 (2010-07-07) <http://clisp.cons.org/>
+
+Copyright (c) Bruno Haible, Michael Stoll 1992, 1993
+Copyright (c) Bruno Haible, Marcus Daniels 1994-1997
+Copyright (c) Bruno Haible, Pierpaolo Bernardi, Sam Steingold 1998
+Copyright (c) Bruno Haible, Sam Steingold 1999-2000
+Copyright (c) Sam Steingold, Bruno Haible 2001-2010
+
+Type :h and hit Enter for context help.
+
+*** We turn on noncommutativity
+
+NIL 
+T 
+NIL 
+NIL algebraic form input> 
+T 
+#\X 
+WARNING: DEFUN/DEFMACRO: redefining macro RECEVAL in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro RECEVLIS in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro VECTPLUS in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro TDEGREECALCULATEPBSERIES in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro INVERT-FPSERIES-STEP in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro CALCTOLIMIT in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro REVERTSERIESCALC in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro REMLASTSERIESCALC in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro ALGOUTLIST in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro DEGREEPBSERIESDISPLAY in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro CLEARPBSERIES in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro SETHSERIESMINIMUMDEFAULT in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro SETHSERIESMINIMA in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro GETHSERIESMINIMUM in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro GETHSERIESMINIMA in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro CLEARHSERIESMINIMA in
+         /home/frank/bergman/lap/clisp/unix/hseries.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro FACTALGADDITIONALRELATIONS in
+         /home/frank/bergman/lap/clisp/unix/modinout.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro HOCHADDITIONALRELATIONS in
+         /home/frank/bergman/lap/clisp/unix/modinout.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro RENEWSERIES in
+         /home/frank/bergman/lap/clisp/unix/sermul.fas, was defined in
+         top-level
+WARNING: DEFUN/DEFMACRO: redefining macro CALCMODHSERIES in
+         /home/frank/bergman/lap/clisp/unix/sermul.fas, was defined in
+         top-level
+
+
++21*z^5
++28*z^6
++36*z^7
++45*z^8
++55*z^9
++66*z^10
+Bye.
