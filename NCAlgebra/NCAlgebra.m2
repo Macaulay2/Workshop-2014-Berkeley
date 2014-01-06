@@ -2755,7 +2755,6 @@ load (currentFileDirectory | "NCAlgebra/NCAlgebraDoc.m2")
 
 end
 
-
 restart
 uninstallPackage "NCAlgebra"
 installPackage "NCAlgebra"
