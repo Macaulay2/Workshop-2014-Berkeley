@@ -25,12 +25,30 @@ canonicalIdeal = (R1) -> (
 ideal answer
 )
 
+--the following function computes the u of a canonical ideal in a polynomial ring
+--it uses previous work of Katzman
+finduOfIdeal = (canIdeal, defIdeal) -> (
+	Ip := frobeniusPower(defIdeal, 1);
+	tempIdeal := intersect( (frobeniusPower(canIdeal, 1)) : canIdeal, Ip : defIdeal );
+	
+	M1 := compress ((gens tempIdeal)%(gens Ip));
+	first first entries M1
+)
+
 --computes the parameter test submodule of a given ring.  It 
 paraTestModuleAmbient = (R1) -> (
 	S1 := ambient R1;
 	I1 := ideal(R1);
 	
-	canIdeal = canonicalIdeal(R1);
+	canIdeal := canonicalIdeal(R1);
 	
+	J1 := findTestElementAmbient(R1);
+	tau0 := J1*canIdeal; --this is the starting test element times the ideal
 	
+	u1 = finduOfIdeal(canIdeal, I1); --this is the multiplying object that gives us (u*omega)^{[1/p]} \subseteq omega.
+	
+	tauOut = ascendIdeal(tau0, u1, 1);
+	
+	(tauOut, canIdeal)
 )
+
