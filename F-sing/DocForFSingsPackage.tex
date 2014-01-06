@@ -1,0 +1,122 @@
+\documentclass[11pt,fullpage]{amsart}
+%   \overfullrule=5pt
+\usepackage[active]{srcltx}
+\usepackage[all]{xy}
+\usepackage{stmaryrd}
+\usepackage{calc,amssymb,amsthm,amsmath}
+\usepackage{fullpage}
+\RequirePackage[dvipsnames,usenames]{color}
+\let\mffont=\sf
+%\input{kmacros3.sty}
+
+%\usepackage{pdfsync}
+%
+%
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{claim}[equation]{Claim}
+\newtheorem*{mainthm}{Main Theorem}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{setting}[theorem]{Setting}
+\newtheorem{xca}[theorem]{Exercise}
+\newtheorem{exercise}[theorem]{Exercise}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{hint}[theorem]{Hint}
+\newtheorem{question}[theorem]{Question}
+\newtheorem*{strategy*}{Strategy}
+
+
+\DeclareMathOperator{\Tr}{Tr}
+\DeclareMathOperator{\Image}{Image}
+\DeclareMathOperator{\Div}{div}
+\renewcommand{\O}{\mathcal O}
+\newcommand{\bQ}{\mathbb{Q}}
+\newcommand{\myR}{\mathbf{R}}
+\newcommand{\bm}{\mathfrak{m}}
+\DeclareMathOperator{\Hom}{Hom}
+\DeclareMathOperator{\sHom}{\mathcal{H}om}
+\DeclareMathOperator{\Spec}{Spec}
+\newcommand{\bF}{\mathbf{F}}
+
+\begin{document}
+
+\title{A brief tutorial on the F-singularities package, version 0.1}
+\author{Package by:  Mordechai Katzman, Sara Malec, Karl Schwede, Emily Witt}
+
+\maketitle
+
+This is a package for use in Macaulay2 for doing computations of $F$-pure thresholds, test ideals, non-sharply $F$-pure ideals, and related notions.  This document gives a brief tutorial on how to use the package.
+
+\section{Loading the package}
+
+This package has been developed using Macaulay2 version 1.6.  Use other versions at your own risk.
+
+Place the package {\tt PosChar.m2} in a folder that Macaulay2 can see (for example, the folder from which you are starting Macaulay2 or emacs), and run the command \begin{center}{\tt loadPackage "PosChar"}  \end{center}
+If there are no errors, then it worked.
+
+If you would like to automatically load the package on startup, please edit your {\tt .Macaulay2/init.m2} and add a line such as
+\begin{quotation}
+{\tt if fileExists "/home/myUserName/F-sing/PosChar.m2" then path=append(path, "/home/myUserName/F-sing/")}\\
+{\tt  if fileExists "/home/myUserName/F-sing/PosChar.m2" then loadPackage("PosChar")}
+\end{quotation}
+You should edit your path appropriately.
+
+
+\section{$F$-pure thresholds}
+
+The default function here is {\tt estFPT}.  To use it, create a polynomial ring over a finite field, say {\tt R = ZZ/5[x,y]} and then create an element, say ${\tt f  = x^2 - y^3 }$.  Then running {\tt estFPT(f, 1)} will try to compute the $F$-pure threshold (if it fails, it should give a range in which the FPT can be found, or it crash due to lack of RAM).  You can replace $1$ by any integer {\tt e}, larger integers {\tt e} may result in longer running time, but perhaps also more success (additional details as to where {\tt e} is used can be found below).
+
+It does it in the following way.  (To watch the progress, run {\tt estFPT} with the {\tt Verbose=>true} switch).
+\begin{enumerate}
+\item It first checks whether or not the polynomial {\tt f} is diagonal (using the function {\tt isDiagonal}).  If so, it computes the FPT using the methods from D.~Hern\'andez's thesis, by calling the function {\tt diagonalFPT}.  You can turn this check off by including the parameter inside the function call, {\tt DiagonalCheck=>false}.  {\tt diagonalFPT} is maintained by Emily Witt.
+\item Next it checks whether or not the polynomial {\tt f} is binomial (using the function {\tt isBinomial}).  If so, it computes the FPT using the methods from D.~Hern\'andez's thesis, by calling the function {\tt binomialFPT}.  You can turn this check off by including the parameter inside the function call, {\tt BinomialCheck=>false}.  {\tt binomialFPT} is maintained by Emily Witt.
+\item If these operations fail, using the {\tt e} you provided, it will compute the largest $\nu_e$ such that ${\tt f^{\nu_e} \notin \langle x_1, \ldots, x_n \rangle}$.  To compute this ${\tt \nu_e}$ yourself, use the functions {\tt nu} and {\tt nuList} (maintained by Emily Witt).   Regardless, we now know that ${ \tt \nu_e \over p^e - 1}\leq \mathrm{FPT}({\tt f}) \leq { \tt \nu_e + 1 \over p^e}$.
+\item We check whether ${\tt (R, f^{\nu_e \over p^e - 1})}$ is strongly $F$-regular by calling the function {\tt isFRegularPoly}, if it is not, then ${ \tt \nu_e \over p^e - 1} = \mathrm{FPT}({\tt f})$.  Indeed, if the denominator of the FPT is not divisible by $p > 0$, then this method will always return the FPT as long as you provide a sufficiently divisible {\tt e}.  You can turn this check off by including the parameter inside the function call, {\tt NuPEMinus1Check=>false}.  This part of the function and {\tt isFRegularPoly} is maintained by Karl Schwede.
+\item If the previous check failed, then the $F$-signature of ${\tt (R, f^{\nu_e \over p^e})}$ and ${\tt (R, f^{\nu_e - 1 \over p^e})}$ are computed using the {\tt fSig} function.  This can be very slow, but currently it cannot be turned off.  You can try to run this in a multithreaded way with {\tt MultiThread=>true}, but it provides no performance gains at the moment.  Substantial performance gains can be found by using a different monomial order, or making sure your polynomial is quasi-homogeneous.  Regardless, the secant line between
+    \begin{center}
+${\tt \Big( {\nu_e \over p^e}, (R, f^{\nu_e \over p^e}) \Big) } \text{ and } {\tt \Big( {\nu_e - 1 \over p^e}, (R, f^{\nu_e - 1 \over p^e}) \Big)}$
+    \end{center}
+    intersects the $x$-axis at a point ${\tt a} \leq  \mathrm{FPT}({\tt f})$.  This part is maintained by Karl Schwede.
+\item Finally, the program checks whether ${\tt (R, f^{a})}$ is strongly $F$-regular again using the function {\tt isFRegularPoly}.    If not, then $a = \mathrm{FPT}({\tt f})$.  Otherwise, the range ${\tt [a, {\nu_e + 1 \over p^e}]}$ is returned.  This method may never find the FPT, even for large and divisible $e$.
+\end{enumerate}
+
+In the future, we hope to be able to compute FPTs for wider classes of quasi-homogeneous polynomials, for non-principal ideals, and for more general ambient rings.  If you need some of this functionality \emph{now}, please contact us and we may be able to help.
+
+\section{Test ideals and non-sharply-$F$-pure ideals}
+
+There are several functions for computing test ideals.  We list them below.  These are maintained by Karl Schwede, but they rely heavily on the {\tt ethRoot} function (which computes $\bullet^{[1/p^e]}$ also denoted by $I_e(\bullet)$) written and maintained by Mordechai Katzman.
+
+\begin{enumerate}
+\item {\tt tauPoly(f,t)}  Suppose ${\tt R}$ is a polynomial ring containing an element {\tt f} and ${\tt t \geq 0}$ is a rational number.  This computes the test ideal ${\tt \tau(R, f^t)}$.  This is done by writing ${\tt t = {a \over (p^b - 1)p^c}}$, first computing ${\tt \tau(R, f^{a\over p^b-1})}$ via ${\tt tauAOverPEMinus1Poly(f,a,b)}$.  And then using the formula
+    \begin{center}
+    ${\tt \tau(R, f^{a\over p^b-1})^{[1/p^c]} = \tau(R, f^{a\over (p^b-1)p^c})}$.
+    \end{center}
+    The ${\tt [1/p^c]}$ implementation was originally written by Katzman.
+\item {\tt tauAOverPEMinus1Poly(f,a,e)}  Suppose ${\tt R}$ is a polynomial ring containing an element {\tt f} and ${\tt a,e \geq 1}$ are integers.  This computes the test ideal ${\tt \tau(R, f^{a \over p^e -1})}$.  This uses the same strategy as the work of Katzman for computing parameter test ideals.
+\item {\tt tauQGor(R, e, f, t)}  Suppose that ${\tt R}$ is a $\bQ$-Gorenstein normal ring containing an element ${\tt f}$ and that the index of $K_{\tt R}$ divides ${\tt p^e - 1}$.  Further $t \geq 0$ is a rational number.  Then this computes the test ideal ${\tt \tau(R, f^t)}$.  The strategy is similar to {\tt tauPoly(f,t)} above.
+\item {\tt tauQGorAmb(R, e)}  Suppose that ${\tt R}$ is a $\bQ$-Gorenstein normal ring and that the index of $K_{\tt R}$ divides ${\tt p^e - 1}$.  Then this computes the test ideal ${\tt \tau(R)}$.
+\end{enumerate}
+
+Using these functions, we also have implemented $F$-regularity checks:  for polynomial rings {\tt isFRegularPoly} and for $\bQ$-Gorenstein rings {\tt isFRegularQGor}.
+
+There is also support for non-sharply-$F$-pure ideals.
+\begin{enumerate}
+\item {\tt sigmaAOverPEMinus1Poly(f, a, e)} Suppose ${\tt R}$ is a polynomial ring containing an element {\tt f} and ${\tt a,e \geq 1}$ are integers.  This computes the non-sharply-$F$-pure ideal ${\tt \sigma(R, f^{a \over p^e - 1})}$.
+\item {\tt sigmaQGorAmb(R, g)}  Suppose that ${\tt R}$ is a $\bQ$-Gorenstein normal ring and that the index of $K_{\tt R}$ divides ${\tt p^g - 1}$.  Then this computes the non-sharply-$F$-pure ideal ${\tt \sigma(R)}$.
+\item {\tt sigmaQGorAOverPEMinus1(f, a, e, g)}  Suppose that ${\tt R}$ is a $\bQ$-Gorenstein normal ring containing an element ${\tt f}$ and that the index of $K_{\tt R}$ divides ${\tt p^g - 1}$.  Further ${\tt a,e \geq 1}$ are integers.  Then this computes the non-sharply-$F$-pure ideal ${\tt \sigma(R, f^{a \over p^e - 1})}$.
+\end{enumerate}
+In each of these cases, $\sigma$ is the stable image of certain $p^{-e}$-linear maps, which can be reduced to twists of {\tt ethRoot}.  Using these functions, we also have implemented a sharp $F$-purity check for polynomial rings {\tt isSharplyFPurePoly}.
+
+In the future we also hope to include parameter test module and ideal computations and $F$-rationality / $F$-injectivity checks.  These have previously been implemented by Katzman.  We also hope to include within this package tools for computing compatibly split ideals, and more generally $\phi$-fixed ideals.  See the recent work of Boix-Katzman (and also Katzman-Zhang).
+
+\end{document}
+
