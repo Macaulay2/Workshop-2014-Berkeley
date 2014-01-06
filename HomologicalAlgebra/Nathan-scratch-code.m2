@@ -45,7 +45,7 @@ res(m, LengthLimit => 10)
 
 ambient dual dual m
 
-isIsomorphism map(dual dual m, m, id_(ambient m))
+isIsomorphism map(dual dual m, m, id_(cover m))
 
 -- returns true because m is supposed
 -- to be reflexive (because is maximal CM over 
@@ -103,7 +103,7 @@ ambient omega(1-g, dual C)
 -- in 3.6
 -- the canonical map we want to lift ?!
 map(dual G, omega(1-g, dual C), id_(
-	ambient omega(1-g, dual C)))
+	cover omega(1-g, dual C)))
 
 ambient (image dual C.dd_g)
 ambient dual G
@@ -114,6 +114,12 @@ dual C.dd_g
 a = map(dual G, omega(1-g, dual C), dual (C.dd_g))
 
 b = inducedMap(dual G, omega(1-g, dual C), dual (C.dd_g))
+
+dual (C.dd_g)
+
+omega(1-g, dual C)
+
+dual b
 
 source a
 source b
@@ -141,6 +147,3 @@ gens coker Cdual.dd_(-1)
 
 gens image Cdual.dd_(-2)
 
--- i think the canonical map should be determined
--- by the dual of C ...
--- not sure why a is zero and b is not.
