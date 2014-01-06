@@ -81,9 +81,11 @@ MAXDEG = 40
 MAXSIZE = 1000
 
 -- Andy's bergman path
-bergmanPath = "/usr/local/bergman1.001"
+--bergmanPath = "/usr/local/bergman1.001"
 -- Frank's bergman path
 --bergmanPath = "~/bergman"
+-- Courtney's bergman path
+bergmanPath = "/Users/crgibbon/Downloads/bergman1.001"
 
 NCRing = new Type of Ring
 NCQuotientRing = new Type of NCRing
@@ -2103,7 +2105,6 @@ remainderFunction (NCRingElement,NCGroebnerBasis) := opts -> (f,ncgb) -> (
                     {1_R};
       foundSubstr = select(ncSubstrs ** cSubstrs, s -> ncgbHash#?(s#0#1,s#1) and
                                                        ncgbHash#(s#0#1,s#1) != dontUse);
-      if #pairsf == 14 then error "err";
       coeff = p#1;
       if foundSubstr =!= {} then (
          foundSubstr = minUsing(foundSubstr, s -> size ncgbHash#(s#0#1,s#1));
