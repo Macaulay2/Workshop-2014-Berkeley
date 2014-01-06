@@ -1290,6 +1290,7 @@ estFPT={FinalCheck=> true, Verbose=> false, MultiThread=>false, DiagonalCheck=>t
 --isFPTPoly, determines if a given rational number is the FPT of a pair in a polynomial ring. 
 --if Origin is specified, it only checks at the origin. 
 isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
+	if (o.Verbose==true) then print "Starting isFPTPoly";
 	pp := char ring f1;
 	if (o.Origin == true) then org := ideal(vars (ring f1));
 	funList := divideFraction(t1, pp);
@@ -1331,6 +1332,7 @@ isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
 
 --isFJumpingNumberPoly determines if a given rational number is an F-jumping number
 isFJumpingNumberPoly ={Verbose=> false}>> o -> (f1, t1) -> (
+	if (o.Verbose==true) then print "Starting isFJumpingNumberPoly";
 	pp := char ring f1;
 	funList := divideFraction(t1, pp);
 	--this writes t1 = a/(p^b(p^c-1))
