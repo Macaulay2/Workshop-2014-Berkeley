@@ -52,3 +52,7 @@ paraTestModuleAmbient = (R1) -> (
 	(tauOut, canIdeal)
 )
 
+paraTestIdealAmbient = (R1) -> (
+	tempList := paraTestModuleAmbient(R1);
+	(tempList#0) : (tempList#1)
+)
