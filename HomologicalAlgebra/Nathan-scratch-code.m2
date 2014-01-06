@@ -55,13 +55,28 @@ ambient m
 dual dual m
 
 -- example of extend
-
 help extend
-
 C = res(m, LengthLimit => 10)
-
 extend(C,C, id_(C_0))
 
+-- we can truncate the complex
+-- this is the notation P < g in the paper.
+-- truncate a chain complex
+-- appears in spectral sequence package
+
+needsPackage"SpectralSequences"
+
+truncate(C,-1)
+truncate(C,1)
+
+restart
+needsPackage"SpectralSequences"
+-- load this so we can truncate
+k = ZZ / 101  
+S = k[x] / ideal(x^2)
+kk = coker vars S
+g = 2
+C = res(kk, LengthLimit => 10)
 
 -- make some trivial methods trying to understand
 -- 3.6 of the paper
@@ -74,34 +89,58 @@ omega(ZZ,ChainComplex) := (n,C) -> (
 
 C
 omega(1,C)
-
 omega(2,C)
-
-needsPackage"SpectralSequences"
-
-truncate(C,-1)
-truncate(C,1)
-
-g = 2
-
 G = omega(g,C)
-
 L = res(dual G, LengthLimit => 10)
-
 truncate(C,-8)
-
-
 sigmaGminus1 = (dual truncate(C,-(length C - g)))[g-1]
-
 dual G
-
 omega(1-g, dual C)
-
 ambient dual G
-
 ambient omega(1-g, dual C)
 
+-- trying to compute the canonical map
+-- in 3.6
 -- the canonical map we want to lift ?!
 map(dual G, omega(1-g, dual C), id_(
-	ambient omega(1-g, dual C))
-)
+	ambient omega(1-g, dual C)))
+
+ambient (image dual C.dd_g)
+ambient dual G
+
+dual C.dd_g
+-- or is the canonical map one of the maps
+-- a or b below??
+a = map(dual G, omega(1-g, dual C), dual (C.dd_g))
+
+b = inducedMap(dual G, omega(1-g, dual C), dual (C.dd_g))
+
+source a
+source b
+target a
+target b
+
+(dual C).dd_(-2)
+coker (dual C).dd_(-1)
+
+Cdual = dual C
+
+Cdual_(-3)
+
+image Cdual.dd_(-2)
+coker Cdual.dd_(-1)
+
+-- question:
+-- why is one of these the zero map and one
+-- of them not the zero map??
+inducedMap(image Cdual.dd_(-2), 
+    coker Cdual.dd_(-1), Cdual.dd_(-2)) 
+map(image Cdual.dd_(-2), coker Cdual.dd_(-1), Cdual.dd_(-2)) 
+
+gens coker Cdual.dd_(-1)
+
+gens image Cdual.dd_(-2)
+
+-- i think the canonical map should be determined
+-- by the dual of C ...
+-- not sure why a is zero and b is not.
