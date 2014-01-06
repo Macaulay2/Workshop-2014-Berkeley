@@ -83,9 +83,9 @@ MAXSIZE = 1000
 -- Andy's bergman path
 --bergmanPath = "/usr/local/bergman1.001"
 -- Frank's bergman path
---bergmanPath = "~/bergman"
+bergmanPath = "~/bergman"
 -- Courtney's bergman path
-bergmanPath = "/Users/crgibbon/Downloads/bergman1.001"
+--bergmanPath = "/Users/crgibbon/Downloads/bergman1.001"
 
 NCRing = new Type of Ring
 NCQuotientRing = new Type of NCRing

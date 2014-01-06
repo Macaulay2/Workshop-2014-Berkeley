@@ -33,11 +33,12 @@ export{
   	 "divideFraction",
   	 "estFPT",
      "ethRoot",
-     "ethRootSafe",
-     "fancyEthRoot",	
+---     "ethRootSafe", 		MK
+---     "fancyEthRoot",		MK
      "fastExp",
      "FinalCheck",
      "findQGorGen",
+     "findTestElementAmbient",
      "firstCarry", 
      "FPTApproxList",     
      "frobeniusPower",
@@ -713,12 +714,15 @@ isBinomial = f ->
 --************************************************************--
 ----------------------------------------------------------------
 
+ethRoot = method(); --- MK
+
+
 --Computes I^{[1/p^e]}, we must be over a perfect field. and working with a polynomial ring
 --This is a slightly stripped down function due to Moty Katzman, with some changes to avoid the
 --use(Rm) which is commented out below
 --The real meat of the function is ethRootInternal, this function just looks for a certain error and calls 
 --the other function depending on that error.
-ethRoot = (Im,e) -> (
+ethRoot(Ideal,ZZ) := (Im,e) -> (
      J := Im;
      success := false;
      count := 0;
@@ -753,6 +757,8 @@ ethRootSafe = (f, I, a, e) -> (
 	
 	IN1*ideal(f^(aQuot))
 )
+
+ethRoot(RingElement, Ideal, ZZ, ZZ) := (f, I, a, e) -> ethRootSafe (f, I, a, e) ---MK
 
 ethRootInternal = (Im,e) -> (
      if (isIdeal(Im) != true) then (
@@ -861,13 +867,37 @@ apply(P, u->
 		g:=1_R;
 		for l from 0 to k-1 do g=g*(G#l)^((U#l)#j); 
 		a=ideal(g)*a;
-		if (i<e) then a=ethRoot(a, ideal(0_R) ,1);
+		if (i<e) then a=ethRoot(a ,1);
 ---print(g,answer);
 	};
 	answer=answer+a;
 });
 ideal(mingens(answer))
 )
+
+ethRoot (Ideal, ZZ, ZZ) := (I,m,e) -> fancyEthRoot (I,m,e)  --- MK
+
+
+
+--Computes I^{[1/p^e]}, we must be over a perfect field. and working with a polynomial ring
+--This is a slightly stripped down function due to Moty Katzman, with some changes to avoid the
+--use(Rm) which is commented out below
+--The real meat of the function is ethRootInternal, this function just looks for a certain error and calls 
+--the other function depending on that error.
+ethRoot(Ideal,ZZ) := (Im,e) -> (
+     J := Im;
+     success := false;
+     count := 0;
+     try J = ethRootInternal(J,e) then success = true else (
+--     print "blew a buffer";
+	 while(count < e) do (	 	
+	      J = ethRootInternal(J, 1);
+	      count = count + 1
+	 )
+     );
+     J
+)
+
 
 -----------------------------------------------------------------------
 
@@ -1370,6 +1400,7 @@ estFPT={FinalCheck=> true, Verbose=> false, MultiThread=>false, DiagonalCheck=>t
 --isFPTPoly, determines if a given rational number is the FPT of a pair in a polynomial ring. 
 --if Origin is specified, it only checks at the origin. 
 isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
+	if (o.Verbose==true) then print "Starting isFPTPoly";
 	pp := char ring f1;
 	if (o.Origin == true) then org := ideal(vars (ring f1));
 	funList := divideFraction(t1, pp);
@@ -1411,6 +1442,7 @@ isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
 
 --isFJumpingNumberPoly determines if a given rational number is an F-jumping number
 isFJumpingNumberPoly ={Verbose=> false}>> o -> (f1, t1) -> (
+	if (o.Verbose==true) then print "Starting isFJumpingNumberPoly";
 	pp := char ring f1;
 	funList := divideFraction(t1, pp);
 	--this writes t1 = a/(p^b(p^c-1))
