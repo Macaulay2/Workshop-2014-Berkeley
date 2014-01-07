@@ -219,6 +219,10 @@ R = QQ[x,y,z]
 I = ideal"x4,xyz3,yz,xz,z6,y5"
 visIdeal( I,  Path => getCurrPath()|"/temp-files/" )
 
+S = QQ[x,y]
+I = ideal"x4,xy3,y5"
+visIdeal( I,  Path => getCurrPath()|"/temp-files/" )
+
 -----------------------------
 -----------------------------
 -- Testing Ground
