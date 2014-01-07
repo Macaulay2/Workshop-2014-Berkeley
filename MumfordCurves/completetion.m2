@@ -1,0 +1,16 @@
+makeCompleteRing=(R,t,n)->(
+     OR=R[x];
+     NR=R[x];
+     NR+NR:=(a,b)->(
+	  g:=0_OR;
+	  co:=0_OR;
+     	  scan(n,i->(
+		    ca:=coefficient(x^i,a);
+		    cb:=coefficient(x^i,b);
+		    s:=ca+cb+co;
+		    q:=s%t;
+		    co=(s-q)//t;
+		    g=g+q*OR_0^i));
+	 sub(g,NR));
+    NR
+    )

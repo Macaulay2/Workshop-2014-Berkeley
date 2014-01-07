@@ -33,9 +33,12 @@ export{
   	 "divideFraction",
   	 "estFPT",
      "ethRoot",
-     "ethRootSafe",	
+---     "ethRootSafe", 		MK
+---     "fancyEthRoot",		MK
      "fastExp",
+     "findTestElementAmbient",
      "FinalCheck",
+	"findAllCompatibleIdeals", 	--- MK
      "findQGorGen",
      "firstCarry", 
      "FPTApproxList",     
@@ -50,6 +53,7 @@ export{
      "isFRegularPoly",
      "isFRegularQGor",
      "isSharplyFPurePoly",
+	"Mstar",			--- MK
      "MultiThread",
      "nu",
      "nuList",
@@ -708,16 +712,19 @@ isBinomial = f ->
 
 ----------------------------------------------------------------
 --************************************************************--
---Functions for computing test ideals, and related objects.   --
+--Functions for computing eth roots                           --
 --************************************************************--
 ----------------------------------------------------------------
+
+ethRoot = method(); --- MK
+
 
 --Computes I^{[1/p^e]}, we must be over a perfect field. and working with a polynomial ring
 --This is a slightly stripped down function due to Moty Katzman, with some changes to avoid the
 --use(Rm) which is commented out below
 --The real meat of the function is ethRootInternal, this function just looks for a certain error and calls 
 --the other function depending on that error.
-ethRoot = (Im,e) -> (
+ethRoot(Ideal,ZZ) := (Im,e) -> (
      J := Im;
      success := false;
      count := 0;
@@ -752,6 +759,8 @@ ethRootSafe = (f, I, a, e) -> (
 	
 	IN1*ideal(f^(aQuot))
 )
+
+ethRoot(RingElement, Ideal, ZZ, ZZ) := (f, I, a, e) -> ethRootSafe (f, I, a, e) ---MK
 
 ethRootInternal = (Im,e) -> (
      if (isIdeal(Im) != true) then (
@@ -790,6 +799,328 @@ ethRootInternal = (Im,e) -> (
 
 --A short version of ethRoot
 eR = (I1,e1)-> (ethRoot(I1,e1) )
+
+---------------------------------------------------------------------------------------
+--- The following code was written in order to more quickly compute eth roots of (f^n*I)
+--- It is used in fancyEthRoot
+----------------------------------------------------------------------------------------
+--- Find all ORDERED partitions of n with k parts
+allPartitions = (n,k)->
+(
+PP0:=matrix{ toList(1..k) };
+PP:=mutableMatrix PP0;
+allPartitionsInnards (n,k,PP,{})
+)
+
+allPartitionsInnards = (n,k,PP,answer)->
+(
+local i;
+if (k==1) then 
+{
+	PP_(0,k-1)=n;
+	answer=append(answer,first entries (PP));
+}
+else
+{
+	for i from 1 to n-(k-1) do
+	{
+		PP_(0,k-1)=i;
+		answer=allPartitionsInnards (n-i,k-1,PP,answer)	;	
+	};
+};
+answer
+)
+
+
+
+
+--- write n=a*p^e+a_{e-1} p^{e-1} + \dots + a_0 where 0\leq e_j <p 
+baseP1 = (n,p,e)->
+(
+a:=n//(p^e);
+answer:=1:a;
+m:=n-a*(p^e);
+f:=e-1; 
+while (f>=0) do
+{
+	d:=m//(p^f);
+	answer=append(answer,d);
+	m=m-d*(p^f);
+	f=f-1;
+};
+answer
+)	
+
+
+fancyEthRoot = (I,m,e) ->
+(
+G:=first entries mingens I;
+k:=#G;
+P:=allPartitions(m,k);
+R:=ring(I);
+p:=char(R);
+answer:=ideal(0_R);
+apply(P, u->
+{
+---print("Partition: ",u);
+	a:=ideal(1_R);
+	U:=apply(u, v->baseP1(v,p,e));
+	for i from 0 to e do
+	{
+		j:=e-i;
+		g:=1_R;
+		for l from 0 to k-1 do g=g*(G#l)^((U#l)#j); 
+		a=ideal(g)*a;
+		if (i<e) then a=ethRoot(a ,1);
+---print(g,answer);
+	};
+	answer=answer+a;
+});
+ideal(mingens(answer))
+)
+
+ethRoot (Ideal, ZZ, ZZ) := (I,m,e) -> fancyEthRoot (I,m,e)  --- MK
+
+
+
+--Computes I^{[1/p^e]}, we must be over a perfect field. and working with a polynomial ring
+--This is a slightly stripped down function due to Moty Katzman, with some changes to avoid the
+--use(Rm) which is commented out below
+--The real meat of the function is ethRootInternal, this function just looks for a certain error and calls 
+--the other function depending on that error.
+ethRoot(Ideal,ZZ) := (Im,e) -> (
+     J := Im;
+     success := false;
+     count := 0;
+     try J = ethRootInternal(J,e) then success = true else (
+--     print "blew a buffer";
+	 while(count < e) do (	 	
+	      J = ethRootInternal(J, 1);
+	      count = count + 1
+	 )
+     );
+     J
+)
+
+----------------------------------------------------------------
+--************************************************************--
+--Functions for computing compatibly split ideals             --
+--************************************************************--
+----------------------------------------------------------------
+
+-----------------------------------------------------------------------
+
+
+--- Start of MK ---------------------------------------------------------------------------------------------------
+
+-- FIND IDEALS COMPATIBLE WITH A GIVEN NEAR-SPLITTING
+-- This is an implementation of the algorithm described in
+-- Moty Katzman and Karl Schwede's paper 
+-- "An algorithm for computing compatibly Frobenius split subvarieties"
+-- J. Symbolic Comput. 47 (2012), no. 8, 996–1008. 
+
+----------------------------------------------------------------------------------------
+
+
+--- Input:
+---   	an element u of the polynomial ring R OVER A PRIME FIELD.
+--- Output:
+---	A list of all prime ideals P such that
+---	(a) u P \subseteq P^{[p]}, and
+---	(b) the action of uT on the the annihilator of P on the injective hull of the residue field of R 
+---	is not the zero Frobenius map.
+
+
+findAllCompatibleIdeals = (u) ->(
+L:={}; R:=ring u; p:=char R;
+P:=ideal(0_R);
+J:=ethRoot(ideal(u),1);
+t:=1_R % (gens J);
+if (t != 0_R) then print("*** WARNING *** Frobenius action has nilpotent elements");
+findAllCompatibleIdealsInnards (u,L,P)
+)
+
+
+
+findAllCompatibleIdealsInnards = (u,L,P) ->(
+R:=ring u;
+p:=char R;
+local tau;
+local Plist;
+P1:=frobeniusPower(P,1);
+C1:=ideal((singularLocus(P)).relations);
+---tau=ideal mingens star(C1,u,1) ; ---OLD VERSION
+tau=ideal mingens ascendIdeal (C1, u, 1);
+Plist=minimalPrimes tau;
+local Q;
+local T;
+apply(Plist, Q->
+{
+	f:= any(L,T -> T == Q);
+---print(L,Q,f);
+	if (not f) then
+	{
+		L=append(L,Q);
+		L=unique(L | findAllCompatibleIdealsInnards(u,L,Q));
+	};
+});
+---
+C2:=(P1+ideal(u)):(P1:P);
+JB:=C1*C2; 
+---print(mingens P, mingens JB);
+---tau=ideal mingens star(C2,u,1) ;  --- OLD VERSION
+tau=ideal mingens ascendIdeal  (C2, u, 1);
+Plist=minimalPrimes tau;
+local Q;
+local T;
+apply(Plist, Q->
+{
+	f:= any(L,T -> T == Q);
+---print(L,Q,f);
+	if (not f) then
+	{
+		L=append(L,Q);
+		L=unique(L | findAllCompatibleIdealsInnards(u,L,Q));
+	};
+});
+---
+L
+)
+
+
+
+-----------------------------------------------------------------------------
+--- Extend the Frobenius p^e th roots and star operations to submodules of
+--- free modules (over polynomial rings with *prime* coeeficient field)
+--- This implements the methods described in 
+--- Moty Katzman and Wenliang Zhang's paper
+--- "Annihilators of Artinian modules compatible with a Frobenius map"
+--- Journal of Symbolic computation, 2014
+
+-----------------------------------------------------------------------------
+
+
+mEthRoofOneElement = (v,e) ->(
+local i;
+local d;
+local w;
+local m;
+R:=ring(v); p:=char R;
+F:=coefficientRing(R);
+n:=rank source vars(R);
+V:=ideal vars(R);
+vv:=first entries vars(R);
+YY:=local YY;
+R1:=F[vv, YY_1..YY_n, MonomialOrder=>ProductOrder{n,n},MonomialSize=>16];
+V=substitute(V,R1);
+---------------------------
+M0:=set {1_R1};
+apply(vv, w->
+{
+ww:=substitute(w,R1);
+M1:=set toList apply(0..p-1, i-> ww^i);
+M0=M0**M1
+});
+M:=toList apply(elements(M0), w-> product toList deepSplice(w));
+---------------------------
+J0:=gens ideal apply(1..n, i->YY_i-substitute(vv#(i-1)^(p^e),R1));
+S:=toList apply(1..n, i->YY_i=>substitute(vv#(i-1),R1));
+Ie:=transpose matrix{{(rank target v):0_R1}}; 
+ev:=entries substitute(v,R1);
+apply(M, m->
+{
+	L:={};
+	apply(ev, t->
+	{
+		tt:=((t#0)%J0);
+		q1:=coefficients( tt , Variables=>(first entries gens V), Monomials=>{m});
+		q2:=q1#1;
+		q3:=first first entries q2;
+		q3=substitute(q3,S);
+		L=append(L,q3);
+---		print(m,tt,q3);
+	});
+---	print(ev,L,m);
+	Ie=Ie | (transpose matrix {L});
+});
+use R;
+compress(substitute(Ie,R))
+)
+
+
+
+
+mEthRoot = (A,e) ->(
+local i;
+local answer;
+answer1:=apply(1..(rank source A), i->mEthRoofOneElement (A_{i-1},e));
+if (#answer1==0) then 
+{
+	answer=A;
+}
+else
+{
+	answer=answer1#0;
+	apply(2..(#answer1), i->answer=answer | answer1#(i-1));
+};
+mingens( image answer )
+)
+
+
+ethRoot (Matrix, ZZ) := (A,e) -> mEthRoot (A,e)  --- MK
+
+
+
+
+
+
+--- Mstar is the implementaion of the star closure operation desribed in 
+--- M Katzman's "Parameter test ideals of Cohen Macaulay rings" 
+--- Input:
+---    ideals I and element u of the same polynomial ring R OVER A PRIME FIELD.
+---    a positive integer e
+---    a prime p which is the characteristic of R
+--- Output:
+---    the smallest ideal J of R containing I with the property that u^(1+p+...+p^(e-1)) J is in J^{[p^e]}
+Mstar = (A,U,e) ->(
+local answer;
+R:=ring(A); p:=char R;
+if (A==0) then
+{
+	answer=A;
+}
+else
+{
+	f:=true;
+	Ne:=sum toList(apply(0..(e-1), i->p^i));
+	lastA:= A;
+	while (f) do
+	{
+		f=false;
+		A1:=mEthRoot(mingens image ((U^Ne)*lastA),e);
+		A1=A1 | lastA;
+		t1:=compress ((A1))%((lastA));
+		if (t1!=0) then 
+		{
+			f=true;
+			lastA=mingens image A1;
+		};
+	};
+	answer=mingens (image A1);
+};
+answer
+)
+
+
+--- end of MK ---------------------------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------
+--************************************************************--
+--Functions for computing test ideals, and related objects.   --
+--************************************************************--
+----------------------------------------------------------------
+
 
 --Finds the smallest phi-stable ideal containing the given ideal Jk
 --in a polynomial ring Sk
@@ -985,6 +1316,13 @@ tauQGor = (Rk, ek, fk, t1) -> (
 --Computes tau(Rk,fk^tk), assuming Gorenstein rings
 tauGor = (Rg,fg,tg) -> tauQGor (Rg,1,fg,tg)
 
+----------------------------------------------------------------
+--************************************************************--
+--Functions for computing sigma                               --
+--************************************************************--
+----------------------------------------------------------------
+
+
 --Computes Non-Sharply-F-Pure ideals over polynomial rings for (R, fm^{a/(p^{e1}-1)}), 
 --at least defined as in Fujino-Schwede-Takagi.
 sigmaAOverPEMinus1Poly ={HSL=> false}>> o -> (fm, a1, e1) -> ( 
@@ -1060,12 +1398,121 @@ sigmaAOverPEMinus1QGor  ={HSL=> false}>> o -> (fk, a1, e1, gg) -> (
 	
 )
 
+----------------------------------------------------------------
+--************************************************************--
+--Functions for computing parameter test modules              --
+--************************************************************--
+----------------------------------------------------------------
+
+
+--This function computes the parameter test module of a ring, it returns it as a submodule of a canonical ideal.
+--this is a slightly modified function originally written by Moty Katzman for "Parameter test ideals of Cohen Macaulay rings"
+--it returns the lift of the canonical module to the ambient ring
+canonicalIdeal = (R1) -> (
+	S1 := ambient R1;
+	I1 := ideal(R1);
+	d1 := (dim S1) - (dim R1);
+	
+	canModuleMatrix := relations(prune( Ext^d1(S1^1/I1, S1^1)));
+	
+	answer:=0;
+	s1:=syz transpose substitute(canModuleMatrix,R1);
+	s2:=entries transpose s1;
+	use S1;
+	apply(s2, t->
+	{
+		s3:=substitute(syz gens ideal t,S1);
+---		print(s3%canModuleMatrix);
+		if ((s3%canModuleMatrix)==0) then
+		{
+			answer=substitute(mingens ideal t,S1);
+			break;
+		};
+	});
+ideal answer
+)
+
+--the following function computes the u of a canonical ideal in a polynomial ring
+--it uses previous work of Katzman
+finduOfIdeal = (canIdeal, defIdeal) -> (
+	Ip := frobeniusPower(defIdeal, 1);
+	tempIdeal := intersect( (frobeniusPower(canIdeal, 1)) : canIdeal, Ip : defIdeal );
+	
+	M1 := compress ((gens tempIdeal)%(gens Ip));
+	first first entries M1
+)
+
+--computes the parameter test submodule of a given ring.  It outputs the parameter test module (as an ideal), it then outputs the canonical module (as an ideal), and finally it outputs the term u used as the action on the ideal
+paraTestModuleAmbient = (R1) -> (
+	S1 := ambient R1;
+	I1 := ideal(R1);
+	
+	canIdeal := canonicalIdeal(R1);
+	
+	J1 := findTestElementAmbient(R1);
+	tau0 := J1*canIdeal; --this is the starting test element times the ideal
+	
+	u1 := finduOfIdeal(canIdeal, I1); --this is the multiplying object that gives us (u*omega)^{[1/p]} \subseteq omega.
+	
+	tauOut := ascendIdeal(tau0, u1, 1);
+	
+	(sub(tauOut, R1), sub(canIdeal, R1), u1)
+)
+
+--computes the parameter test ideal of an ambient ring
+paraTestIdealAmbient = (R1) -> (
+	tempList := paraTestModuleAmbient(R1);
+	(tempList#0) : (tempList#1)
+)
+
+--this computes the parameter test module \tau(R, f^t).  It does not assume that R is a polynomial ring.
+paraTestModule = (fk, t1) -> ( --maintained by Karl
+	R1 := ring fk;
+	S1 := ambient R1;
+	f1 := sub(fk, S1);
+	I1 := ideal R1;
+	pp := char R1;
+	funList := divideFraction(t1, pp);
+	
+	aa := funList#0;
+	bb := funList#1;
+	cc := funList#2;
+	
+--	tempList := paraTestModuleAmbient(R1);
+--	tauAmb := sub(tempList#0, S1);
+--	omegaAmb := sub(tempList#1, S1);
+--	u1 := tempList#2;
+
+	omegaAmb := canonicalIdeal(R1);
+	J1 := findTestElementAmbient(R1)*omegaAmb;
+	u1 := finduOfIdeal(omegaAmb, I1);
+
+	uPower := 1;
+	if (cc != 0) then
+		uPower = floor((pp^cc-1)/(pp-1));
+	firstTau := J1;
+	
+	if (cc != 0) then	
+		firstTau = ascendIdeal(J1*ideal(f1^(ceiling(t1))), f1^aa*u1^(uPower), cc)
+		--I should write an ascendIdealSafe that works for multiple elements raised to powers...	
+	else 
+		firstTau = ascendIdeal(J1, u1^(uPower), 1)*ideal(f1^aa);
+			
+	secondTau := firstTau;
+	if (bb != 0) then
+		secondTau = ethRoot(u1, firstTau, uPower, bb);
+		
+	(sub(secondTau, R1), omegaAmb, u1)
+)
+
+
 
 ----------------------------------------------------------------
 --************************************************************--
 --Functions for checking whether a ring/pair is F-pure/regular--
 --************************************************************--
 ----------------------------------------------------------------
+
 
 isFRegularPoly = method();
 
@@ -1721,7 +2168,7 @@ doc ///
      Headline
         Computes tau(R,f^t) for a Q-Gorenstein ring such that the index divides p^e-1.
      Usage
-     	 tauGorAmb(R,e,f,t)
+     	 tauQGor(R,e,f,t)
      Inputs
      	 R:Ring
 	 e:ZZ
@@ -1740,7 +2187,7 @@ doc ///
      Headline
         Computes tau(R,f^t) for a Gorenstein ring such that the index divides p^e-1.
      Usage
-     	 tauGorAmb(R,f,t)
+     	 tauGor(R,f,t)
      Inputs
      	 R:Ring
 	 f:RingElement
@@ -1831,7 +2278,7 @@ doc ///
      Headline
         Finds the smallest phi-stable ideal containing a given ideal in a polynomial ring.
      Usage
-     	 ascendIdeal(J, h, a, e)
+     	 ascendIdealSafe(J, h, a, e)
      Inputs
      	 J:Ideal 
 	h:RingElement

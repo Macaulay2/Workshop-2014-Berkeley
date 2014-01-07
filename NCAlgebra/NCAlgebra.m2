@@ -84,8 +84,11 @@ MAXSIZE = 1000
 -- bergmanPath = "/usr/local/bergman1.001"
 -- Andy's other bergman path
 bergmanPath = "/cygdrive/d/userdata/Desktop/bergman1.001"
+--bergmanPath = "/usr/local/bergman1.001"
 -- Frank's bergman path
---bergmanPath = "~/bergman"
+-- bergmanPath = "~/bergman"
+-- Courtney's bergman path
+--bergmanPath = "/Users/crgibbon/Downloads/bergman1.001"
 
 NCRing = new Type of Ring
 NCQuotientRing = new Type of NCRing
@@ -2081,6 +2084,7 @@ List ** List := (xs,ys) -> flatten for y in ys list apply(xs, x -> {x,y})
 remainderFunction = method(Options => {DontUse => 0})
 remainderFunction (NCRingElement,NCGroebnerBasis) := opts -> (f,ncgb) -> (
    if #(gens ncgb) == 0 then return f;
+   if f == 0 then return f;
    if ((gens ncgb)#0).ring =!= f.ring then error "Expected GB over the same ring.";
    dontUse := opts#DontUse;
    ncgbHash := ncgb.generators;
@@ -2105,7 +2109,6 @@ remainderFunction (NCRingElement,NCGroebnerBasis) := opts -> (f,ncgb) -> (
                     {1_R};
       foundSubstr = select(ncSubstrs ** cSubstrs, s -> ncgbHash#?(s#0#1,s#1) and
                                                        ncgbHash#(s#0#1,s#1) != dontUse);
-      if #pairsf == 14 then error "err";
       coeff = p#1;
       if foundSubstr =!= {} then (
          foundSubstr = minUsing(foundSubstr, s -> size ncgbHash#(s#0#1,s#1));
@@ -2756,10 +2759,90 @@ load (currentFileDirectory | "NCAlgebra/NCAlgebraDoc.m2")
 
 end
 
-
 restart
 uninstallPackage "NCAlgebra"
 installPackage "NCAlgebra"
 needsPackage "NCAlgebra"
 viewHelp "NCAlgebra"
 
+--- demo
+restart
+needsPackage "NCAlgebra"
+A = QQ{x,y,z}
+f = y*z + z*y - x^2
+g = x*z + z*x - y^2
+h = z^2 - x*y - y*x
+f*g
+I=ncIdeal{f,g,h}
+Igb = twoSidedNCGroebnerBasisBergman I
+B = A/I
+z^10
+generators B
+numgens B
+isCommutative B
+x*y-y*x
+coefficientRing B
+x
+C = skewPolynomialRing(QQ,(-1)_QQ,{x,y,z,w}) 
+x
+use B
+x
+use C
+sigma = ncMap(C,C,{y,z,w,x})
+D = oreExtension(C,sigma,a)
+gens D
+y*a
+a*y
+
+restart
+needsPackage "NCAlgebra"
+B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
+A = ambient B
+g = 2*(-y^3-x*y*z+y*x*z+x^3)  -- g is central
+ideal B
+J = (ideal B) + ncIdeal {g}
+B' = A/J -- Factor of sklyanin
+k = ncMatrix {{x,y,z}}
+BprimeToB = ncMap(B,B',gens B) -- way to lift back from B' to B
+M1 = rightKernelBergman k
+M2 = rightKernelBergman M1
+M = BprimeToB M2
+gId = g*(ncMatrix applyTable(entries id_(ZZ^4), i -> promote(i,B)))
+gId.source
+gId.target
+assignDegrees(gId,{2,2,2,3},{5,5,5,6});
+-- now factor through g*id
+M' = gId // M
+M*M' == gId
+M'*M == gId
+
+restart
+debug needsPackage "NCAlgebra"
+Q = QQ[a,b,c]
+R = Q/ideal{a*b-c^2}
+kRes = res(coker vars R, LengthLimit=>7)
+M = coker kRes.dd_5
+B = endomorphismRing(M,X)
+gensI = gens ideal B
+netList gensI
+gensIMin = minimizeRelations(gensI)
+maps = B.cache.endomorphismRingGens
+maps_3 == maps_0*maps_2
+checkHomRelations(gensIMin,maps)
+
+restart
+needsPackage "NCAlgebra"
+C = threeDimSklyanin(QQ,{a,b,c}, DegreeLimit=>6)
+ncGroebnerBasis ideal C
+f = centralElements(C,3)
+
+restart
+needsPackage "NCAlgebra"
+B = skewPolynomialRing(QQ,-1_QQ,{a,b,c})
+sigma = ncMap(B,B,{b,c,a})
+isWellDefined sigma
+C = oreExtension(B,sigma,w)
+isCentral w
+isNormal w      
+phi = normalAutomorphism w
+matrix phi
