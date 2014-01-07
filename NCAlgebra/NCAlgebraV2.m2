@@ -16,9 +16,10 @@ newPackage("NCAlgebraV2",
      DebuggingMode => true
      )
 
-export {subQuotientAsCokernel}
-
 needsPackage "NCAlgebra"
+
+export {subQuotientAsCokernel,
+        NCChainComplex}
 
 subQuotientAsCokernel = method()
 subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
@@ -46,12 +47,58 @@ NCMatrix ** NCMatrix := (M,N) -> (
 Hom (NCMatrix,NCMatrix,ZZ) := (M,N,d) -> (
    R := coefficientRing ring M;
    sourceM := M.source;
-   sourceN := Nsource;
+   sourceN := N.source;
    targetM := M.target;
    targetN := N.target;
    error "err";
    R
 )
+
+-------------------------------------------
+--- NCChainComplex Methods ----------------
+-------------------------------------------
+NCChainComplex = new Type of HashTable
+
+resolution NCMatrix := opts -> M -> (
+   numSyz := if opts#LengthLimit === infinity then numgens ring M else opts#LengthLimit;
+   currentM := M;
+   syzList := {M} | for i from 0 to numSyz-1 list (
+      newM := rightKernelBergman currentM;
+      currentM = newM;
+      currentM
+   );
+   new NCChainComplex from apply(#syzList, i -> (i,syzList#i))
+)
+
+betti NCChainComplex := opts -> C -> (
+    firstbettis := flatten apply(
+    	keys (tally (C#0).target), 
+    	i -> {(0,(C#0).target,i) => (tally (C#0).target)_i}
+    );
+    lastbettis := flatten flatten apply(#C-1, j -> 
+	apply(
+    	    keys (tally (C#j).source), 
+    	    i -> {(j+1,(C#j).source,i) => (tally (C#j).source)_i}
+	    )
+	);
+    L := firstbettis | lastbettis;
+    B := new BettiTally from L
+)
+
+
+TEST ///
+restart
+needsPackage "NCAlgebraV2"
+needsPackage "NCAlgebra"
+B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
+M = ncMatrix {{x,y,z}}
+Mres = res M
+betti Mres
+N = ncMatrix {{x,y,z^2}}
+Nres = res N
+betti Nres
+///
+
 
 TEST ///
 restart
