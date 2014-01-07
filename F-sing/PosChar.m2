@@ -21,6 +21,7 @@ export{
 	 "aPower",
 	 "ascendIdeal", 
 	 "ascendIdealSafe",
+	 "ascendIdealSafeList",
 	 "basePExp",
   	 "basePExpMaxE",
   	 "BinomialCheck",
@@ -53,7 +54,8 @@ export{
      "isFRegularPoly",
      "isFRegularQGor",
      "isSharplyFPurePoly",
-	"Mstar",			--- MK
+	"minimalCompatible",		--- MK
+---	"Mstar",			--- MK
      "MultiThread",
      "nu",
      "nuList",
@@ -1178,6 +1180,40 @@ ascendIdealSafe = (Jk, hk, ak, ek) -> (
      trim IP
 )
 
+
+
+
+--works just like ascendIdealSafe but also handles lists of hk to powers...
+ascendIdealSafeList = (Jk, hkList, akList, ek) -> (
+	Sk := ring Jk;
+	pp := char Sk;
+	IN := Jk;
+	IP := ideal(0_Sk);
+	
+	--we ascend the ideal as above
+	while (isSubset(IN, IP) == false) do(
+		IP = IN;
+		IN = ethRootSafeList( hkList, IP, akList, ek) + IP
+	);
+	
+	--trim the output
+	trim IP
+)
+
+--MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
+-- minimalCompatible is a method which is implemented as:
+-- (1) the finding of the smallest ideal J which satisfies uJ\subset J^{[p^e]} 
+---    containg a given ideal for a given ring element u,
+-- (2) the finding of the smallest submodule V of a free module which satisfies UV\subset V^{[p^e]} 
+--     containg a given submodule for a given matrix U.
+minimalCompatible = method();
+minimalCompatible(Ideal,RingElement,ZZ) :=  (Jk, hk, ek) -> ascendIdeal (Jk, hk, ek)
+minimalCompatible(Ideal,RingElement,ZZ,ZZ) :=  (Jk, hk, ak, ek) -> ascendIdealSafe (Jk, hk, ak, ek)
+minimalCompatible(Matrix,Matrix,ZZ) := (A,U,e) -> Mstar (A,U,e)
+
+--MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
+
+
 --Finds a test element of a ring R = k[x, y, ...]/I (or at least an ideal 
 --containing a nonzero test element).  It views it as an element of the ambient ring
 --of R.  It returns an ideal with some of these elements in it.
@@ -1332,6 +1368,7 @@ tauQGor = (Rk, ek, fk, t1) -> (
 --Computes tau(Rk,fk^tk), assuming Gorenstein rings
 tauGor = (Rg,fg,tg) -> tauQGor (Rg,1,fg,tg)
 
+
 ----------------------------------------------------------------
 --************************************************************--
 --Functions for computing sigma                               --
@@ -1416,7 +1453,7 @@ sigmaAOverPEMinus1QGor  ={HSL=> false}>> o -> (fk, a1, e1, gg) -> (
 
 ----------------------------------------------------------------
 --************************************************************--
---Functions for computing parameter test modules              --
+--Functions for computing parameter test modules and ideals   --
 --************************************************************--
 ----------------------------------------------------------------
 
