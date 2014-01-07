@@ -41,7 +41,8 @@ export {
      "visIdeal",
      "visGraph",
      "runServer", --helper
-     "toArray" --helper
+     "toArray", --helper
+     "getCurrPath" --helper
 }
 
 needsPackage"Graphs"
@@ -50,6 +51,13 @@ needsPackage"Graphs"
 ------------------------------------------------------------
 -- METHODS
 ------------------------------------------------------------
+
+-- Input: None.
+-- Output: String containing current path.
+
+getCurrPath = method()
+installMethod(getCurrPath, () -> (local currPath; currPath = get "!pwd"; substring(currPath,0,(length currPath)-1)))
+
 
 --input: A list of lists
 --output: an array of arrays
@@ -66,7 +74,7 @@ toArray(List) := L -> (
 --input: A path
 --output: runs a server for displaying objects
 --
-runServer = method(Options => {Path => "./"})
+runServer = method(Options => {Path => getCurrPath()})
 runServer(String) := opts -> (visPath) -> (
     return run visPath;
     )
@@ -77,7 +85,7 @@ runServer(String) := opts -> (visPath) -> (
 --    	 where template file is located.
 --output: A file with visKey replaced with visString.
 --
-visOutput = method(Options => {Path => "./"})
+visOutput = method(Options => {Path => getCurrPath()})
 visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
     local fileName; local openFile; local PATH;
     
@@ -86,34 +94,45 @@ visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
     openOut PATH << 
     	replace(visKey, visString , get visTemplate) << 
 	close;
-              
-    openFile = "open "|PATH;
-    
-    return run openFile;
+                  
+    return show new URL from { "file://"|PATH };
     )
 
 
 
---input: A monomial ideal of a polynomial ring in 3 variables.
+--input: A monomial ideal of a polynomial ring in 2 or 3 variables.
 --output: The newton polytope of the of the ideal.
 --
-visIdeal = method(Options => {Path => "./", visTemplate => "./templates/visIdeal/visIdeal.html"})
+visIdeal = method(Options => {Path => "./", visTemplate => "./templates/visIdeal/visIdeal"})
 visIdeal(Ideal) := opts -> J -> (
-    local R; local arrayList; local arrayString;
+    local R; local arrayList; local arrayString; local numVar; local visTemp;
     
     R = ring J;
-    arrayList = apply(flatten entries basis(0,infinity, R/J), m -> flatten exponents m );
-    arrayList = toArray arrayList;
-    arrayString = toString arrayList;
+    numVar = rank source vars R;
     
-    return visOutput( "visArray", arrayString, opts.visTemplate, Path => opts.Path );
+    if ((numVar != 2) and (numVar != 3)) then (error "Ring needs to have either 2 or 3 variables.");
+    
+    if numVar == 2 
+    then (
+    	visTemp = opts.visTemplate|"2D.html";
+	arrayList = apply( flatten entries gens J, m -> flatten exponents m);	
+	arrayList = toArray arrayList;
+	arrayString = toString arrayList;
     )
-
+    else (
+	visTemp = opts.visTemplate|"3D.html";
+    	arrayList = apply(flatten entries basis(0,infinity, R/J), m -> flatten exponents m );
+    	arrayList = toArray arrayList;
+    	arrayString = toString arrayList;
+    );
+	
+    return visOutput( "visArray", arrayString, visTemp, Path => opts.Path );
+    )
 
 --input: A monomial ideal of a polynomial ring in 2 or 3 variables.
 --output: The newton polytope of the integral closure of the ideal.
 --
-visIntegralClosure = method(Options => {Path => "./", visTemplate => "./templates/visIdeal/visIdeal.html"})
+visIntegralClosure = method(Options => {Path => getCurrPath(), visTemplate => getCurrPath() | "/templates/visIdeal/visIdeal.html"})
 visIntegralClosure(Ideal) := opts -> J -> (
     local R; local arrayList; local arrayString; 
 --    local fileName; local openFile;
@@ -137,7 +156,7 @@ visIntegralClosure(Ideal) := opts -> J -> (
 --input: A graph
 --output: the graph in the browswer
 --
-visGraph = method(Options => {Path => "./", visTemplate => "./templates/visGraph/visGraph-template.html"})
+visGraph = method(Options => {Path => getCurrPath(), visTemplate => getCurrPath() | "/templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
     local A; local arrayList; local arrayString;
     
@@ -153,7 +172,7 @@ visGraph(Graph) := opts -> G -> (
 -- DOCUMENTATION
 --------------------------------------------------
 
-
+-- use simple doc
 beginDocumentation()
 
 document {
@@ -183,7 +202,6 @@ end
 -------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------
 
-
 -----------------------------
 -----------------------------
 -- Stable Tests
@@ -195,12 +213,15 @@ loadPackage"Graphs"
 loadPackage"Visualize"
 
 G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
-visGraph( G, Path => "./temp-files/" )
+visGraph( G, Path => getCurrPath()|"/temp-files/" )
 
 R = QQ[x,y,z]
-I = ideal"x4,xy,yz,xz,z6,y5"
-visIdeal( I,  Path => "./temp-files/" )
+I = ideal"x4,xyz3,yz,xz,z6,y5"
+visIdeal( I,  Path => getCurrPath()|"/temp-files/" )
 
+S = QQ[x,y]
+I = ideal"x4,xy3,y5"
+visIdeal( I,  Path => getCurrPath()|"/temp-files/" )
 
 -----------------------------
 -----------------------------
