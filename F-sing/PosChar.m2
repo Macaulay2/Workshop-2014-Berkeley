@@ -334,6 +334,23 @@ frobeniusPower(Ideal,ZZ) := (I1,e1) ->(
      answer
 );
 
+
+
+frobeniusPower(Matrix,ZZ) := (M,e) ->(
+R:=ring M;
+p:=char R;
+G:=entries M;
+local i;
+local j;
+L:={};
+apply(G, i->
+{
+	L=append(L,apply(i, j->j^(p^e)));
+});
+matrix L
+);
+
+
 -- This function computes the element in the ambient ring S of R=S/I such that
 -- I^{[p^e]}:I = (f) + I^{[p^e]}
 -- If there is no such unique element, the function returns zero
