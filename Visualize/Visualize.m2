@@ -56,7 +56,7 @@ needsPackage"Graphs"
 -- Output: String containing current path.
 
 getCurrPath = method()
-installMethod(getCurrPath, () -> (local currPath; currPath = get "!pwd"; substring(currPath,0,(length currPath)-1)))
+installMethod(getCurrPath, () -> (local currPath; currPath = get "!pwd"; substring(currPath,0,(length currPath)-1)|"/"))
 
 
 --input: A list of lists
@@ -103,7 +103,7 @@ visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
 --input: A monomial ideal of a polynomial ring in 2 or 3 variables.
 --output: The newton polytope of the of the ideal.
 --
-visIdeal = method(Options => {Path => "./", visTemplate => "./templates/visIdeal/visIdeal"})
+visIdeal = method(Options => {Path => getCurrPath()|"/temp-files/", visTemplate => getCurrPath() |"/templates/visIdeal/visIdeal"})
 visIdeal(Ideal) := opts -> J -> (
     local R; local arrayList; local arrayString; local numVar; local visTemp;
     
@@ -129,34 +129,10 @@ visIdeal(Ideal) := opts -> J -> (
     return visOutput( "visArray", arrayString, visTemp, Path => opts.Path );
     )
 
---input: A monomial ideal of a polynomial ring in 2 or 3 variables.
---output: The newton polytope of the integral closure of the ideal.
---
-visIntegralClosure = method(Options => {Path => getCurrPath(), visTemplate => getCurrPath() | "/templates/visIdeal/visIdeal.html"})
-visIntegralClosure(Ideal) := opts -> J -> (
-    local R; local arrayList; local arrayString; 
---    local fileName; local openFile;
-
-    R = ring J;
-    J = integralClosure J;
-    arrayList = apply(flatten entries basis(0,infinity, R/J), m -> flatten exponents m );
-    arrayList = toArray arrayList;
-    arrayString = toString arrayList;
-    
-    return visOutput( "visArray", arrayString, opts.visTemplate, Path => opts.Path );
-
---    G = flatten entries mingens integralClosure J;
---    arrayList = new Array from apply(G, i -> new Array from flatten exponents i);
---    arrayString = toString arrayList;
-    
---    return visOutput(arrayString, Path => opts.Path ); 
-    )
-
-
 --input: A graph
 --output: the graph in the browswer
 --
-visGraph = method(Options => {Path => getCurrPath(), visTemplate => getCurrPath() | "/templates/visGraph/visGraph-template.html"})
+visGraph = method(Options => {Path => getCurrPath()|"/temp-files/", visTemplate => getCurrPath() | "/templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
     local A; local arrayList; local arrayString;
     
@@ -213,15 +189,17 @@ loadPackage"Graphs"
 loadPackage"Visualize"
 
 G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
-visGraph( G, Path => getCurrPath()|"/temp-files/" )
+visGraph G
 
 R = QQ[x,y,z]
 I = ideal"x4,xyz3,yz,xz,z6,y5"
-visIdeal( I,  Path => getCurrPath()|"/temp-files/" )
+visIdeal I
+visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
 
 S = QQ[x,y]
-I = ideal"x4,xy3,y5"
-visIdeal( I,  Path => getCurrPath()|"/temp-files/" )
+I = ideal"x4,xy3,y50"
+visIdeal I
+visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
 
 -----------------------------
 -----------------------------
