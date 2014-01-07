@@ -30,4 +30,16 @@ N=coker matrix{{3}}
 M=L++N
 doubleDualMap(M)
 
+--learning sufficiently much about the truncate command to implement it
+restart
+R=QQ[x,y,z]
+M=coker matrix{{x,y,z}}
+C=resolution(M,LengthLimit=>10)
+loadPackage "SpectralSequences" --don't have this...
+help truncate
+
+--creating method to truncate, dualize, and shift a complex
+truncateDualShift = method()
+truncateDualShift(ZZ,ChainComplex) := (g,P) -> (
+     if g > max C-1
 
