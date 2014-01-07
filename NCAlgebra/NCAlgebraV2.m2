@@ -21,13 +21,25 @@ export {subQuotientAsCokernel}
 needsPackage "NCAlgebra"
 
 subQuotientAsCokernel = method()
-subQuotientAsCokernel (NCMatrix, NCMatrix) := (A,B) -> (
+subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
    --- following Algorithm 6.3.1 in Boehm
-   C := A | B;
-   kerC := rightKernelBergman(C);
-   rowsAB := #(A.source);
-   kerC^(toList(0..(rowsAB-1)))
+   L := M | N;
+   kerL := rightKernelBergman(L);
+   rowsMN := #(M.source);
+   kerL^(toList(0..(rowsMN-1)))
 )
+
+NCMatrix ** Matrix := 
+Matrix ** NCMatrix :=
+NCMatrix ** NCMatrix := (M,N) -> (
+   entriesM := entries M;
+   MtensN := ncMatrix applyTable(entriesM, e -> e*N);
+   --- now we must assignDegrees to make make them compatible
+   --- with M and N
+   MtensN
+)
+
+
 
 TEST ///
 restart
@@ -37,6 +49,15 @@ B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
 M = ncMatrix {{x,y}}
 N = ncMatrix {{x^2,y^2}}
 subQuotientAsCokernel(M,N)
+
+M = ncMatrix {{x,y,0},{0,y,z}}
+N = ncMatrix {{x,y}}
+L1 = id_(QQ^1)
+K1 = L1 ** transpose M
+L2 = id_(QQ^3)
+K2 = L2 ** N
+K = K1 | -K2
+kerK = rightKernelBergman K
 ///
 
 end
