@@ -69,6 +69,10 @@ construction (ZZ, Module) := (g, M) -> (
      
      cRes = id_(resolution (ring M)^0);
      
+     --Jason's portion
+     
+     --Kat's portion
+     
      
      
 restart     
