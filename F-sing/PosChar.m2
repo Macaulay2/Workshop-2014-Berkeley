@@ -34,6 +34,7 @@ export{
   	 "estFPT",
      "ethRoot",
 ---     "ethRootSafe", 		MK
+	"ethRootSafeList",
 ---     "fancyEthRoot",		MK
      "fastExp",
      "findTestElementAmbient",
@@ -773,7 +774,20 @@ ethRootSafeList = (elmtList, I1, aList, e1) -> (
 	
 	expOfaList := apply(aListRem, z1-> basePExpMaxE(z1, p1, e1) );
 	
-	IN1 := I1;
+	aPowerList := apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#0));
+	
+	IN1 := I1*ideal(fold(times, aPowerList));
+	if (e1 > 0) then (
+		IN1 = ethRoot(IN1, 1);
+		i := 1;
+		while(i < e1) do (
+			aPowerList = apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#i));
+			IN1 = ethRoot( IN1*ideal(fold(times, aPowerList)), 1);
+			i = i + 1;
+		)
+	);
+	aPowerList = apply(elmtList, aListQuot, (f1, z1) -> f1^z1);
+	IN1*ideal(fold(times, aPowerList))
 )
 
 ethRoot(RingElement, Ideal, ZZ, ZZ) := (f, I, a, e) -> ethRootSafe (f, I, a, e) ---MK
