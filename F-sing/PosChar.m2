@@ -19,8 +19,8 @@ Version => "0.1a", Date => "October 18th, 2013", Authors => {
 Headline => "A package for calculations in positive characteristic", DebuggingMode => true, Reload => true )
 export{
 	 "aPower",
-	 "ascendIdeal", 
-	 "ascendIdealSafe",
+---MK	 "ascendIdeal", 
+---MK	 "ascendIdealSafe",
 	 "basePExp",
   	 "basePExpMaxE",
   	 "BinomialCheck",
@@ -34,6 +34,7 @@ export{
   	 "estFPT",
      "ethRoot",
 ---     "ethRootSafe", 		MK
+	"ethRootSafeList",
 ---     "fancyEthRoot",		MK
      "fastExp",
      "findTestElementAmbient",
@@ -53,7 +54,8 @@ export{
      "isFRegularPoly",
      "isFRegularQGor",
      "isSharplyFPurePoly",
-	"Mstar",			--- MK
+	"minimalCompatible",		--- MK
+---	"Mstar",			--- MK
      "MultiThread",
      "nu",
      "nuList",
@@ -773,7 +775,20 @@ ethRootSafeList = (elmtList, I1, aList, e1) -> (
 	
 	expOfaList := apply(aListRem, z1-> basePExpMaxE(z1, p1, e1) );
 	
-	IN1 := I1;
+	aPowerList := apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#0));
+	
+	IN1 := I1*ideal(fold(times, aPowerList));
+	if (e1 > 0) then (
+		IN1 = ethRoot(IN1, 1);
+		i := 1;
+		while(i < e1) do (
+			aPowerList = apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#i));
+			IN1 = ethRoot( IN1*ideal(fold(times, aPowerList)), 1);
+			i = i + 1;
+		)
+	);
+	aPowerList = apply(elmtList, aListQuot, (f1, z1) -> f1^z1);
+	IN1*ideal(fold(times, aPowerList))
 )
 
 ethRoot(RingElement, Ideal, ZZ, ZZ) := (f, I, a, e) -> ethRootSafe (f, I, a, e) ---MK
@@ -1178,6 +1193,19 @@ ascendIdealSafe = (Jk, hk, ak, ek) -> (
      trim IP
 )
 
+--MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
+-- minimalCompatible is a method which is implemented as:
+-- (1) the finding of the smallest ideal J which satisfies uJ\subset J^{[p^e]} 
+---    containg a given ideal for a given ring element u,
+-- (2) the finding of the smallest submodule V of a free module which satisfies UV\subset V^{[p^e]} 
+--     containg a given submodule for a given matrix U.
+minimalCompatible = method();
+minimalCompatible(Ideal,ZZ,ZZ) :=  (Jk, hk, ek) -> ascendIdeal (Jk, hk, ek)
+minimalCompatible(Ideal,ZZ,ZZ,ZZ) :=  (Jk, hk, ak, ek) -> ascendIdeal (Jk, hk, ak, ek)
+minimalCompatible(Matrix,Matrix,ZZ) := (A,U,e) -> Mstar (A,U,e)
+
+--MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
+
 --Finds a test element of a ring R = k[x, y, ...]/I (or at least an ideal 
 --containing a nonzero test element).  It views it as an element of the ambient ring
 --of R.  It returns an ideal with some of these elements in it.
@@ -1331,6 +1359,7 @@ tauQGor = (Rk, ek, fk, t1) -> (
 
 --Computes tau(Rk,fk^tk), assuming Gorenstein rings
 tauGor = (Rg,fg,tg) -> tauQGor (Rg,1,fg,tg)
+
 
 ----------------------------------------------------------------
 --************************************************************--
