@@ -36,6 +36,7 @@ export{
 ---     "ethRootSafe", 		MK
 ---     "fancyEthRoot",		MK
      "fastExp",
+     "findTestElementAmbient",
      "FinalCheck",
 	"findAllCompatibleIdeals", 	--- MK
      "findQGorGen",
@@ -1002,6 +1003,7 @@ F:=coefficientRing(R);
 n:=rank source vars(R);
 V:=ideal vars(R);
 vv:=first entries vars(R);
+YY:=local YY;
 R1:=F[vv, YY_1..YY_n, MonomialOrder=>ProductOrder{n,n},MonomialSize=>16];
 V=substitute(V,R1);
 ---------------------------
@@ -2038,7 +2040,7 @@ doc ///
      Headline
         Computes tau(R,f^t) for a Q-Gorenstein ring such that the index divides p^e-1.
      Usage
-     	 tauGorAmb(R,e,f,t)
+     	 tauQGor(R,e,f,t)
      Inputs
      	 R:Ring
 	 e:ZZ
@@ -2057,7 +2059,7 @@ doc ///
      Headline
         Computes tau(R,f^t) for a Gorenstein ring such that the index divides p^e-1.
      Usage
-     	 tauGorAmb(R,f,t)
+     	 tauGor(R,f,t)
      Inputs
      	 R:Ring
 	 f:RingElement
@@ -2148,7 +2150,7 @@ doc ///
      Headline
         Finds the smallest phi-stable ideal containing a given ideal in a polynomial ring.
      Usage
-     	 ascendIdeal(J, h, a, e)
+     	 ascendIdealSafe(J, h, a, e)
      Inputs
      	 J:Ideal 
 	h:RingElement
