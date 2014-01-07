@@ -82,3 +82,13 @@ prune coker A == C
 
 -- recusrively add {{0}}; via ++ {{0}} a few times, precisely
 -- rank (cover M) - rank (cover dual dual M) times.
+
+
+--
+-- testing of Frank's contribution of bidualitymap.m2
+--
+kk = ZZ/ ideal (101)
+R = kk[x]/ideal (x^2)
+M = coker matrix {{x}}
+C = completeRes(M,3)
+C.dd
