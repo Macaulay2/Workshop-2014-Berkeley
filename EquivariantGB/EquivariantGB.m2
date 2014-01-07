@@ -17,6 +17,7 @@ newPackage(
 export {
      egb,
      buildERing,
+     buildEMonomialMap,
      Symmetrize,
      Completely,
      Diagonal,
@@ -151,6 +152,7 @@ buildERing (List,List,Ring,ZZ) := o -> (X,s,K,n) -> (
 		    )), MonomialOrder => moList];
      R.symbols = X;
      R.varIndices = variableIndices;
+     print variableIndices;
      R.varTable = new HashTable from apply(#(R.varIndices), n->(R.varIndices#n => (gens R)#n));
      R.varPosTable = new HashTable from apply(#(R.varIndices), n->(R.varIndices#n => n));
      R.semigroup = s;
@@ -396,6 +398,27 @@ egb (List) := o -> F -> (
 	  n = S.indexBound;
 	  );
      F
+     )
+
+
+--builds an equivariant monomial map from ERing R to S.
+--F is a list storing the image of y_(0,1,...,k-1) for each block of variables in R.
+buildEMonomialMap = (S,R,F) -> (
+     if S.indexBound != R.indexBound then (
+	  S' := buildERing(S,R.indexBound);
+          F = F / ringMap(S',S);
+	  S = S';
+	  );
+     Fsupp := F / support;
+     mapList := apply(R.varIndices, I -> (
+	       subs := apply(Fsupp#(I#0), v->(
+			 J := new MutableList from S.varIndices#(index v);
+			 for k from 1 to #J-1 do J#k = I#(J#k + 1);
+			 v => S.varTable#(toSequence J)
+			 ));
+	       sub(F#(I#0), subs)
+	       ));
+     map(S,R,mapList)
      )
 
 beginDocumentation()
