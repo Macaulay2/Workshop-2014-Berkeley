@@ -10,7 +10,7 @@ newPackage("NCAlgebraV2",
 	   HomePage => "http://www.math.wfu.edu/Faculty/Conner.html",
 	   Email => "connerab@wfu.edu"},
           {Name => "Courtney Gibbons",
-	   HomePage => "",
+	   HomePage => "http://people.hamilton.edu/cgibbons",
 	   Email => "crgibbon@hamilton.edu"}},
      AuxiliaryFiles => true,
      DebuggingMode => true
