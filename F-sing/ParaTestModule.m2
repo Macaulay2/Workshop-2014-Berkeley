@@ -35,7 +35,7 @@ finduOfIdeal = (canIdeal, defIdeal) -> (
 	first first entries M1
 )
 
---computes the parameter test submodule of a given ring.  It 
+--computes the parameter test submodule of a given ring.  It outputs the parameter test module (as an ideal), it then outputs the canonical module (as an ideal), and finally it outputs the term u used as the action on the ideal
 paraTestModuleAmbient = (R1) -> (
 	S1 := ambient R1;
 	I1 := ideal(R1);
@@ -49,10 +49,53 @@ paraTestModuleAmbient = (R1) -> (
 	
 	tauOut = ascendIdeal(tau0, u1, 1);
 	
-	(tauOut, canIdeal)
+	(sub(tauOut, R1), sub(canIdeal, R1), u1)
 )
 
+--computes the parameter test ideal of an ambient ring
 paraTestIdealAmbient = (R1) -> (
 	tempList := paraTestModuleAmbient(R1);
 	(tempList#0) : (tempList#1)
+)
+
+--this computes the parameter test module \tau(R, f^t).  It does not assume that R is a polynomial ring.
+paraTestModule = (fk, t1) -> (
+	R1 := ring fk;
+	S1 := ambient R1;
+	f1 := sub(fk, S1);
+	I1 := ideal R1;
+	pp := char R1;
+	funList := divideFraction(t1, pp);
+	
+	aa := funList#0;
+	bb := funList#1;
+	cc := funList#2;
+	
+--	tempList := paraTestModuleAmbient(R1);
+--	tauAmb := sub(tempList#0, S1);
+--	omegaAmb := sub(tempList#1, S1);
+--	u1 := tempList#2;
+
+	omegaAmb := canonicalIdeal(R1);
+	J1 := findTestElementAmbient(R1)*omegaAmb;
+	u1 := finduOfIdeal(omegaAmb, I1);
+
+	
+	uPower := 1;
+	if (cc != 0) then
+		uPower = floor((pp^cc-1)/(pp-1));
+	firstTau := J1;
+	
+	
+	if (cc != 0) then	
+		firstTau = ascendIdeal(J1*ideal(f1^aa), f1^aa*u1^(uPower), cc)
+		--I should write an ascendIdealSafe that works for multiple elements raised to powers...	
+	else 
+		firstTau = ascendIdeal(J1, u1^(uPower), 1)*ideal(f1^aa);
+	
+	secondTau := firstTau;
+	if (bb != 0) then
+		secondTau = ethRoot(u1, firstTau, uPower, bb);
+
+	(sub(secondTau, R1), omegaAmb, u1)
 )
