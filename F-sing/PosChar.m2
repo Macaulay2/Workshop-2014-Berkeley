@@ -39,7 +39,6 @@ export{
      "FinalCheck",
 	"findAllCompatibleIdeals", 	--- MK
      "findQGorGen",
-     "findTestElementAmbient",
      "firstCarry", 
      "FPTApproxList",     
      "frobeniusPower",
@@ -53,6 +52,7 @@ export{
      "isFRegularPoly",
      "isFRegularQGor",
      "isSharplyFPurePoly",
+	"Mstar",			--- MK
      "MultiThread",
      "nu",
      "nuList",
@@ -980,7 +980,131 @@ L
 )
 
 
+
+-----------------------------------------------------------------------------
+--- Extend the Frobenius p^e th roots and star operations to submodules of
+--- free modules (over polynomial rings with *prime* coeeficient field)
+--- This implements the methods described in 
+--- Moty Katzman and Wenliang Zhang's paper
+--- "Annihilators of Artinian modules compatible with a Frobenius map"
+--- Journal of Symbolic computation, 2014
+
+-----------------------------------------------------------------------------
+
+
+mEthRoofOneElement = (v,e) ->(
+local i;
+local d;
+local w;
+local m;
+R:=ring(v); p:=char R;
+F:=coefficientRing(R);
+n:=rank source vars(R);
+V:=ideal vars(R);
+vv:=first entries vars(R);
+R1:=F[vv, YY_1..YY_n, MonomialOrder=>ProductOrder{n,n},MonomialSize=>16];
+V=substitute(V,R1);
+---------------------------
+M0:=set {1_R1};
+apply(vv, w->
+{
+ww:=substitute(w,R1);
+M1:=set toList apply(0..p-1, i-> ww^i);
+M0=M0**M1
+});
+M:=toList apply(elements(M0), w-> product toList deepSplice(w));
+---------------------------
+J0:=gens ideal apply(1..n, i->YY_i-substitute(vv#(i-1)^(p^e),R1));
+S:=toList apply(1..n, i->YY_i=>substitute(vv#(i-1),R1));
+Ie:=transpose matrix{{(rank target v):0_R1}}; 
+ev:=entries substitute(v,R1);
+apply(M, m->
+{
+	L:={};
+	apply(ev, t->
+	{
+		tt:=((t#0)%J0);
+		q1:=coefficients( tt , Variables=>(first entries gens V), Monomials=>{m});
+		q2:=q1#1;
+		q3:=first first entries q2;
+		q3=substitute(q3,S);
+		L=append(L,q3);
+---		print(m,tt,q3);
+	});
+---	print(ev,L,m);
+	Ie=Ie | (transpose matrix {L});
+});
+use R;
+compress(substitute(Ie,R))
+)
+
+
+
+
+mEthRoot = (A,e) ->(
+local i;
+local answer;
+answer1:=apply(1..(rank source A), i->mEthRoofOneElement (A_{i-1},e));
+if (#answer1==0) then 
+{
+	answer=A;
+}
+else
+{
+	answer=answer1#0;
+	apply(2..(#answer1), i->answer=answer | answer1#(i-1));
+};
+mingens( image answer )
+)
+
+
+ethRoot (Matrix, ZZ) := (A,e) -> mEthRoot (A,e)  --- MK
+
+
+
+
+
+
+--- Mstar is the implementaion of the star closure operation desribed in 
+--- M Katzman's "Parameter test ideals of Cohen Macaulay rings" 
+--- Input:
+---    ideals I and element u of the same polynomial ring R OVER A PRIME FIELD.
+---    a positive integer e
+---    a prime p which is the characteristic of R
+--- Output:
+---    the smallest ideal J of R containing I with the property that u^(1+p+...+p^(e-1)) J is in J^{[p^e]}
+Mstar = (A,U,e) ->(
+local answer;
+R:=ring(A); p:=char R;
+if (A==0) then
+{
+	answer=A;
+}
+else
+{
+	f:=true;
+	Ne:=sum toList(apply(0..(e-1), i->p^i));
+	lastA:= A;
+	while (f) do
+	{
+		f=false;
+		A1:=mEthRoot(mingens image ((U^Ne)*lastA),e);
+		A1=A1 | lastA;
+		t1:=compress ((A1))%((lastA));
+		if (t1!=0) then 
+		{
+			f=true;
+			lastA=mingens image A1;
+		};
+	};
+	answer=mingens (image A1);
+};
+answer
+)
+
+
 --- end of MK ---------------------------------------------------------------------------------------------------
+
 
 
 
@@ -1483,7 +1607,6 @@ estFPT={FinalCheck=> true, Verbose=> false, MultiThread=>false, DiagonalCheck=>t
 --isFPTPoly, determines if a given rational number is the FPT of a pair in a polynomial ring. 
 --if Origin is specified, it only checks at the origin. 
 isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
-	if (o.Verbose==true) then print "Starting isFPTPoly";
 	pp := char ring f1;
 	if (o.Origin == true) then org := ideal(vars (ring f1));
 	funList := divideFraction(t1, pp);
@@ -1525,7 +1648,6 @@ isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
 
 --isFJumpingNumberPoly determines if a given rational number is an F-jumping number
 isFJumpingNumberPoly ={Verbose=> false}>> o -> (f1, t1) -> (
-	if (o.Verbose==true) then print "Starting isFJumpingNumberPoly";
 	pp := char ring f1;
 	funList := divideFraction(t1, pp);
 	--this writes t1 = a/(p^b(p^c-1))
