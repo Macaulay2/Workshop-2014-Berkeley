@@ -81,9 +81,12 @@ MAXDEG = 40
 MAXSIZE = 1000
 
 -- Andy's bergman path
+-- bergmanPath = "/usr/local/bergman1.001"
+-- Andy's other bergman path
+bergmanPath = "/cygdrive/d/userdata/Desktop/bergman1.001"
 --bergmanPath = "/usr/local/bergman1.001"
 -- Frank's bergman path
-bergmanPath = "~/bergman"
+-- bergmanPath = "~/bergman"
 -- Courtney's bergman path
 --bergmanPath = "/Users/crgibbon/Downloads/bergman1.001"
 
@@ -2081,6 +2084,7 @@ List ** List := (xs,ys) -> flatten for y in ys list apply(xs, x -> {x,y})
 remainderFunction = method(Options => {DontUse => 0})
 remainderFunction (NCRingElement,NCGroebnerBasis) := opts -> (f,ncgb) -> (
    if #(gens ncgb) == 0 then return f;
+   if f == 0 then return f;
    if ((gens ncgb)#0).ring =!= f.ring then error "Expected GB over the same ring.";
    dontUse := opts#DontUse;
    ncgbHash := ncgb.generators;

@@ -1,8 +1,8 @@
 -- -*- coding: utf-8 -*-
 newPackage(
 	"PointsNew",
-    	Version => "1.0", 
-    	Date => "12 August 2010",
+    	Version => "2.0", 
+    	Date => "07 August 2010",
     	Authors => {
 	     {Name => "Mike Stillman", Email => "mike@math.cornell.edu", HomePage => "http://www.math.uiuc.edu/Macaulay2/"},
      	     {Name => "Gregory G. Smith", Email => "ggsmith@mast.queensu.ca"},
@@ -20,15 +20,15 @@ export {
      pointsMat,
      points,
      pointsByIntersection,
-     makeRingMaps,
-     nfPoints,
+     makeRingMaps, 
+     nfPoints,   
      separators,
      FGLM,
      stdmons,
      borderBasisNaive
      }
 
-
+--nfPoints,
 debug Core
 
 makeRingMaps = method (TypicalValue => List)
@@ -387,6 +387,9 @@ FGLM (GroebnerBasis, PolynomialRing, Option) := (GS,S,monOrd) -> (
      thiscol := 0;
      G := {}; -- the list of Groebner basis elements to return
      numList := 1;
+     monom := 0;
+     cv :=0;
+     Lleast := 0;
     while L != {} do (
      --@print (#L);
 	  -- First step: get the monomial to consider
@@ -472,7 +475,7 @@ document {
      *}
      }
 document {
-     Key => {nfPoints, (nfPoints,RingElement,List,Matrix,Matrix)},
+     Key => {nfPoints, (nfPoints,RingElement,List,List,Matrix)},
      Headline => "Normal form wrt standard monomials using linear algebra",
      Usage => "makeRingMaps(p,phi,std,Ainv)",
      Inputs => {
@@ -487,7 +490,7 @@ document {
      EXAMPLE lines ///
      
      M = random(ZZ^10, ZZ^15);
-     R = QQ[a..j];
+     R = QQ[a,b,c,d,e,f,g,h,i,j];
      (A, std) = pointsMat(M, R);
      phi = makeRingMaps(M,R);
      Ainv = inverse A;
@@ -634,7 +637,7 @@ document {
     --linear algebra time
     
     bbtime = 0;
-    --border basis time
+    --multmatrix time
     mptime = 0;
     --merge pairs time
     
