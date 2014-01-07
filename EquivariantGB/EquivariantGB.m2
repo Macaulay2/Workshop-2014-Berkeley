@@ -400,6 +400,9 @@ egb (List) := o -> F -> (
      F
      )
 
+
+--builds an equivariant monomial map from ERing R to S.
+--F is a list storing the image of y_(0,1,...,k-1) for each block of variables in R.
 buildEMonomialMap = (S,R,F) -> (
      if S.indexBound != R.indexBound then (
 	  S' := buildERing(S,R.indexBound);
