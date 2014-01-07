@@ -9,10 +9,10 @@ makeCompleteRing = (R,t,n)->(
 		s#i := q));
       	  new NR from s
      	  );
-     NR
-     );
+    NR
+    );
 
 PP = makeCompleteRing(ZZ,3,5);
 a = new PP from {1,2,0,0,0};
 b = new PP from {2,2,2,0,2};
-a+b		
+a+b
