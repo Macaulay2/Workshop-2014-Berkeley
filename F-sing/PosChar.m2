@@ -36,6 +36,7 @@ export{
 ---     "ethRootSafe", 		MK
 ---     "fancyEthRoot",		MK
      "fastExp",
+     "findTestElementAmbient",
      "FinalCheck",
 	"findAllCompatibleIdeals", 	--- MK
      "findQGorGen",
