@@ -10,7 +10,7 @@ newPackage(
 	     {Name => "Samuel Lundqvist", Email => "samuel@math.su.se"}
 	     },
     	Headline => "Computing with sets of affine points and functionals (i.e. FGLM conversion)",
-    	DebuggingMode => true
+    	DebuggingMode => true, Reload => true
     	)
 -- Current developers
 -- Past developers
@@ -27,6 +27,16 @@ export {
      stdmons,
      borderBasisNaive
      }
+
+exportMutable {
+    gbtime, 
+    rktime,
+    aptime,
+    bbtime,
+    cvtime,
+    latime,
+    mptime
+    }
 
 --nfPoints,
 debug Core
@@ -451,6 +461,7 @@ FGLM (GroebnerBasis, PolynomialRing, Option) := (GS,S,monOrd) -> (
 --These elements are multiplies of ini(I) and should not be considered, cf the
 --trick in the FGLM-paper.
 removeElements = (L) -> (
+     Lleast := 0;
      while L != {} do (
 	  Lleast = first(L);
        if (#support(Lleast#0) > (Lleast#1)#2) then (
@@ -631,11 +642,12 @@ document {
 	   	  "G2" => List => "The Groebner basis wrt to mo2"
 		  },
      EXAMPLE lines ///
+
+--START
  loadPackage ("PointsNew", 
      FileName => "/Users/samuel/Workshop-2014-Berkeley/Points/PointsNew.m2", Reload => true);
     latime = 0;
-    --linear algebra time
-    
+    --linear algebra time   
     bbtime = 0;
     --multmatrix time
     mptime = 0;
@@ -658,10 +670,10 @@ document {
      M = random(ZZ^n, ZZ^m);     
      R = QQ[vars(0..(n-1))];
      -- m points in QQ^n
- M = random((ZZ/17)^n, (ZZ/17)^m);
  R = (ZZ/17)[vars(0..(n-1)), MonomialOrder => Lex]; 
-  -- m points in (ZZ/17)^n
-     
+ M = random((ZZ/17)^n, (ZZ/17)^m);
+
+  -- m points in (ZZ/17)^n   
      --,MonomialOrder => GRevLex]
      --Compute a Gröbner basis for I(M) with respect to DegRevLex using the BM-algorithm
      timing ((Q,inG,Gd) = points(M,R);)
@@ -670,6 +682,9 @@ document {
     --Convert the basis to a GRevLex-base using FGLM
     timing( (S1,FGLMLexGb,QLex) = FGLM(DegRevLexGb, R, MonomialOrder => GRevLex);)
     (latime,mptime,cvtime,bbtime,gbtime,rktime,aptime)
+
+--END
+
     --Convert the basis to a Lex-base using FGLM
     (S1,FGLMLexGb,QLex) = FGLM(DegRevLexGb, R, MonomialOrder => Lex);
     timing( (S1,FGLMLexGb,QLex) = FGLM(DegRevLexGb, R, MonomialOrder => Lex);)

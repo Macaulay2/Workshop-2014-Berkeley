@@ -1052,7 +1052,7 @@ document {
     },
     
  
-  SUBSECTION "More ellaborate examples which illustrate this package",
+  SUBSECTION "More elaborate examples which illustrate this package",
   UL {
     TO "Computing the Serre Spectral Sequence associated to a Hopf Fibration",
     TO "Balancing Tor",
@@ -1092,7 +1092,7 @@ doc ///
 	       $\bullet$ @TO"I-adic filtrations of chain complexes and their spectral sequences"@
     
  
-               {\bf More ellaborate examples which illustrate this package}
+               {\bf More elaborate examples which illustrate this package}
 
                $\bullet$ @TO"Computing the Serre Spectral Sequence associated to a Hopf Fibration"@
     	       
