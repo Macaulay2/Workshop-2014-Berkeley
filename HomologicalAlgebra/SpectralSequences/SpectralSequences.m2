@@ -77,7 +77,8 @@ export {
    "pageMap", 
    "page" ,
   -- "InfiniteSequence",
-  "prunningMaps", "edgeComplex" --, "xHom", "yHom" --, "xTensor", "yTensor"
+  "prunningMaps", "edgeComplex",
+  "filteredHomologyObject", "associatedGradedHomologyObject"  --, "xHom", "yHom" --, "xTensor", "yTensor"
   }
 
 
@@ -953,6 +954,19 @@ edgeComplex(SpectralSequence) := (E) -> (
     c)
     )
 
+-- maybe better to make new type ?!  
+filteredHomologyObject = method()
+
+filteredHomologyObject(ZZ, ZZ,FilteredComplex) := (p,n,K) -> (
+    image(inducedMap(HH_n K_infinity, HH_n K_p, id_(K_infinity _n)))
+    )
+
+
+associatedGradedHomologyObject = method()
+
+associatedGradedHomologyObject(ZZ,ZZ,FilteredComplex) := (p,n,K) -> (
+    filteredHomologyObject(p,n,K) / filteredHomologyObject(p-1,n,K)
+    )
 
 
 -----------------------------------------------------------

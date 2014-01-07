@@ -1,4 +1,14 @@
 -- Spectral Sequence Demo
+--restart
+--uninstallPackage"SpectralSequences"
+--installPackage"SpectralSequences"
+--installPackage("SpectralSequences", RemakeAllDocumentation => true)
+--check "SpectralSequences"
+
+
+restart
+needsPackage"SpectralSequences"
+viewHelp"SpectralSequences"
 -- Example 1 --
 -- We compute the Serre Spectral Sequence arising from the Hopf Fibration
 -- SS^1 --> SS^3 --> SS^2.  This example is made possible by 
@@ -48,12 +58,13 @@ needsPackage"SpectralSequences"
 --	       The cohomology groups we want are obtained as follows.
 		 basis({0,0}, E^2_{0,0}) --  == HH^0 OO_C(1,0)
 		 basis({0,0}, E^2_{1,-2}) --  == HH^1 OO_C(1,0)	 
-
+		 basis({0,0}, E^2)
 -- Example 3 --
 restart
 needsPackage"SpectralSequences"
 --     	  I-adic filtrations of chain complexes and their spectral sequences
---	  By multiplying a chain complex by sucessive powers of an ideal we obtain a filtered complex.       
+--	  By multiplying a chain complex by sucessive powers of an ideal we obtain a 
+--        filtered complex.       
 	      B = QQ[a..d]
 	      J = ideal vars B
 	      C = complete res monomialCurveIdeal(B,{1,3,4})
@@ -65,6 +76,13 @@ needsPackage"SpectralSequences"
 	       E^3 .dd
 	       E^4
 	       E^4 .dd
+    	       E^infinity
     	       hilbertPolynomial(E^4)    	    	
                prune HH K_infinity
     	       hilbertPolynomial(HH_0 K_infinity)
+    	       E^infinity
+    	       prune associatedGradedHomologyObject(-4,0,K)
+	       E^infinity _{-4,4}
+    	       prune associatedGradedHomologyObject(-3,0,K)
+    	       E^infinity _{-3,3}
+    	       --etc

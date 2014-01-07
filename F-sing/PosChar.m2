@@ -35,7 +35,6 @@ export{
   	 "estFPT",
      "ethRoot",
 ---     "ethRootSafe", 		MK
-	"ethRootSafeList",
 ---     "fancyEthRoot",		MK
      "fastExp",
      "findTestElementAmbient",
@@ -334,6 +333,23 @@ frobeniusPower(Ideal,ZZ) := (I1,e1) ->(
      if (#G1==0) then answer=ideal(0_R1) else answer=ideal(apply(G1, j->j^(p1^e1)));
      answer
 );
+
+
+
+frobeniusPower(Matrix,ZZ) := (M,e) ->(
+R:=ring M;
+p:=char R;
+G:=entries M;
+local i;
+local j;
+L:={};
+apply(G, i->
+{
+	L=append(L,apply(i, j->j^(p^e)));
+});
+matrix L
+);
+
 
 -- This function computes the element in the ambient ring S of R=S/I such that
 -- I^{[p^e]}:I = (f) + I^{[p^e]}
@@ -768,28 +784,28 @@ ethRootSafe = (f, I, a, e) -> (
 
 --This tries to compute (f1^a1*f2^a2*...fk^ak*I)^{[1/p^e]} in such a way that we don't blow exponent buffers.  It can be much faster as well.
 ethRootSafeList = (elmtList, I1, aList, e1) -> (
-	R1 := ring I1;
-	p1 := char R1;
-	
-	aListRem := apply(aList, z1 -> z1%(p1^e1) );
-	aListQuot := apply(aList, z1 -> floor(z1/p1^e1) );
-	
-	expOfaList := apply(aListRem, z1-> basePExpMaxE(z1, p1, e1) );
-	
-	aPowerList := apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#0));
-	
-	IN1 := I1*ideal(fold(times, aPowerList));
-	if (e1 > 0) then (
-		IN1 = ethRoot(IN1, 1);
-		i := 1;
-		while(i < e1) do (
-			aPowerList = apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#i));
-			IN1 = ethRoot( IN1*ideal(fold(times, aPowerList)), 1);
-			i = i + 1;
-		)
-	);
-	aPowerList = apply(elmtList, aListQuot, (f1, z1) -> f1^z1);
-	IN1*ideal(fold(times, aPowerList))
+	   R1 := ring I1;
+        p1 := char R1;
+        
+        aListRem := apply(aList, z1 -> z1%(p1^e1) );
+        aListQuot := apply(aList, z1 -> floor(z1/p1^e1) );
+        
+        expOfaList := apply(aListRem, z1-> basePExpMaxE(z1, p1, e1) );
+        
+        aPowerList := apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#0));
+        
+        IN1 := I1*ideal(fold(times, aPowerList));
+        if (e1 > 0) then (
+                IN1 = ethRoot(IN1, 1);
+                i := 1;
+                while(i < e1) do (
+                        aPowerList = apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#i));
+                        IN1 = ethRoot( IN1*ideal(fold(times, aPowerList)), 1);
+                        i = i + 1;
+                )
+        );
+        aPowerList = apply(elmtList, aListQuot, (f1, z1) -> f1^z1);
+        IN1*ideal(fold(times, aPowerList))
 )
 
 ethRoot(RingElement, Ideal, ZZ, ZZ) := (f, I, a, e) -> ethRootSafe (f, I, a, e) ---MK
@@ -1221,8 +1237,8 @@ ascendIdealSafeList = (Jk, hkList, akList, ek) -> (
 -- (2) the finding of the smallest submodule V of a free module which satisfies UV\subset V^{[p^e]} 
 --     containg a given submodule for a given matrix U.
 minimalCompatible = method();
-minimalCompatible(Ideal,ZZ,ZZ) :=  (Jk, hk, ek) -> ascendIdeal (Jk, hk, ek)
-minimalCompatible(Ideal,ZZ,ZZ,ZZ) :=  (Jk, hk, ak, ek) -> ascendIdeal (Jk, hk, ak, ek)
+minimalCompatible(Ideal,RingElement,ZZ) :=  (Jk, hk, ek) -> ascendIdeal (Jk, hk, ek)
+minimalCompatible(Ideal,RingElement,ZZ,ZZ) :=  (Jk, hk, ak, ek) -> ascendIdealSafe (Jk, hk, ak, ek)
 minimalCompatible(Matrix,Matrix,ZZ) := (A,U,e) -> Mstar (A,U,e)
 
 --MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
