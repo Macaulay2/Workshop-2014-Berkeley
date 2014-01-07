@@ -19,8 +19,9 @@ Version => "0.1a", Date => "October 18th, 2013", Authors => {
 Headline => "A package for calculations in positive characteristic", DebuggingMode => true, Reload => true )
 export{
 	 "aPower",
----MK	 "ascendIdeal", 
----MK	 "ascendIdealSafe",
+	 "ascendIdeal", 
+	 "ascendIdealSafe",
+	 "ascendIdealSafeList",
 	 "basePExp",
   	 "basePExpMaxE",
   	 "BinomialCheck",
@@ -1193,6 +1194,26 @@ ascendIdealSafe = (Jk, hk, ak, ek) -> (
      trim IP
 )
 
+
+
+
+--works just like ascendIdealSafe but also handles lists of hk to powers...
+ascendIdealSafeList = (Jk, hkList, akList, ek) -> (
+	Sk := ring Jk;
+	pp := char Sk;
+	IN := Jk;
+	IP := ideal(0_Sk);
+	
+	--we ascend the ideal as above
+	while (isSubset(IN, IP) == false) do(
+		IP = IN;
+		IN = ethRootSafeList( hkList, IP, akList, ek) + IP
+	);
+	
+	--trim the output
+	trim IP
+)
+
 --MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
 -- minimalCompatible is a method which is implemented as:
 -- (1) the finding of the smallest ideal J which satisfies uJ\subset J^{[p^e]} 
@@ -1205,6 +1226,7 @@ minimalCompatible(Ideal,ZZ,ZZ,ZZ) :=  (Jk, hk, ak, ek) -> ascendIdeal (Jk, hk, a
 minimalCompatible(Matrix,Matrix,ZZ) := (A,U,e) -> Mstar (A,U,e)
 
 --MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
+
 
 --Finds a test element of a ring R = k[x, y, ...]/I (or at least an ideal 
 --containing a nonzero test element).  It views it as an element of the ambient ring
@@ -1445,7 +1467,7 @@ sigmaAOverPEMinus1QGor  ={HSL=> false}>> o -> (fk, a1, e1, gg) -> (
 
 ----------------------------------------------------------------
 --************************************************************--
---Functions for computing parameter test modules              --
+--Functions for computing parameter test modules and ideals   --
 --************************************************************--
 ----------------------------------------------------------------
 
