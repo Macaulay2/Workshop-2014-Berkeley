@@ -10,7 +10,6 @@ bidualityMap = M -> (
    retVal := map(Mdd,M,(transpose matrix tempMap) // gensMdd);
    retVal
 )
-
 completeRes = method()
 completeRes (Module,ZZ) := (M,n) -> (
    --- R is a Gorenstein ring, and M a module over it.  This function
