@@ -14,6 +14,31 @@ relativePrecision = method()
 makePAdicField:=(R,p)->(
    A := new PAdicField from {(symbol baseRing) => R,
                             (symbol uniformizingParameter) => p};
+
+     computeCarryOver := (a,prec) -> (
+	  
+	  );
+
+     A + A := (a,b) -> (
+	  newPrecision := min(a#"precision",b#"precision");
+	  s := new MutableHashTable from a#"expansion";
+	  for i in keys a#"expansion" do (
+	       if i<newPrecision then (
+		    s#i := a#"expansion"#i;
+	       );
+	  );
+     	  for i in keys b#"expansion" do (
+	       if i<newPrecision then (
+	       	    if s#?i then (
+		    	 s#i := s#i + b#"expansion"#i;
+		    ) else (
+		    	 s#i := b#"expansion"#i;
+		    );
+	       );
+	  computeCarryOver(s,newPrecision);
+	  new A from {"precision"=>newPrecision,"expansion"=>s};
+	  );
+
    precision A := a->a#"precision";
    valuation A := a->min keys a#"expansion";
    relativePrecision A:= a -> (precision a)-(valuation a);
@@ -23,7 +48,6 @@ makePAdicField:=(R,p)->(
 		  toString(expans#i)|"*"|toString p|"^"
 		  |toString i|"+"))
 	|"O("|toString p|"^"|toString(precision a)|")"));
-   A + A := (a,b) -> 3;
      A 
 )
 
