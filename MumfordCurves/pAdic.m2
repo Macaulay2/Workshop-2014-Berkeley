@@ -14,6 +14,12 @@ relativePrecision = method()
 makePAdicField:=(R,p)->(
    A := new PAdicField from {(symbol baseRing) => R,
                             (symbol uniformizingParameter) => p};
+<<<<<<< HEAD
+ --  net A := a->(expans:=a#"expansion";
+--	d:=min keys expans;
+--	n:=a#"precision";
+--	if d<0 then 
+--		  if 
 
      computeCarryOver := (a,prec) -> (
 	  
@@ -38,7 +44,11 @@ makePAdicField:=(R,p)->(
 	  computeCarryOver(s,newPrecision);
 	  new A from {"precision"=>newPrecision,"expansion"=>s};
 	  );
+	  	 
+     A 
+)
 
+=======
    precision A := a->a#"precision";
    valuation A := a->min keys a#"expansion";
    relativePrecision A:= a -> (precision a)-(valuation a);
@@ -48,10 +58,12 @@ makePAdicField:=(R,p)->(
 		  toString(expans#i)|"*"|toString p|"^"
 		  |toString i|"+"))
 	|"O("|toString p|"^"|toString(precision a)|")"));
+   A + A := (a,b) -> 3;
      A 
 )
 
 pAdicField = method()
+>>>>>>> 8c932138572cc1fa37fe04a4ecc9be14c5ae6055
 pAdicField(Ring,RingElement):=(R,p)->makePAdicField(R,p)
 pAdicField(Ring,ZZ):=(R,p)->makePAdicField(R,p)
 pAdicField(ZZ):=(p)->makePAdicField(ZZ,p)
