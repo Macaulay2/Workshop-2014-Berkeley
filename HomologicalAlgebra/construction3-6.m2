@@ -42,12 +42,14 @@ globalAssignment CompleteResolution
 -- what follow is version 0.1 of construction 3.6 from Avramov & Martsinkovsky
 -- later versions will turn the construction into an object of the type
 -- CompleteResolution
-construction = method()
+construction = method(TypicalValue => ChainComplexMap, 
+     Options => {LengthLimit => "3"})
 construction (ZZ, Module) := (g, M) -> (
+     n = (opts.LengthLimit);
      G = omega(g, M);
      Gd = dual G;
-     L = resolution(Gd, LengthLimit => g+2); -- adjust later to suit user input
-     P = resolution(M, LengthLimit => g+2);  -- ditto
+     L = resolution(Gd, LengthLimit => max(g+2, n)); -- check that max works
+     P = resolution(M, LengthLimit => max(n,g+2));  -- ditto
      Pd = dual P;
      toLiftFirstFactor = map(image(Pd.dd_(-g+1)), omega(1-g, Pd), id_(Pd_(1-g)));  
      K = kernel(Pd.dd_(-g));
@@ -65,8 +67,14 @@ construction (ZZ, Module) := (g, M) -> (
      lambda = map(HH_0(L), L_0, id_(L_0));
      lambdaDual = dual lambda;
      
+     cRes = id_(resolution (ring M)^0);
      
+     
+     
+restart     
 R = QQ[x,y,z]
+C = resolution(R^0)
+K = id_C
 M = coker matrix {{x,y,z}}
 C = resolution M
 D = C[1]
