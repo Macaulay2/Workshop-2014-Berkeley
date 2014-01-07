@@ -767,15 +767,28 @@ ethRootSafe = (f, I, a, e) -> (
 
 --This tries to compute (f1^a1*f2^a2*...fk^ak*I)^{[1/p^e]} in such a way that we don't blow exponent buffers.  It can be much faster as well.
 ethRootSafeList = (elmtList, I1, aList, e1) -> (
-	R1 := ring I1;
-	p1 := char R1;
-	
-	aListRem := apply(aList, z1 -> z1%(p1^e1) );
-	aListQuot := apply(aList, z1 -> floor(z1/p1^e1) );
-	
-	expOfaList := apply(aListRem, z1-> basePExpMaxE(z1, p1, e1) );
-	
-	IN1 := I1;
+	   R1 := ring I1;
+        p1 := char R1;
+        
+        aListRem := apply(aList, z1 -> z1%(p1^e1) );
+        aListQuot := apply(aList, z1 -> floor(z1/p1^e1) );
+        
+        expOfaList := apply(aListRem, z1-> basePExpMaxE(z1, p1, e1) );
+        
+        aPowerList := apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#0));
+        
+        IN1 := I1*ideal(fold(times, aPowerList));
+        if (e1 > 0) then (
+                IN1 = ethRoot(IN1, 1);
+                i := 1;
+                while(i < e1) do (
+                        aPowerList = apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#i));
+                        IN1 = ethRoot( IN1*ideal(fold(times, aPowerList)), 1);
+                        i = i + 1;
+                )
+        );
+        aPowerList = apply(elmtList, aListQuot, (f1, z1) -> f1^z1);
+        IN1*ideal(fold(times, aPowerList))
 )
 
 ethRoot(RingElement, Ideal, ZZ, ZZ) := (f, I, a, e) -> ethRootSafe (f, I, a, e) ---MK
