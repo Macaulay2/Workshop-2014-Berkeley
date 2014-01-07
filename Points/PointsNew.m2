@@ -1,8 +1,8 @@
 -- -*- coding: utf-8 -*-
 newPackage(
 	"PointsNew",
-    	Version => "1.0", 
-    	Date => "12 August 2010",
+    	Version => "2.0", 
+    	Date => "07 August 2010",
     	Authors => {
 	     {Name => "Mike Stillman", Email => "mike@math.cornell.edu", HomePage => "http://www.math.uiuc.edu/Macaulay2/"},
      	     {Name => "Gregory G. Smith", Email => "ggsmith@mast.queensu.ca"},
@@ -20,15 +20,21 @@ export {
      pointsMat,
      points,
      pointsByIntersection,
-     makeRingMaps,
-     nfPoints,
+     makeRingMaps, 
+     nfPoints,   
      separators,
      FGLM,
      stdmons,
      borderBasisNaive
      }
 
+exportMutable {
+    gbtime, 
+    rktime,
+    aptime
+    }
 
+--nfPoints,
 debug Core
 
 makeRingMaps = method (TypicalValue => List)
@@ -70,7 +76,7 @@ reduceColumn = (M,Mchange,H,c) -> (
 
 --x_i e_j = e_h OK
 --x_i e_j = lm(g_k) OK
---x_i e_j multiple of an element in ini. Pick any x_k with e_j = e_j' x_k 
+--x_i e_j pure multiple of an element in ini. Pick any x_k with e_j = e_j' x_k 
 --such that (x_i e_j') is not a basis element. This one has already been
 --computed since it is less than x_i e_j, so x_i e_j' = c_1 e_1 + ... + c_s e_s.
 -- Every x_k e_i *with* c_i != 0 has been computed before!
@@ -83,6 +89,8 @@ reduceColumn = (M,Mchange,H,c) -> (
 -- property of the element x_k on the third line (x_ie_j = x_ie_j' x_k and 
 -- x_i e_j' is not a basis element. Pick such k and compute.
 
+
+-- z^3, xy^2, y^2. 
 -- Konstruera listan (eventuell, lagra index på e_i?
 -- for i from 0 to s-1 do (
 --     for j from 0 to #gens-1 do (
@@ -111,6 +119,7 @@ borderBasisNaive (List, List, Ring) := (std, gblist, R) -> (
      Gb := forceGB matrix {gblist};
      K := coefficientRing R;
      s := #std;
+     print std;
      --print s;
      --m := 0;
      l := 0;
@@ -119,16 +128,22 @@ borderBasisNaive (List, List, Ring) := (std, gblist, R) -> (
      for i from 0 to #(gens R)-1 do (
 	  m :=  mutableMatrix map(K^s, K^s, 0);
 	  for j from 0 to s-1 do (
-	       l = flatten entries (coefficients ((R_i * std#j) % Gb, Monomials => std))_1;
-	       scan(#l, k -> m_(j,k) = RtoK(l#k));
+	       gbtime = gbtime + first (timing (
+		       l = flatten entries (coefficients ((R_i * std#j) % Gb, 
+		       Monomials => std))_1));
+	       --l = flatten entries (coefficients ((R_i * std#j) % Gb, Monomials => std))_1;
+	       
+	       rktime = rktime + first (timing (scan(#l, k -> m_(j,k) = RtoK(l#k))));
+	       --scan(#l, k -> m_(j,k) = RtoK(l#k));
 	  );	
-     	  bb = append (bb, matrix m); --We don't want it to be mutable anymore.
+     	  aptime = aptime + first (timing (bb = append (bb, matrix m))); --We don't want it to be mutable anymore.
+     	  --bb = append (bb, matrix m);
      );	   
      return bb;
 )
 	       
     -- Samuel Lundqvist aug 2010
-     getCoefficientVector = (varIndex, cv, K, multMatrix, s) -> (
+getCoefficientVector = (varIndex, cv, K, multMatrix, s) -> (
      -- varIndex is the index of the variable we are multiplying with monomial with.
      -- cv is coefficient vector of the monomial.
      -- K is the field that we are performing computations over. 
@@ -295,7 +310,7 @@ points (Matrix,Ring) := (M,R) -> (
 -- The separators of the points as linear combinations of the standard monomials
 -- stds are the standard monomials returned by pointsMat
 -- Ainv is the inverse of the matrix returned by pointsMat
--- Samuel Lundqvist, jan 2010
+-- Samuel jan 2010
 separators = method()
 separators (Matrix, Matrix) := (stds, Ainv) -> (
      transpose (Ainv) * (matrix entries stds)
@@ -307,7 +322,7 @@ separators (Matrix, Matrix) := (stds, Ainv) -> (
 -- phi are the ring maps returned from makeRingMaps 
 -- stds are the standard monomials returned by pointsMat
 -- Ainv is the inverse of the matrix returned by po intsMat
--- Samuel Lundqvist jan 2010
+-- Samuel jan 2010
 
 nfPoints = method()
 nfPoints (RingElement, List, List, Matrix) := (p, phi, stds, Ainv) -> (
@@ -345,7 +360,8 @@ FGLM (GroebnerBasis, PolynomialRing, Option) := (GS,S,monOrd) -> (
      s := length basisS;   
      inGSl := flatten entries leadTerm GS;
      GSl :=  flatten entries gens GS;
-     print timing(bb := borderBasisNaive(basisS, GSl, S););
+     bbtime = first (timing (bb := borderBasisNaive(basisS, GSl, S)));
+     --bb := borderBasisNaive(basisS, GSl, S);
      --from now on, we will compute over the ring R.
      R := newRing(S, monOrd);
      RtoS := map(S,R);
@@ -377,6 +393,9 @@ FGLM (GroebnerBasis, PolynomialRing, Option) := (GS,S,monOrd) -> (
      thiscol := 0;
      G := {}; -- the list of Groebner basis elements to return
      numList := 1;
+     monom := 0;
+     cv :=0;
+     Lleast := 0;
     while L != {} do (
      --@print (#L);
 	  -- First step: get the monomial to consider
@@ -388,13 +407,19 @@ FGLM (GroebnerBasis, PolynomialRing, Option) := (GS,S,monOrd) -> (
 	  -- Now fix up the matrices P, PC
 	  --use S;
 	  --We are multiplying with (Lleast#1)#0;
-          cv = getCoefficientVector(
-	       (Lleast#1)#0, (Lleast#1)#1, K, bb#((Lleast#1)#0),s);
+          cvtime = cvtime + first (timing (cv = getCoefficientVector(
+	       (Lleast#1)#0, (Lleast#1)#1, K, bb#((Lleast#1)#0),s)));
+   --cv = getCoefficientVector(
+	  --     (Lleast#1)#0, (Lleast#1)#1, K, bb#((Lleast#1)#0),s);
 	  scan(s, i -> P_(i,thiscol) = cv_(0,i)); --add the column to P
 	  --use R;
-	  rawMatrixColumnScale(raw PC, raw(0_K), thiscol, false);
+	  latime = latime + 
+	  (first (timing (rawMatrixColumnScale(raw PC, raw(0_K), thiscol, false))));
+	  --rawMatrixColumnScale(raw PC, raw(0_K), thiscol, false);
 	  PC_(thiscol,thiscol) = 1_K;
-          isLT := reduceColumn(P,PC,H,thiscol);
+          latime = latime + 
+	  first(timing(isLT := reduceColumn(P,PC,H,thiscol)));
+	  --isLT := reduceColumn(P,PC,H,thiscol);
 	  monom = (Lleast#0);
 	  if isLT then (
 	       -- we add to G
@@ -409,17 +434,20 @@ FGLM (GroebnerBasis, PolynomialRing, Option) := (GS,S,monOrd) -> (
 	       newList := {};
 	       for i from 0 to #essgens - 1 do (
 	       	  numList = numList + 1;
-	       	  newList = prepend((monom * essgens_i, (i, cv,1)),newList);
+	       	  mptime = mptime + first timing(
+		      newList = prepend((monom * essgens_i, (i, cv,1)),newList));
+		  --newList = prepend((monom * essgens_i, (i, cv,1)),newList);
 		  --print newList;
 		  );
 --	       print newList;
-	       L = mergePairs(L,newList, (v,w)->(v#0,v#1,v#2 + w#2));
-	       --print L;
-	       
+	       mptime = mptime + first (timing 
+		   (L = mergePairs(L,newList, (v,w)->(v#0,v#1,v#2 + w#2))));
+	       --L = mergePairs(L,newList, (v,w)->(v#0,v#1,v#2 + w#2));
 	       --print L;
 	       thiscol = thiscol + 1;
 	       );
-	  L = removeElements(L);
+	  mptime = mptime + first (timing (L = removeElements(L)));
+	  --L = removeElements(L);
 	  );
      --print("number of monomials considered = " numList);
      (R,G,Q)
@@ -429,6 +457,7 @@ FGLM (GroebnerBasis, PolynomialRing, Option) := (GS,S,monOrd) -> (
 --These elements are multiplies of ini(I) and should not be considered, cf the
 --trick in the FGLM-paper.
 removeElements = (L) -> (
+     Lleast := 0;
      while L != {} do (
 	  Lleast = first(L);
        if (#support(Lleast#0) > (Lleast#1)#2) then (
@@ -453,7 +482,7 @@ document {
      *}
      }
 document {
-     Key => {nfPoints, (nfPoints,RingElement,List,Matrix,Matrix)},
+     Key => {nfPoints, (nfPoints,RingElement,List,List,Matrix)},
      Headline => "Normal form wrt standard monomials using linear algebra",
      Usage => "makeRingMaps(p,phi,std,Ainv)",
      Inputs => {
@@ -468,7 +497,7 @@ document {
      EXAMPLE lines ///
      
      M = random(ZZ^10, ZZ^15);
-     R = QQ[a..j];
+     R = QQ[a,b,c,d,e,f,g,h,i,j];
      (A, std) = pointsMat(M, R);
      phi = makeRingMaps(M,R);
      Ainv = inverse A;
@@ -609,17 +638,49 @@ document {
 	   	  "G2" => List => "The Groebner basis wrt to mo2"
 		  },
      EXAMPLE lines ///
-     n := 30
-     m := 40;
-     M = random(ZZ^n, ZZ^m);
-     -- m points in QQ^n
 
-     R = QQ[vars(0..(n-1))]
+--START
+ loadPackage ("PointsNew", 
+     FileName => "/Users/samuel/Workshop-2014-Berkeley/Points/PointsNew.m2", Reload => true);
+    latime = 0;
+    --linear algebra time   
+    bbtime = 0;
+    --multmatrix time
+    mptime = 0;
+    --merge pairs time
+    
+    cvtime = 0;
+    --coefficentvector time
+   
+   gbtime = 0;
+   --time for grobner reduction in the multmatrix step
+    
+    rktime = 0; 
+   --time for filling the matrix by mapping from R to K
+    
+    aptime = 0;
+    --time for appending in the multmatrix step
+    
+     n := 55
+     m := 55;
+     M = random(ZZ^n, ZZ^m);     
+     R = QQ[vars(0..(n-1))];
+     -- m points in QQ^n
+ R = (ZZ/17)[vars(0..(n-1)), MonomialOrder => Lex]; 
+ M = random((ZZ/17)^n, (ZZ/17)^m);
+
+  -- m points in (ZZ/17)^n   
      --,MonomialOrder => GRevLex]
      --Compute a Gröbner basis for I(M) with respect to DegRevLex using the BM-algorithm
      timing ((Q,inG,Gd) = points(M,R);)
      DegRevLexGb = forceGB matrix {Gd};
      IR = ideal gens DegRevLexGb;
+    --Convert the basis to a GRevLex-base using FGLM
+    timing( (S1,FGLMLexGb,QLex) = FGLM(DegRevLexGb, R, MonomialOrder => GRevLex);)
+    (latime,mptime,cvtime,bbtime,gbtime,rktime,aptime)
+
+--END
+
     --Convert the basis to a Lex-base using FGLM
     (S1,FGLMLexGb,QLex) = FGLM(DegRevLexGb, R, MonomialOrder => Lex);
     timing( (S1,FGLMLexGb,QLex) = FGLM(DegRevLexGb, R, MonomialOrder => Lex);)
