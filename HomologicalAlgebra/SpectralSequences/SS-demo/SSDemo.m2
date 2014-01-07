@@ -65,6 +65,13 @@ needsPackage"SpectralSequences"
 	       E^3 .dd
 	       E^4
 	       E^4 .dd
+    	       E^infinity
     	       hilbertPolynomial(E^4)    	    	
                prune HH K_infinity
     	       hilbertPolynomial(HH_0 K_infinity)
+    	       E^infinity
+    	       prune associatedGradedHomologyObject(-4,0,K)
+	       E^infinity _{-4,4}
+    	       prune associatedGradedHomologyObject(-3,0,K)
+    	       E^infinity _{-3,3}
+    	       --etc
