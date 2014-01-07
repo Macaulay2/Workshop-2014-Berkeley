@@ -26,3 +26,59 @@ C = resolution( M, LengthLimit =>6)
 C.dd
 A = matrix{{x}}
 extend(C,C,A)
+
+--rough sketch of construction 3.6
+
+restart
+omega = method()
+omega(ZZ,ChainComplex) := (n,C) -> (
+     coker C.dd_(n + 1)
+     )
+
+--
+-- building check for double-dual map
+--
+
+restart
+kerDD = method()
+kerDD(Module) := M -> (
+     DM = coker dual presentation M;
+     Ext^1(DM, ring M)
+     )
+
+cokerDD = method()
+cokerDD(Module) := M -> (
+     DM = coker dual presentation M;
+     Ext^2(DM, ring M)
+     )
+
+doubleDualMap = method()
+doubleDualMap(Module):= M -> (
+--     map(dual (dual M), M, id_(ambient M))
+--     map(dual (dual M), M, id_(cover M))
+inducedMap(dual dual M, M)
+     )
+
+kk = ZZ/ ideal (101)
+R = kk[x]/ideal (x^2)
+M = coker matrix {{x}}
+
+
+--the following breaks the code for both
+-- map(dual (dual M), M, id_(cover M))  and
+-- map(dual (dual M), M, id_(ambient M))
+R = ZZ
+L = ZZ^1
+N = coker matrix {{2}}
+M = N++L
+A = doubleDualMap(M)
+K = kerDD(M)
+K = prune kerDD(M)
+C = cokerDD(M)
+C = prune cokerDD(M)
+prune ker A == K
+prune coker A == C
+
+
+-- recusrively add {{0}}; via ++ {{0}} a few times, precisely
+-- rank (cover M) - rank (cover dual dual M) times.
