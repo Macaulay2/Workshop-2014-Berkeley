@@ -81,7 +81,9 @@ MAXDEG = 40
 MAXSIZE = 1000
 
 -- Andy's bergman path
-bergmanPath = "/usr/local/bergman1.001"
+-- bergmanPath = "/usr/local/bergman1.001"
+-- Andy's other bergman path
+bergmanPath = "/cygdrive/d/userdata/Desktop/bergman1.001"
 -- Frank's bergman path
 --bergmanPath = "~/bergman"
 
