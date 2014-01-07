@@ -33,11 +33,13 @@ export{
   	 "divideFraction",
   	 "estFPT",
      "ethRoot",
-     "ethRootSafe",
-     "fancyEthRoot",	
+---     "ethRootSafe", 		MK
+---     "fancyEthRoot",		MK
      "fastExp",
      "FinalCheck",
+	"findAllCompatibleIdeals", 	--- MK
      "findQGorGen",
+     "findTestElementAmbient",
      "firstCarry", 
      "FPTApproxList",     
      "frobeniusPower",
@@ -713,12 +715,15 @@ isBinomial = f ->
 --************************************************************--
 ----------------------------------------------------------------
 
+ethRoot = method(); --- MK
+
+
 --Computes I^{[1/p^e]}, we must be over a perfect field. and working with a polynomial ring
 --This is a slightly stripped down function due to Moty Katzman, with some changes to avoid the
 --use(Rm) which is commented out below
 --The real meat of the function is ethRootInternal, this function just looks for a certain error and calls 
 --the other function depending on that error.
-ethRoot = (Im,e) -> (
+ethRoot(Ideal,ZZ) := (Im,e) -> (
      J := Im;
      success := false;
      count := 0;
@@ -753,6 +758,8 @@ ethRootSafe = (f, I, a, e) -> (
 	
 	IN1*ideal(f^(aQuot))
 )
+
+ethRoot(RingElement, Ideal, ZZ, ZZ) := (f, I, a, e) -> ethRootSafe (f, I, a, e) ---MK
 
 ethRootInternal = (Im,e) -> (
      if (isIdeal(Im) != true) then (
@@ -861,7 +868,7 @@ apply(P, u->
 		g:=1_R;
 		for l from 0 to k-1 do g=g*(G#l)^((U#l)#j); 
 		a=ideal(g)*a;
-		if (i<e) then a=ethRoot(a, ideal(0_R) ,1);
+		if (i<e) then a=ethRoot(a ,1);
 ---print(g,answer);
 	};
 	answer=answer+a;
@@ -869,7 +876,113 @@ apply(P, u->
 ideal(mingens(answer))
 )
 
+ethRoot (Ideal, ZZ, ZZ) := (I,m,e) -> fancyEthRoot (I,m,e)  --- MK
+
+
+
+--Computes I^{[1/p^e]}, we must be over a perfect field. and working with a polynomial ring
+--This is a slightly stripped down function due to Moty Katzman, with some changes to avoid the
+--use(Rm) which is commented out below
+--The real meat of the function is ethRootInternal, this function just looks for a certain error and calls 
+--the other function depending on that error.
+ethRoot(Ideal,ZZ) := (Im,e) -> (
+     J := Im;
+     success := false;
+     count := 0;
+     try J = ethRootInternal(J,e) then success = true else (
+--     print "blew a buffer";
+	 while(count < e) do (	 	
+	      J = ethRootInternal(J, 1);
+	      count = count + 1
+	 )
+     );
+     J
+)
+
+
 -----------------------------------------------------------------------
+
+
+--- Start of MK ---------------------------------------------------------------------------------------------------
+
+-- FIND IDEALS COMPATIBLE WITH A GIVEN NEAR-SPLITTING
+-- This is an implementation of the algorithm described in
+-- Moty Katzman and Karl Schwede's paper 
+-- "An algorithm for computing compatibly Frobenius split subvarieties"
+-- J. Symbolic Comput. 47 (2012), no. 8, 996–1008. 
+
+----------------------------------------------------------------------------------------
+
+
+--- Input:
+---   	an element u of the polynomial ring R OVER A PRIME FIELD.
+--- Output:
+---	A list of all prime ideals P such that
+---	(a) u P \subseteq P^{[p]}, and
+---	(b) the action of uT on the the annihilator of P on the injective hull of the residue field of R 
+---	is not the zero Frobenius map.
+
+
+findAllCompatibleIdeals = (u) ->(
+L:={}; R:=ring u; p:=char R;
+P:=ideal(0_R);
+J:=ethRoot(ideal(u),1);
+t:=1_R % (gens J);
+if (t != 0_R) then print("*** WARNING *** Frobenius action has nilpotent elements");
+findAllCompatibleIdealsInnards (u,L,P)
+)
+
+
+
+findAllCompatibleIdealsInnards = (u,L,P) ->(
+R:=ring u;
+p:=char R;
+local tau;
+local Plist;
+P1:=frobeniusPower(P,1);
+C1:=ideal((singularLocus(P)).relations);
+---tau=ideal mingens star(C1,u,1) ; ---OLD VERSION
+tau=ideal mingens ascendIdeal (C1, u, 1);
+Plist=minimalPrimes tau;
+local Q;
+local T;
+apply(Plist, Q->
+{
+	f:= any(L,T -> T == Q);
+---print(L,Q,f);
+	if (not f) then
+	{
+		L=append(L,Q);
+		L=unique(L | findAllCompatibleIdealsInnards(u,L,Q));
+	};
+});
+---
+C2:=(P1+ideal(u)):(P1:P);
+JB:=C1*C2; 
+---print(mingens P, mingens JB);
+---tau=ideal mingens star(C2,u,1) ;  --- OLD VERSION
+tau=ideal mingens ascendIdeal  (C2, u, 1);
+Plist=minimalPrimes tau;
+local Q;
+local T;
+apply(Plist, Q->
+{
+	f:= any(L,T -> T == Q);
+---print(L,Q,f);
+	if (not f) then
+	{
+		L=append(L,Q);
+		L=unique(L | findAllCompatibleIdealsInnards(u,L,Q));
+	};
+});
+---
+L
+)
+
+
+--- end of MK ---------------------------------------------------------------------------------------------------
+
+
 
 --Finds the smallest phi-stable ideal containing the given ideal Jk
 --in a polynomial ring Sk
@@ -1370,6 +1483,7 @@ estFPT={FinalCheck=> true, Verbose=> false, MultiThread=>false, DiagonalCheck=>t
 --isFPTPoly, determines if a given rational number is the FPT of a pair in a polynomial ring. 
 --if Origin is specified, it only checks at the origin. 
 isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
+	if (o.Verbose==true) then print "Starting isFPTPoly";
 	pp := char ring f1;
 	if (o.Origin == true) then org := ideal(vars (ring f1));
 	funList := divideFraction(t1, pp);
@@ -1411,6 +1525,7 @@ isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
 
 --isFJumpingNumberPoly determines if a given rational number is an F-jumping number
 isFJumpingNumberPoly ={Verbose=> false}>> o -> (f1, t1) -> (
+	if (o.Verbose==true) then print "Starting isFJumpingNumberPoly";
 	pp := char ring f1;
 	funList := divideFraction(t1, pp);
 	--this writes t1 = a/(p^b(p^c-1))
