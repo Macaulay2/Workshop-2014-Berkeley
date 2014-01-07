@@ -57,3 +57,23 @@ truncateComplex(ZZ,ChainComplex) := (g,P) -> (
 	  )
      )
 
+-- truncate chain complex code below taken from SpectralSequence package and added here by Nathan.
+-- truncate a chain complex at a given homological degree 
+truncate(ChainComplex,ZZ):= (C,q) ->( 
+     if q == 0 then return C 
+     else (
+	  m := min support C;
+	  n := max support C;
+	  l := length C;
+	  if q < -l or q > l then return image(0*id_C)
+	  else  K:=new ChainComplex;
+	        K.ring=C.ring;
+	  	if q < 0 then for i from min C + 1 to max C do (
+	             if i <= n + q then K.dd_i = C.dd_i 
+	       	     else if i-1 > n + q then K.dd_i = inducedMap(0*C_(i-1),0*C_i,C.dd_i)
+	       	     else K.dd_i = inducedMap(C_(i-1), 0*C_i, C.dd_i) ) 
+	  	else for i from min C+1  to max C do (
+	       	     if i-1 >= q + m then K.dd_i = C.dd_i 
+	       	     else if i < q + m then K.dd_i = inducedMap(0*C_(i-1),0*C_i,C.dd_i)
+	       	     else K.dd_i = map(0*C_(i-1), C_i, 0*C.dd_i) )); 		
+     K)
