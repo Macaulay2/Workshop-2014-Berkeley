@@ -35,11 +35,25 @@ restart
 R=QQ[x,y,z]
 M=coker matrix{{x,y,z}}
 C=resolution(M,LengthLimit=>10)
+truncateComplex(2,C)
+pmax C
+max C-1
 loadPackage "SpectralSequences" --don't have this...
 help truncate
 
---creating method to truncate, dualize, and shift a complex
-truncateDualShift = method()
-truncateDualShift(ZZ,ChainComplex) := (g,P) -> (
-     if g > max C-1
+--creating method to truncate
+restart
+truncateComplex = method()
+truncateComplex(ZZ,ChainComplex) := (g,P) -> (
+     if g >= max C then return C
+     if g <= min C then return image(0*id_C)
+     else (
+	  K:=new ChainComplex;
+	  K.ring=C.ring;
+	  for i from min C+1 to max C do (
+	       if i < g then K.dd_i=C.dd_i;
+	       );
+	  return K
+	  )
+     )
 
