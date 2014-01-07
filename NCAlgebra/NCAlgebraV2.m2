@@ -16,6 +16,11 @@ newPackage("NCAlgebraV2",
      DebuggingMode => true
      )
 
+<<<<<<< HEAD
+=======
+export {subQuotientAsCokernel,identityMap}
+
+>>>>>>> 6af5ca88392e0803faceb7d6dd30792c7c99396d
 needsPackage "NCAlgebra"
 
 export {subQuotientAsCokernel,
@@ -30,8 +35,8 @@ subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
    kerL^(toList(0..(rowsMN-1)))
 )
 
-NCMatrix ** Matrix := 
-Matrix ** NCMatrix :=
+--NCMatrix ** Matrix := 
+--Matrix ** NCMatrix := 
 NCMatrix ** NCMatrix := (M,N) -> (
    entriesM := entries M;
    MtensN := ncMatrix applyTable(entriesM, e -> e*N);
@@ -54,6 +59,7 @@ Hom (NCMatrix,NCMatrix,ZZ) := (M,N,d) -> (
    R
 )
 
+<<<<<<< HEAD
 -------------------------------------------
 --- NCChainComplex Methods ----------------
 -------------------------------------------
@@ -100,6 +106,16 @@ betti Nres
 ///
 
 
+=======
+identityMap = method()
+identityMap (List, NCRing) := (L,R) -> (
+   n := #L;
+   B := coefficientRing R;
+   I := ncMatrix applyTable(entries id_(B^n), e -> promote(e,R));
+   assignDegrees(I,toList(n:0),L)
+)
+
+>>>>>>> 6af5ca88392e0803faceb7d6dd30792c7c99396d
 TEST ///
 restart
 needsPackage "NCAlgebraV2"
@@ -112,13 +128,14 @@ subQuotientAsCokernel(M,N)
 restart
 needsPackage "NCAlgebraV2"
 needsPackage "NCAlgebra"
-B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
+R = QQ[w]/ideal(w^2+w+1)
+B = threeDimSklyanin(R,{1,1,-1},{x,y,z})
 M = ncMatrix {{x,y,0},{0,y,z}}
 N = ncMatrix {{x,y}}
 Hom(M,N,1)
-L1 = id_(QQ^1)
-K1 = L1 ** transpose M
-L2 = id_(QQ^3)
+L1 = identityMap({0},B)
+K1 = L1 ** (transpose M)
+L2 = identityMap({0,0,0},B)
 K2 = L2 ** N
 K = K1 | -K2
 kerK = rightKernelBergman K

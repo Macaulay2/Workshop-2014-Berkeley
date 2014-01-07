@@ -21,6 +21,7 @@ export{
 	 "aPower",
 	 "ascendIdeal", 
 	 "ascendIdealSafe",
+	 "ascendIdealSafeList",
 	 "basePExp",
   	 "basePExpMaxE",
   	 "BinomialCheck",
@@ -53,7 +54,8 @@ export{
      "isFRegularPoly",
      "isFRegularQGor",
      "isSharplyFPurePoly",
-	"Mstar",			--- MK
+	"minimalCompatible",		--- MK
+---	"Mstar",			--- MK
      "MultiThread",
      "nu",
      "nuList",
@@ -331,6 +333,23 @@ frobeniusPower(Ideal,ZZ) := (I1,e1) ->(
      if (#G1==0) then answer=ideal(0_R1) else answer=ideal(apply(G1, j->j^(p1^e1)));
      answer
 );
+
+
+
+frobeniusPower(Matrix,ZZ) := (M,e) ->(
+R:=ring M;
+p:=char R;
+G:=entries M;
+local i;
+local j;
+L:={};
+apply(G, i->
+{
+	L=append(L,apply(i, j->j^(p^e)));
+});
+matrix L
+);
+
 
 -- This function computes the element in the ambient ring S of R=S/I such that
 -- I^{[p^e]}:I = (f) + I^{[p^e]}
@@ -749,15 +768,44 @@ ethRootSafe = (f, I, a, e) -> (
 	
 	expOfA := basePExpMaxE(aRem,p1,e); --this gives "a base p", with the left-most term the smallest "endian".
 	
-	IN1 := ethRoot( I*ideal(f^(expOfA#0)), 1);
-	i := 1;
+	IN1 := I*ideal(f^(expOfA#0));
 	
-	while(i < #expOfA) do (
-		IN1 = ethRoot( IN1*ideal(f^(expOfA#i)), 1);
-		i = i + 1;
+	if (e > 0) then (
+		IN1 = ethRoot(IN1, 1);
+		i := 1;
+	
+		while(i < #expOfA) do (
+			IN1 = ethRoot( IN1*ideal(f^(expOfA#i)), 1);
+			i = i + 1;
+		)
 	);
-	
 	IN1*ideal(f^(aQuot))
+)
+
+--This tries to compute (f1^a1*f2^a2*...fk^ak*I)^{[1/p^e]} in such a way that we don't blow exponent buffers.  It can be much faster as well.
+ethRootSafeList = (elmtList, I1, aList, e1) -> (
+	   R1 := ring I1;
+        p1 := char R1;
+        
+        aListRem := apply(aList, z1 -> z1%(p1^e1) );
+        aListQuot := apply(aList, z1 -> floor(z1/p1^e1) );
+        
+        expOfaList := apply(aListRem, z1-> basePExpMaxE(z1, p1, e1) );
+        
+        aPowerList := apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#0));
+        
+        IN1 := I1*ideal(fold(times, aPowerList));
+        if (e1 > 0) then (
+                IN1 = ethRoot(IN1, 1);
+                i := 1;
+                while(i < e1) do (
+                        aPowerList = apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#i));
+                        IN1 = ethRoot( IN1*ideal(fold(times, aPowerList)), 1);
+                        i = i + 1;
+                )
+        );
+        aPowerList = apply(elmtList, aListQuot, (f1, z1) -> f1^z1);
+        IN1*ideal(fold(times, aPowerList))
 )
 
 ethRoot(RingElement, Ideal, ZZ, ZZ) := (f, I, a, e) -> ethRootSafe (f, I, a, e) ---MK
@@ -807,28 +855,28 @@ eR = (I1,e1)-> (ethRoot(I1,e1) )
 --- Find all ORDERED partitions of n with k parts
 allPartitions = (n,k)->
 (
-PP0:=matrix{ toList(1..k) };
-PP:=mutableMatrix PP0;
-allPartitionsInnards (n,k,PP,{})
+	PP0:=matrix{ toList(1..k) };
+	PP:=mutableMatrix PP0;
+	allPartitionsInnards (n,k,PP,{})
 )
 
 allPartitionsInnards = (n,k,PP,answer)->
 (
-local i;
-if (k==1) then 
-{
-	PP_(0,k-1)=n;
-	answer=append(answer,first entries (PP));
-}
-else
-{
-	for i from 1 to n-(k-1) do
+	local i;
+	if (k==1) then 
 	{
-		PP_(0,k-1)=i;
-		answer=allPartitionsInnards (n-i,k-1,PP,answer)	;	
+		PP_(0,k-1)=n;
+		answer=append(answer,first entries (PP));
+	}
+	else
+	{
+		for i from 1 to n-(k-1) do
+		{
+			PP_(0,k-1)=i;
+			answer=allPartitionsInnards (n-i,k-1,PP,answer)	;	
+		};
 	};
-};
-answer
+	answer
 )
 
 
@@ -837,46 +885,46 @@ answer
 --- write n=a*p^e+a_{e-1} p^{e-1} + \dots + a_0 where 0\leq e_j <p 
 baseP1 = (n,p,e)->
 (
-a:=n//(p^e);
-answer:=1:a;
-m:=n-a*(p^e);
-f:=e-1; 
-while (f>=0) do
-{
-	d:=m//(p^f);
-	answer=append(answer,d);
-	m=m-d*(p^f);
-	f=f-1;
-};
-answer
+	a:=n//(p^e);
+	answer:=1:a;
+	m:=n-a*(p^e);
+	f:=e-1; 
+	while (f>=0) do
+	{
+		d:=m//(p^f);
+		answer=append(answer,d);
+		m=m-d*(p^f);
+		f=f-1;
+	};
+	answer
 )	
 
 
 fancyEthRoot = (I,m,e) ->
 (
-G:=first entries mingens I;
-k:=#G;
-P:=allPartitions(m,k);
-R:=ring(I);
-p:=char(R);
-answer:=ideal(0_R);
-apply(P, u->
-{
----print("Partition: ",u);
-	a:=ideal(1_R);
-	U:=apply(u, v->baseP1(v,p,e));
-	for i from 0 to e do
+	G:=first entries mingens I;
+	k:=#G;
+	P:=allPartitions(m,k);
+	R:=ring(I);
+	p:=char(R);
+	answer:=ideal(0_R);
+	apply(P, u->
 	{
-		j:=e-i;
-		g:=1_R;
-		for l from 0 to k-1 do g=g*(G#l)^((U#l)#j); 
-		a=ideal(g)*a;
-		if (i<e) then a=ethRoot(a ,1);
+	---print("Partition: ",u);
+		a:=ideal(1_R);
+		U:=apply(u, v->baseP1(v,p,e));
+		for i from 0 to e do
+		{
+			j:=e-i;
+			g:=1_R;
+			for l from 0 to k-1 do g=g*(G#l)^((U#l)#j); 
+			a=ideal(g)*a;
+			if (i<e) then a=ethRoot(a ,1);
 ---print(g,answer);
-	};
-	answer=answer+a;
-});
-ideal(mingens(answer))
+		};
+		answer=answer+a;
+	});
+	ideal(mingens(answer))
 )
 
 ethRoot (Ideal, ZZ, ZZ) := (I,m,e) -> fancyEthRoot (I,m,e)  --- MK
@@ -932,59 +980,59 @@ ethRoot(Ideal,ZZ) := (Im,e) -> (
 
 
 findAllCompatibleIdeals = (u) ->(
-L:={}; R:=ring u; p:=char R;
-P:=ideal(0_R);
-J:=ethRoot(ideal(u),1);
-t:=1_R % (gens J);
-if (t != 0_R) then print("*** WARNING *** Frobenius action has nilpotent elements");
-findAllCompatibleIdealsInnards (u,L,P)
+	L:={}; R:=ring u; p:=char R;
+	P:=ideal(0_R);
+	J:=ethRoot(ideal(u),1);
+	t:=1_R % (gens J);
+	if (t != 0_R) then print("*** WARNING *** Frobenius action has nilpotent elements");
+	findAllCompatibleIdealsInnards (u,L,P)
 )
 
 
 
 findAllCompatibleIdealsInnards = (u,L,P) ->(
-R:=ring u;
-p:=char R;
-local tau;
-local Plist;
-P1:=frobeniusPower(P,1);
-C1:=ideal((singularLocus(P)).relations);
----tau=ideal mingens star(C1,u,1) ; ---OLD VERSION
-tau=ideal mingens ascendIdeal (C1, u, 1);
-Plist=minimalPrimes tau;
-local Q;
-local T;
-apply(Plist, Q->
-{
-	f:= any(L,T -> T == Q);
----print(L,Q,f);
-	if (not f) then
+	R:=ring u;
+	p:=char R;
+	local tau;
+	local Plist;
+	P1:=frobeniusPower(P,1);
+	C1:=ideal((singularLocus(P)).relations);
+	---tau=ideal mingens star(C1,u,1) ; ---OLD VERSION
+	tau=ideal mingens ascendIdeal (C1, u, 1);
+	Plist=minimalPrimes tau;
+	local Q;
+	local T;
+	apply(Plist, Q->
 	{
-		L=append(L,Q);
-		L=unique(L | findAllCompatibleIdealsInnards(u,L,Q));
-	};
-});
+		f:= any(L,T -> T == Q);
+---print(L,Q,f);
+		if (not f) then
+		{
+			L=append(L,Q);
+			L=unique(L | findAllCompatibleIdealsInnards(u,L,Q));
+		};
+	});
 ---
-C2:=(P1+ideal(u)):(P1:P);
-JB:=C1*C2; 
+	C2:=(P1+ideal(u)):(P1:P);
+	JB:=C1*C2; 
 ---print(mingens P, mingens JB);
 ---tau=ideal mingens star(C2,u,1) ;  --- OLD VERSION
-tau=ideal mingens ascendIdeal  (C2, u, 1);
-Plist=minimalPrimes tau;
-local Q;
-local T;
-apply(Plist, Q->
-{
-	f:= any(L,T -> T == Q);
----print(L,Q,f);
-	if (not f) then
+	tau=ideal mingens ascendIdeal  (C2, u, 1);
+	Plist=minimalPrimes tau;
+	local Q;
+	local T;
+	apply(Plist, Q->
 	{
-		L=append(L,Q);
-		L=unique(L | findAllCompatibleIdealsInnards(u,L,Q));
-	};
-});
----
-L
+		f:= any(L,T -> T == Q);
+	---print(L,Q,f);
+		if (not f) then
+		{
+			L=append(L,Q);
+			L=unique(L | findAllCompatibleIdealsInnards(u,L,Q));
+		};
+	});
+	---
+	L
 )
 
 
@@ -1000,71 +1048,71 @@ L
 -----------------------------------------------------------------------------
 
 
-mEthRoofOneElement = (v,e) ->(
-local i;
-local d;
-local w;
-local m;
-R:=ring(v); p:=char R;
-F:=coefficientRing(R);
-n:=rank source vars(R);
-V:=ideal vars(R);
-vv:=first entries vars(R);
-YY:=local YY;
-R1:=F[vv, YY_1..YY_n, MonomialOrder=>ProductOrder{n,n},MonomialSize=>16];
-V=substitute(V,R1);
----------------------------
-M0:=set {1_R1};
-apply(vv, w->
-{
-ww:=substitute(w,R1);
-M1:=set toList apply(0..p-1, i-> ww^i);
-M0=M0**M1
-});
-M:=toList apply(elements(M0), w-> product toList deepSplice(w));
----------------------------
-J0:=gens ideal apply(1..n, i->YY_i-substitute(vv#(i-1)^(p^e),R1));
-S:=toList apply(1..n, i->YY_i=>substitute(vv#(i-1),R1));
-Ie:=transpose matrix{{(rank target v):0_R1}}; 
-ev:=entries substitute(v,R1);
-apply(M, m->
-{
-	L:={};
-	apply(ev, t->
+mEthRootOfOneElement = (v,e) ->(
+	local i;
+	local d;
+	local w;
+	local m;
+	R:=ring(v); p:=char R;
+	F:=coefficientRing(R);
+	n:=rank source vars(R);
+	V:=ideal vars(R);
+	vv:=first entries vars(R);
+	YY:=local YY;
+	R1:=F[vv, YY_1..YY_n, MonomialOrder=>ProductOrder{n,n},MonomialSize=>16];
+	V=substitute(V,R1);
+	---------------------------
+	M0:=set {1_R1};
+	apply(vv, w->
 	{
-		tt:=((t#0)%J0);
-		q1:=coefficients( tt , Variables=>(first entries gens V), Monomials=>{m});
-		q2:=q1#1;
-		q3:=first first entries q2;
-		q3=substitute(q3,S);
-		L=append(L,q3);
----		print(m,tt,q3);
+		ww:=substitute(w,R1);
+		M1:=set toList apply(0..p-1, i-> ww^i);
+		M0=M0**M1
 	});
----	print(ev,L,m);
-	Ie=Ie | (transpose matrix {L});
-});
-use R;
-compress(substitute(Ie,R))
+	M:=toList apply(elements(M0), w-> product toList deepSplice(w));
+---------------------------
+	J0:=gens ideal apply(1..n, i->YY_i-substitute(vv#(i-1)^(p^e),R1));
+	S:=toList apply(1..n, i->YY_i=>substitute(vv#(i-1),R1));
+	Ie:=transpose matrix{{(rank target v):0_R1}}; 
+	ev:=entries substitute(v,R1);
+	apply(M, m->
+	{
+		L:={};
+		apply(ev, t->
+		{
+			tt:=((t#0)%J0);
+			q1:=coefficients( tt , Variables=>(first entries gens V), Monomials=>{m});
+			q2:=q1#1;
+			q3:=first first entries q2;
+			q3=substitute(q3,S);
+			L=append(L,q3);
+	---		print(m,tt,q3);
+		});
+	---	print(ev,L,m);
+		Ie=Ie | (transpose matrix {L});
+	});
+---	use R;
+	compress(substitute(Ie,R))
 )
 
 
 
 
 mEthRoot = (A,e) ->(
-local i;
-local answer;
-answer1:=apply(1..(rank source A), i->mEthRoofOneElement (A_{i-1},e));
-if (#answer1==0) then 
-{
-	answer=A;
-}
-else
-{
-	answer=answer1#0;
-	apply(2..(#answer1), i->answer=answer | answer1#(i-1));
-};
-mingens( image answer )
-)
+	local i;
+	local answer;
+	answer1:=apply(1..(rank source A), i->mEthRootOfOneElement (A_{i-1},e));
+	if (#answer1==0) then 
+	{
+		answer=A;
+	}	
+	else
+	{
+		answer=answer1#0;
+		apply(2..(#answer1), i->answer=answer | answer1#(i-1));
+	};
+	mingens( image answer )
+)	
 
 
 ethRoot (Matrix, ZZ) := (A,e) -> mEthRoot (A,e)  --- MK
@@ -1083,32 +1131,32 @@ ethRoot (Matrix, ZZ) := (A,e) -> mEthRoot (A,e)  --- MK
 --- Output:
 ---    the smallest ideal J of R containing I with the property that u^(1+p+...+p^(e-1)) J is in J^{[p^e]}
 Mstar = (A,U,e) ->(
-local answer;
-R:=ring(A); p:=char R;
-if (A==0) then
-{
-	answer=A;
-}
-else
-{
-	f:=true;
-	Ne:=sum toList(apply(0..(e-1), i->p^i));
-	lastA:= A;
-	while (f) do
+	local answer;
+	R:=ring(A); p:=char R;
+	if (A==0) then
 	{
-		f=false;
-		A1:=mEthRoot(mingens image ((U^Ne)*lastA),e);
-		A1=A1 | lastA;
-		t1:=compress ((A1))%((lastA));
-		if (t1!=0) then 
+		answer=A;
+	}
+	else
+	{
+		f:=true;
+		Ne:=sum toList(apply(0..(e-1), i->p^i));
+		lastA:= A;
+		while (f) do
 		{
-			f=true;
-			lastA=mingens image A1;
+			f=false;
+			A1:=mEthRoot(mingens image ((U^Ne)*lastA),e);
+			A1=A1 | lastA;
+			t1:=compress ((A1))%((lastA));
+			if (t1!=0) then 
+			{
+				f=true;
+				lastA=mingens image A1;
+			};
 		};
+		answer=mingens (image A1);
 	};
-	answer=mingens (image A1);
-};
-answer
+	answer
 )
 
 
@@ -1161,6 +1209,40 @@ ascendIdealSafe = (Jk, hk, ak, ek) -> (
      --trim the output
      trim IP
 )
+
+
+
+
+--works just like ascendIdealSafe but also handles lists of hk to powers...
+ascendIdealSafeList = (Jk, hkList, akList, ek) -> (
+	Sk := ring Jk;
+	pp := char Sk;
+	IN := Jk;
+	IP := ideal(0_Sk);
+	
+	--we ascend the ideal as above
+	while (isSubset(IN, IP) == false) do(
+		IP = IN;
+		IN = ethRootSafeList( hkList, IP, akList, ek) + IP
+	);
+	
+	--trim the output
+	trim IP
+)
+
+--MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
+-- minimalCompatible is a method which is implemented as:
+-- (1) the finding of the smallest ideal J which satisfies uJ\subset J^{[p^e]} 
+---    containg a given ideal for a given ring element u,
+-- (2) the finding of the smallest submodule V of a free module which satisfies UV\subset V^{[p^e]} 
+--     containg a given submodule for a given matrix U.
+minimalCompatible = method();
+minimalCompatible(Ideal,RingElement,ZZ) :=  (Jk, hk, ek) -> ascendIdeal (Jk, hk, ek)
+minimalCompatible(Ideal,RingElement,ZZ,ZZ) :=  (Jk, hk, ak, ek) -> ascendIdealSafe (Jk, hk, ak, ek)
+minimalCompatible(Matrix,Matrix,ZZ) := (A,U,e) -> Mstar (A,U,e)
+
+--MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
+
 
 --Finds a test element of a ring R = k[x, y, ...]/I (or at least an ideal 
 --containing a nonzero test element).  It views it as an element of the ambient ring
@@ -1316,6 +1398,7 @@ tauQGor = (Rk, ek, fk, t1) -> (
 --Computes tau(Rk,fk^tk), assuming Gorenstein rings
 tauGor = (Rg,fg,tg) -> tauQGor (Rg,1,fg,tg)
 
+
 ----------------------------------------------------------------
 --************************************************************--
 --Functions for computing sigma                               --
@@ -1400,7 +1483,7 @@ sigmaAOverPEMinus1QGor  ={HSL=> false}>> o -> (fk, a1, e1, gg) -> (
 
 ----------------------------------------------------------------
 --************************************************************--
---Functions for computing parameter test modules              --
+--Functions for computing parameter test modules and ideals   --
 --************************************************************--
 ----------------------------------------------------------------
 
