@@ -11,3 +11,14 @@ bidualityMap = M -> (
    retVal
 )
 
+completeRes = method()
+completeRes (Module,ZZ) := (M,n) -> (
+   --- R is a Gorenstein ring, and M a module over it.  This function
+   --- returns the complete resolution to degree n
+   R := ring M;
+   Mres := res(M, LengthLimit => n);
+   C := res(coker transpose Mres.dd_n, LengthLimit=>2*n);
+   D := Hom(C,R^1);
+   D[n - max C]
+)
+
