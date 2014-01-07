@@ -1016,7 +1016,7 @@ findAllCompatibleIdealsInnards = (u,L,P) ->(
 -----------------------------------------------------------------------------
 
 
-mEthRoofOneElement = (v,e) ->(
+mEthRootOfOneElement = (v,e) ->(
 	local i;
 	local d;
 	local w;
@@ -1059,7 +1059,7 @@ mEthRoofOneElement = (v,e) ->(
 	---	print(ev,L,m);
 		Ie=Ie | (transpose matrix {L});
 	});
-	use R;
+---	use R;
 	compress(substitute(Ie,R))
 )
 
@@ -1069,7 +1069,7 @@ mEthRoofOneElement = (v,e) ->(
 mEthRoot = (A,e) ->(
 	local i;
 	local answer;
-	answer1:=apply(1..(rank source A), i->mEthRoofOneElement (A_{i-1},e));
+	answer1:=apply(1..(rank source A), i->mEthRootOfOneElement (A_{i-1},e));
 	if (#answer1==0) then 
 	{
 		answer=A;
