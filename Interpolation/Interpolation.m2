@@ -9,7 +9,7 @@ polynomialInterpolation (List,PolynomialRing) := RingElement => (L,R) -> (
 		);
 	sum(p)
 )
-polynomialInterpolation (List) := RingElements => L -> guessPolynomial(L, QQ[t])
+polynomialInterpolation (List) := RingElements => L -> polynomialInterpolation(L, QQ[t])
 
 rationalInterpolation = method ()
 rationalInterpolation (List, PolynomialRing) := RingElement => (L,R) -> (

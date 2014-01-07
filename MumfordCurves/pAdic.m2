@@ -15,13 +15,13 @@ makePAdicField:=(R,p)->(
    A := new PAdicField from {(symbol baseRing) => R,
                             (symbol uniformizingParameter) => p};
    precision A := a->a#"precision";
-   valuation A := a->min keys a#"expansion";
+   valuation A := a->min a#"expansion"_0;
    relativePrecision A:= a -> (precision a)-(valuation a);
    net A := a->(expans:=a#"expansion";
-	keylist:=sort keys expans;
-	((concatenate apply(keylist,i->
-		  toString(expans#i)|"*"|toString p|"^"
-		  |toString i|"+"))
+	keylist:=expans_0;
+	((concatenate apply(#keylist,i->
+		  toString(expans_1_i)|"*"|toString p|"^"
+		  |toString keylist_i|"+"))
 	|"O("|toString p|"^"|toString(precision a)|")"));
    A + A := (a,b) -> 3;
      A 
@@ -34,7 +34,7 @@ pAdicField(ZZ):=(p)->makePAdicField(ZZ,p)
 
 -- PAdicField Elements are hashtables with following keys:
 -- precision (value ZZ)
--- expansion (hashtable, keys are integers, values elements of baseRing)
+-- expansion (hashtable, two entries: exponents, coefficients)
 
 
 
@@ -43,7 +43,7 @@ toPAdicFieldElement = method()
 
 toPAdicFieldElement (List,PAdicField) := (L,S) -> (
    n:=#L;
-   expans:=new HashTable from select(apply(n,i->(i,L_i)),j->not j_1==0);
+   expans:=select(apply(n,i->(i,L_i)),j->not j_1==0);
    new S from {"precision"=>n,"expansion"=>expans}
    )
 
@@ -58,4 +58,12 @@ x=toPAdicFieldElement({0,1,0,0,1,0},Q3)
 precision x
 relativePrecision x
 valuation x
+f=x
 
+
+ZZ[y]
+f=y^2+y^6
+jacobian f
+help jacobian
+diff(y,f)
+help diff
