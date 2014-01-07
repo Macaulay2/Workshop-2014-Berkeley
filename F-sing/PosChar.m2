@@ -1002,6 +1002,7 @@ F:=coefficientRing(R);
 n:=rank source vars(R);
 V:=ideal vars(R);
 vv:=first entries vars(R);
+YY:=local YY;
 R1:=F[vv, YY_1..YY_n, MonomialOrder=>ProductOrder{n,n},MonomialSize=>16];
 V=substitute(V,R1);
 ---------------------------
