@@ -21,4 +21,4 @@ rationalInterpolation (List, PolynomialRing) := RingElement => (L,R) -> (
 	(sum(1..(n-2), j -> ((-1)^j * y_j)/(t-x_j)) + 1/2 * (y_0)/(t-x_0) + 1/2 * ((-1)^(n-1) * y_(n-1))/(t-x_(n-1))) / 
 		(sum(1..(n-2), j -> ((-1)^j)/(t-x_j)) + 1/2 * ((-1)^0)/(t-x_0) + 1/2 * ((-1)^(n-1))/(t-x_(n-1)))
 )
-rationalInterpolation (List) := RingElements => L -> rationalInterpolation(L, QQ[t])
+rationalInterpolation (List) := RingElement => L -> rationalInterpolation(L, QQ[t])

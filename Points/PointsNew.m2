@@ -10,7 +10,7 @@ newPackage(
 	     {Name => "Samuel Lundqvist", Email => "samuel@math.su.se"}
 	     },
     	Headline => "Computing with sets of affine points and functionals (i.e. FGLM conversion)",
-    	DebuggingMode => true
+    	DebuggingMode => true, Reload => true
     	)
 -- Current developers
 -- Past developers
@@ -31,7 +31,11 @@ export {
 exportMutable {
     gbtime, 
     rktime,
-    aptime
+    aptime,
+    bbtime,
+    cvtime,
+    latime,
+    mptime
     }
 
 --nfPoints,
