@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>M2 -- visGraph</title>
+        <script type="text/javascript" src="js/d3.v3.js"></script>
+        <style>
+            a:link {color:#0000FF;}    /* unvisited link */
+            a:visited {color:#800080;} /* visited link */
+            a:hover {color:#0000FF;}   /* mouse over link */
+            a:active {color:#800080;}  /* selected link */
+            #tdToggle
+            {
+            position:absolute;
+            left:0px;
+            top:0px;
+            z-index:1;
+            }
+            #editToggle
+            {
+            position:absolute;
+            left:100px;
+            top:0px;
+            z-index:1;
+            }
+            #exportToggle
+            {
+            position:absolute;
+            left:210px;
+            top:0px;
+            z-index:1;
+            }
+            #canvasElement
+            {
+            position:absolute;
+            left:0px;
+            top:0px;
+            z-index:2;
+            }
+            
+        </style>
+    </head>
+    <body>
+        <a id= "tdToggle"> switch to 3d </a>
+        <a id= "editToggle"> enable editing</a>
+        <a id= "exportToggle"> export </a>
+        <script type="text/javascript">
+
+            var w = 900;
+            var h = 600;
+            var color = d3.scale.category10();
+
+            
+            var data = [[0, 1, 0, 1, 1, 0], [1, 0, 0, 1, 0, 0], [0, 0, 0, 1, 0, 0], [1, 1, 1, 0, 0, 0], [1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]];
+            
+            //convert adjacency matrix into edge pairs for d3 to process
+            var nodeList = [];
+            var edgeList = [];
+            for (var i = 0; i<data.length; i++) {
+
+                nodeList.push( {name: i } );
+                //console.log("I " + i);
+                          
+            }
+            for (var i = 0; i<data.length; i++) {
+                for (var j = 0; j< data[i].length; j++) {
+                    if (data[i][j] == 1) {
+                        edgeList.push( { source: i, target: j} );
+                        //console.log("I " + i + "  J " + j);
+                    }    
+                }
+            }
+            
+            //begin d3
+            
+            var svg = d3.select("body")
+                        .append("svg")
+                        .attr("height", h)
+                        .attr("width", w)
+                        .attr("id", "canvasElement");
+
+            var dataset = {
+                nodes: nodeList,
+                edges: edgeList
+                };
+
+            var force = d3.layout.force()
+                        .nodes(dataset.nodes)
+                        .links(dataset.edges)
+                        .size([w, h])
+                        .gravity(.1)
+                        .linkDistance([150])
+                        .charge([-1000])
+                        .start();
+
+            // https://github.com/mbostock/d3/wiki/Force-Layout#wiki-drag
+            // implement 'dragstart' function that fixes nodes so they are
+            // not repositioned by force layout.
+            var drag = force.drag()
+              .on("dragstart", dragstart);
+
+            function dragstart(d) {
+              d.fixed = true;
+              d3.select(this).classed("fixed", true);
+            }
+  
+    
+            var edges = svg.selectAll("line")
+                        .data(dataset.edges)
+                        .enter()
+                        .append("line")
+                        .style("stroke", "#ccc")
+                        .style("stroke-width", 2);
+                        
+            var nodes = svg.selectAll("g")
+                        .data(dataset.nodes)
+                        .enter()
+                        .append("g")
+                        .call(force.drag);
+
+            nodes.append("circle")
+                        .attr("r", 10)
+                        .style("fill", function(d, i) {
+                                    return color(i);
+                        });
+
+            nodes.append("text")
+                        .attr("font-family", "sans-serif")
+                        .attr("font-size", "12px")
+                        .attr("fill", "white")
+                        .attr("text-anchor", "middle")
+                        .attr("dy", "4px")
+                        .text(function(d) { return d.name; });
+
+                        
+            force.on("tick", function() {
+
+            edges.attr("x1", function(d) { return d.source.x; })
+                    .attr("y1", function(d) { return d.source.y; })
+                    .attr("x2", function(d) { return d.target.x; })
+                    .attr("y2", function(d) { return d.target.y; });
+
+            nodes.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });                 
+            
+            });
+            setTimeout(function() {
+                force.stop();
+            }, (2000));
+
+
+        </script>
+    </body>
+</html> 
