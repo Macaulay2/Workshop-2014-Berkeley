@@ -10,7 +10,7 @@ newPackage("NCAlgebraV2",
 	   HomePage => "http://www.math.wfu.edu/Faculty/Conner.html",
 	   Email => "connerab@wfu.edu"},
           {Name => "Courtney Gibbons",
-	   HomePage => "",
+	   HomePage => "http://people.hamilton.edu/cgibbons",
 	   Email => "crgibbon@hamilton.edu"}},
      AuxiliaryFiles => true,
      DebuggingMode => true
@@ -35,11 +35,23 @@ NCMatrix ** NCMatrix := (M,N) -> (
    entriesM := entries M;
    MtensN := ncMatrix applyTable(entriesM, e -> e*N);
    --- now we must assignDegrees to make make them compatible
-   --- with M and N
-   MtensN
+   --- with the maps M and N
+   newSource := flatten apply(#(M.source), i ->
+         apply(#(N.source), j -> ((M.source)#i)+((N.source)#j)));
+   newTarget := flatten apply(#(M.target), i ->
+         apply(#(N.target), j -> ((M.target)#i)+((N.target)#j)));
+   assignDegrees(MtensN,newSource,newTarget)
 )
 
-
+Hom (NCMatrix,NCMatrix,ZZ) := (M,N,d) -> (
+   R := coefficientRing ring M;
+   sourceM := M.source;
+   sourceN := Nsource;
+   targetM := M.target;
+   targetN := N.target;
+   error "err";
+   R
+)
 
 TEST ///
 restart
@@ -50,8 +62,13 @@ M = ncMatrix {{x,y}}
 N = ncMatrix {{x^2,y^2}}
 subQuotientAsCokernel(M,N)
 
+restart
+needsPackage "NCAlgebraV2"
+needsPackage "NCAlgebra"
+B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
 M = ncMatrix {{x,y,0},{0,y,z}}
 N = ncMatrix {{x,y}}
+Hom(M,N,1)
 L1 = id_(QQ^1)
 K1 = L1 ** transpose M
 L2 = id_(QQ^3)

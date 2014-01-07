@@ -59,7 +59,7 @@ paraTestIdealAmbient = (R1) -> (
 )
 
 --this computes the parameter test module \tau(R, f^t).  It does not assume that R is a polynomial ring.
-paraTestModule = (fk, t1) -> (
+paraTestModule = (fk, t1) -> ( --maintained by Karl
 	R1 := ring fk;
 	S1 := ambient R1;
 	f1 := sub(fk, S1);
@@ -80,22 +80,20 @@ paraTestModule = (fk, t1) -> (
 	J1 := findTestElementAmbient(R1)*omegaAmb;
 	u1 := finduOfIdeal(omegaAmb, I1);
 
-	
 	uPower := 1;
 	if (cc != 0) then
 		uPower = floor((pp^cc-1)/(pp-1));
 	firstTau := J1;
 	
-	
 	if (cc != 0) then	
-		firstTau = ascendIdeal(J1*ideal(f1^aa), f1^aa*u1^(uPower), cc)
+		firstTau = ascendIdeal(J1*ideal(f1^(ceiling(t1))), f1^aa*u1^(uPower), cc)
 		--I should write an ascendIdealSafe that works for multiple elements raised to powers...	
 	else 
 		firstTau = ascendIdeal(J1, u1^(uPower), 1)*ideal(f1^aa);
-	
+			
 	secondTau := firstTau;
 	if (bb != 0) then
 		secondTau = ethRoot(u1, firstTau, uPower, bb);
-
+		
 	(sub(secondTau, R1), omegaAmb, u1)
 )
