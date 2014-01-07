@@ -6,7 +6,7 @@
 -- by K.V. Madahar and K.S Sarkaria. Geom Dedicata, 2000.
 restart
 needsPackage "SpectralSequences"
-needs "~/Documents/NathanCode/SS-demo/Hopf-Preload.m2";
+needs "~/Desktop/Workshop-2014-Berkeley/HomologicalAlgebra/SpectralSequences/SS-demo/Hopf-Preload.m2";
 K = filteredComplex({S3,F1S3,F0S3}, ReducedHomology => false);
 -- the filtered complex K above arises from a combinatorial 
 -- realization of the hopf fibration SS^1 --> SS^3 --> SS^2
@@ -48,3 +48,30 @@ needsPackage"SpectralSequences"
 --	       The cohomology groups we want are obtained as follows.
 		 basis({0,0}, E^2_{0,0}) --  == HH^0 OO_C(1,0)
 		 basis({0,0}, E^2_{1,-2}) --  == HH^1 OO_C(1,0)	 
+
+-- Example 3 --
+restart
+needsPackage"SpectralSequences"
+--     	  I-adic filtrations of chain complexes and their spectral sequences
+--	  By multiplying a chain complex by sucessive powers of an ideal we obtain a filtered complex.       
+	      B = QQ[a..d]
+	      J = ideal vars B
+	      C = complete res monomialCurveIdeal(B,{1,3,4})
+	      K = filteredComplex(J,C,4)
+--      Here are higher some pages of the associated spectral sequence:
+	       E = prune spectralSequence K
+	       E^2
+	       E^3
+	       E^3 .dd
+	       E^4
+	       E^4 .dd
+    	       E^infinity
+    	       hilbertPolynomial(E^4)    	    	
+               prune HH K_infinity
+    	       hilbertPolynomial(HH_0 K_infinity)
+    	       E^infinity
+    	       prune associatedGradedHomologyObject(-4,0,K)
+	       E^infinity _{-4,4}
+    	       prune associatedGradedHomologyObject(-3,0,K)
+    	       E^infinity _{-3,3}
+    	       --etc
