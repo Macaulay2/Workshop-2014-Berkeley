@@ -1,4 +1,4 @@
---------------------------------------------------------------------------
+---------------------------------------------------------------------------
 -- PURPOSE : Visualize package for Macaulay2 provides the ability to 
 -- visualize various algebraic objects in java script using a 
 -- modern browser.
@@ -209,20 +209,32 @@ visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
 
 
 restart
-loadPackage"Graphs"
 loadPackage"Visualize"
 
+-- Creates staircase diagram 
+-- 2 variables
+S = QQ[x,y]
+I = ideal"x4,xy3,y5"
+visIdeal I
+
+-- User can choose where to place files
+visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
+
+-- 3 variables
+R = QQ[x,y,z]
+J = ideal"x4,xyz3,yz2,xz3,z6,y5"
+visIdeal J
+visIdeal( J, Path => "/Users/bstone/Desktop/Test/")
+
+restart
+needsPackage"Graphs"
+loadPackage"Visualize"
+
+-- we are also focusing on graphs
 G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
+-- displayGraph A
 visGraph G
 
-R = QQ[x,y,z]
-I = ideal"x4,xyz3,yz,xz,z6,y5"
-visIdeal I
-visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
-
-S = QQ[x,y]
-I = ideal"x4,xy3,y50"
-visIdeal I
-visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
-
-
+M = 
+A = graph M
+visGraph A

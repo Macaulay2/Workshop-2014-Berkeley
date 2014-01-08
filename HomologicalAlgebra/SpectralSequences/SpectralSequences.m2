@@ -3275,46 +3275,62 @@ doc ///
 	       G2 = minimalPresentation(D^2)
 	       G2.dd
 	       D^infinity 	             	          
-  ///	  	 
+  ///	 
+  
+doc ///
+     Key
+          filteredHomologyObject
+     Headline
+     	  compute the filtered homology object
+     SeeAlso
+        (filteredHomologyObject, ZZ, ZZ, FilteredComplex)
+	(associatedGradedHomologyObject, ZZ, ZZ, FilteredComplex)	  	  
+  ///   
 
---doc ///
---     Key
---     	  "filtered complexes from chain complexes"
---     Headline
---     	  making filtered complexes and spectral sequences from chain complexes.
---     Description
---     	  Text
---///	  	  
-
---doc ///
---     Key
---        "filtered complexes from tensor products of chain complexes"
---     Headline
---     	 making filtered complexes and spectral sequences from tensor products 	
---     Description
---     	  Text
---///	  
-
-
-
---doc ///
---     Key
---     	  "spectral sequences"
---     Headline
---     	  how to create and manipluate spectral sequences
---///	  	  
+doc ///
+     Key
+	  (filteredHomologyObject, ZZ, ZZ, FilteredComplex)
+     Headline 
+	  compute the filtered homology object 
+     Usage 
+         M = filteredHomologyObject(ZZ, ZZ, FilteredComplex)
+     Inputs
+	 p:ZZ
+	 n:ZZ
+	 K:FilteredComplex	 
+     Outputs
+         M:Module 
+     Description
+	  Text
+	       Computes the filtered homology object determined by the filtered chain complex
+     SeeAlso
+	(associatedGradedHomologyObject, ZZ, ZZ, FilteredComplex)	  	  
 	       
-
---doc ///
---     Key
---     	  "spectral sequence page"
---     Headline
---     	  how to create and manipluate spectral sequence pages
---     Description
---     	   Text
---	       Here we explain how to create and manipluate spectral sequence pages.
---///	  	  
-
+   ///
+   
+doc ///
+     Key
+          associatedGradedHomologyObject
+  ///   
+   	       
+doc ///
+     Key
+	  (associatedGradedHomologyObject, ZZ, ZZ, FilteredComplex)
+     Headline 
+	  compute the associated graded homology object 
+     Usage 
+         M = associatedGradedHomologyObject(ZZ, ZZ, FilteredComplex)
+     Inputs
+	 p:ZZ
+	 n:ZZ
+	 K:FilteredComplex	 
+     Outputs
+         M:Module 
+     Description
+	  Text
+	       Computes the assocaited graded homology object determined by the filtered chain complex
+   ///	       
+  	  
 doc ///
      Key
      	  "Edge homomorphisms"
