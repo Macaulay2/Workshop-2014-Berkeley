@@ -2673,6 +2673,8 @@ assignDegrees NCMatrix := M -> (
 
 assignDegrees (NCMatrix, List, List) := (M,targetDeg,sourceDeg) -> (
    -- this function is for manual assignment of degrees
+   if (#(targetDeg) != #(entries M)) then error "Target degree list does not match number of rows of matrix";
+   if (#(sourceDeg) != #(first entries M)) then error "Source degree list does not match number of columns of matriix";
    M#(symbol source) = sourceDeg;
    M#(symbol target) = targetDeg;
    -- set the isHomogeneous flag.
