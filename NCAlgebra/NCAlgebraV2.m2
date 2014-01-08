@@ -28,7 +28,7 @@ subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
    L := M | N;
    kerL := rightKernelBergman(L);
    rowsMN := #(M.source);
-   kerL^(toList(0..(rowsMN-1)))
+   kerL^(toList(0..(rowsMN-1)-1))
 )
 
 --NCMatrix ** Matrix := 
