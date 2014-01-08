@@ -25,10 +25,11 @@ rationalInterpolation (List) := RingElement => L -> rationalInterpolation(L, QQ[
 guessRational = method ()
 guessRational (List,PolynomialRing) := RingElement => (L,R) -> (
 	n := #L;
+	L = apply(L, i -> i/1);
 	a := apply(L, i -> numerator i);
 	b := apply(L, i -> denominator i);
-	p = polynomialInterpolation(a,R);
-	q = polynomialInterpolation(b,R);
+	p := polynomialInterpolation(a,R);
+	q := polynomialInterpolation(b,R);
 	p/q
 )
 guessRational (List) := RingElement => L -> guessRational(L, QQ[t])
