@@ -16,7 +16,7 @@ newPackage("NCAlgebraV2",
      DebuggingMode => true
      )
 
-export {subQuotientAsCokernel,identityMap,NCChainComplex}
+export {subQuotientAsCokernel,homologyAsCokernel,identityMap,NCChainComplex}
 
 
 needsPackage "NCAlgebra"
@@ -29,6 +29,17 @@ subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
    kerL := rightKernelBergman(L);
    rowsMN := #(M.source);
    kerL^(toList(0..(rowsMN-1)))
+)
+
+homologyAsCokernel = method()
+homologyAsCokernel(NCMatrix,NCMatrix) := opts -> (M,N) -> (
+    if M*N != 0 then return "Error: maps do not compose to zero"
+    else (
+    B := N.ring;
+    Z := Z = zeroMap((N.target),(N.source),B);
+    kerM := rightKernelBergman(M);
+    subQuotientAsCokernel(kerM,N)
+    )
 )
 
 --NCMatrix ** Matrix := 
@@ -116,6 +127,22 @@ betti Lres
 rightKernelBergman(Lres#2)
 ///
 
+-- Twist --     
+NCMatrix Array := (M,n) -> (
+    if #n != 1 then return "Error: Please enter a single integer" else
+    M**(assignDegrees(ncMatrix {{promote(1,M.ring)}},{-1*n#0},{-1*n#0}))
+    )
+
+TEST ///
+restart
+needsPackage "NCAlgebraV2"
+needsPackage "NCAlgebra"
+B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
+M = ncMatrix {{x,y,z}}
+M[1]
+(M[1]).source
+///
+
 
 identityMap = method()
 identityMap (List, NCRing) := (L,R) -> (
@@ -178,7 +205,7 @@ zeroMapEnt = entries zeroMap
 d = 2
 K = K1|K2
 H = (K3 | zeroMap) || (K4 | K5)
-H = K3 || K4   -- do this if Nsyz == 0
+--H = K3 || K4   -- do this if Nsyz == 0
 K.source
 H.target
 K1' = matrix apply(#(K1.target), i -> apply(#(K1.source), j -> 
@@ -195,15 +222,14 @@ zeroMap' = matrix apply(#(zeroMap.target), i -> apply(#(zeroMap.source), j ->
 	   rightMultiplicationMap(-zeroMapEnt#i#j, d - (zeroMap.source)#j, d - (zeroMap.target)#i)))
 K' = K1'|K2'
 H' = matrix {{K3',zeroMap'},{K4',K5'}}
-H' = matrix {{K3'},{K4'}}  -- do this if Nsyz == 0
+--H' = matrix {{K3'},{K4'}}  -- do this if Nsyz == 0
 myHom = prune ((ker K') / (image H'))
 homGens = mingens image(gens image myHom.cache.pruningMap)^(toList(0..(numgens source K1' - 1)))
 basisMatr = fold(apply(#(K1.source), i -> basis(d-(K1.source)#i,B)), (a,b) -> a ++ b)
 flattenedMatrs = basisMatr * homGens
-apply(apply(#(flattenedMatrs.source), i -> flatten entries flattenedMatrs_{i}), L -> transpose ncMatrix pack(#(N.target),L))
+apply(apply(#(flattenedMatrs.source), i -> flatten entries flattenedMatrs_{i}), L -> ncMatrix pack(#(N.target),L))
 applyTable(entries K1, e -> leftMultiplicationMap(e,2))
 K = K1 | -K2
-
 kerK = rightKernelBergman K
 ///
 
