@@ -75,7 +75,7 @@ toArray(List) := L -> (
 --input: A path
 --output: runs a server for displaying objects
 --
-runServer = method(Options => {Path => getCurrPath()})
+runServer = method(Options => {Path => currentDirectory()})
 runServer(String) := opts -> (visPath) -> (
     return run visPath;
     )
@@ -86,7 +86,7 @@ runServer(String) := opts -> (visPath) -> (
 --    	 where template file is located.
 --output: A file with visKey replaced with visString.
 --
-visOutput = method(Options => {Path => getCurrPath()})
+visOutput = method(Options => {Path => currentDirectory()})
 visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
     local fileName; local openFile; local PATH;
     
@@ -104,7 +104,7 @@ visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
 --input: A monomial ideal of a polynomial ring in 2 or 3 variables.
 --output: The newton polytope of the of the ideal.
 --
-visIdeal = method(Options => {Path => getCurrPath()|"/temp-files/", visTemplate => getCurrPath() |"/templates/visIdeal/visIdeal"})
+visIdeal = method(Options => {Path => currentDirectory()|"temp-files/", visTemplate => currentDirectory() |"templates/visIdeal/visIdeal"})
 visIdeal(Ideal) := opts -> J -> (
     local R; local arrayList; local arrayString; local numVar; local visTemp;
     local A;
@@ -130,13 +130,13 @@ visIdeal(Ideal) := opts -> J -> (
     
     A = visOutput( "visArray", arrayString, visTemp, Path => opts.Path );
     
-    return getCurrPath()|A_1;
+    return currentDirectory()|A_1;
     )
 
 --input: A graph
 --output: the graph in the browswer
 --
-visGraph = method(Options => {Path => getCurrPath()|"/temp-files/", visTemplate => getCurrPath() | "/templates/visGraph/visGraph-template.html"})
+visGraph = method(Options => {Path => currentDirectory()|"temp-files/", visTemplate => currentDirectory() | "templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
     local A; local arrayList; local arrayString; local B;
     
@@ -146,7 +146,7 @@ visGraph(Graph) := opts -> G -> (
     
     B = visOutput( "visArray", arrayString, opts.visTemplate, Path => opts.Path );    
     
-    return getCurrPath()|B_1;
+    return currentDirectory()|B_1;
     )
 
 
@@ -181,7 +181,7 @@ copyJS(String) := dst -> (
 	       );
     	);
     
-    copyDirectory(getCurrPath()|"/temp-files/js/",dst);
+    copyDirectory(currentDirectory()|"temp-files/js/",dst);
     
     return "Created directory "|dst;
 )
