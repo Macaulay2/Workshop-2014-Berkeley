@@ -153,7 +153,9 @@ visGraph(Graph) := opts -> G -> (
 --input: a String of a path to a directory
 --output: Copies the js library to path
 --
---
+--caveat: Checks to see if files exist. If they do exist, the user
+--        must give permission to continue. Continuing will overwrite
+--        current files and cannont be undone.
 copyJS = method()
 copyJS(String) := dst -> (
     local jsdir; local ans; local quest;
