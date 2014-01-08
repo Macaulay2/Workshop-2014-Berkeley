@@ -49,6 +49,22 @@ B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
 M = ncMatrix {{x^2,y^2,z^3}}
 Msyz = rightKernelBergman M
 test = subQuotientAsCokernel(Msyz,Msyz)
+
+N = rightKernelBergman(M)
+L = transpose ncMatrix{(entries transpose N)_0,(entries transpose N)_1}
+L = assignDegrees (L, N.target, N.source)
+L.target
+isHomogeneous L
+M*L == 0
+L
+M
+
+T = rightKernelBergman(M) | L
+isHomogeneous T
+rightKernelBergman(T)
+
+homologyAsCokernel(M,N)
+homologyAsCokernel(M,L)
 ///
 
 --NCMatrix ** Matrix := 
