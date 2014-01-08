@@ -10,7 +10,8 @@ makePAdicField:=(R,p)->(
    A := new PAdicField from {(symbol baseRing) => R,
                             (symbol uniformizingParameter) => p};
    precision A := a->a#"precision";
-   valuation A := a->min a#"expansion"_0;
+   valuation A := a->(if #a#"expansion">0 then return min a#"expansion"_0;
+	infinity);
    relativePrecision A:= a -> (precision a)-(valuation a);
    net A := a->(expans:=a#"expansion";
 	keylist:=expans_0;
