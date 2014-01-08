@@ -135,9 +135,6 @@ map(image Cdual.dd_(-2), coker Cdual.dd_(-1), Cdual.dd_(-2))
 gens coker Cdual.dd_(-1)
 gens image Cdual.dd_(-2)
 
-isModuleReflexive = method()
-isModuleReflexive(Module) := (m) -> (
-    isIsomorphism isIsomorphism map(dual dual m, m, id_(cover m)))
 
 restart
 R = ZZ
@@ -161,3 +158,12 @@ dual dual N
 -- to do:  try to 
 -- understand Franks biduality code.
 
+-- is there an easy way to
+-- augment a resolution
+-- to a chain complex which includes the 
+-- module we are resolving??
+A = QQ[x,y,z]
+I = coker vars A
+C = res I
+C_0
+inducedMap(I, C_0, id_(C_0))
