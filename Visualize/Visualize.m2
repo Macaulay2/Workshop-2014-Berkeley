@@ -42,7 +42,8 @@ export {
      "visGraph",
      "runServer", --helper
      "toArray", --helper
-     "getCurrPath" --helper
+     "getCurrPath", --helper
+     "copyJS"
 }
 
 needsPackage"Graphs"
@@ -143,10 +144,40 @@ visGraph(Graph) := opts -> G -> (
     arrayList = toArray entries A;
     arrayString = toString arrayList;
     
-    B = visOutput( "visArray", arrayString, opts.visTemplate, Path => opts.Path );
+    B = visOutput( "visArray", arrayString, opts.visTemplate, Path => opts.Path );    
     
     return getCurrPath()|B_1;
     )
+
+copyJS = method()
+copyJS(String) := dst -> (
+    local jsdir; local ans; local quest;
+    
+    dst = dst|"js/";    
+    
+    -- get list of filenames in js/
+    jsdir = delete("..",delete(".",
+	    readDirectory(currentDirectory()|"temp-files/js/")
+	    ));
+    
+    -- test to see if files exist in target
+    if (scan(jsdir, j -> if fileExists(concatenate(dst,j)) then break true) === true)
+    then (
+    	   quest = concatenate(" -- Some files in ",dst," will be overwritten.\n -- This action cannot be undone.");
+	   print quest;
+	   ans = read "Would you like to continue? (yes or no):  ";
+	   while (ans != "yes" and ans != "no") do (
+	       ans = read "Would you like to continue? (yes or no):  ";
+	       );  
+	   if ans == "no" then (
+	       error "Process was aborted."
+	       );
+    	);
+    
+    copyDirectory(getCurrPath()|"/temp-files/js/",dst);
+    
+    return "Created directory "|dst;
+)
 
 
 --------------------------------------------------
@@ -193,12 +224,7 @@ restart
 loadPackage"Graphs"
 loadPackage"Visualize"
 
-G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5},EntryMode => "edges")
-adjacencyMatrix G
-H = new MutableHashTable from G
-peek H
-
-
+G = graph(toList(x_0..x_5),{{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5},EntryMode => "edges")
 visGraph G
 
 R = QQ[x,y,z]
@@ -212,17 +238,12 @@ visIdeal I
 visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
 
 
-copyJS = method()
-copyJS(String) := dst -> (
-    
-    dst = dst|"js/";
-    
-    copyDirectory(getCurrPath()|"/temp-files/js/",dst);
-    
-    return "Created directory "|dst;
-)
 
 copyJS "/Users/bstone/Desktop/Test/"
+yes
+
+
+
 
 -----------------------------
 -----------------------------
