@@ -31,7 +31,7 @@ subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
 )
 
 homologyAsCokernel = method()
-homologyAsCokernel(NCMatrix,NCMatrix) := opts -> (M,N) -> (
+homologyAsCokernel(NCMatrix,NCMatrix) := (M,N) -> (
     if M*N != 0 then return "Error: maps do not compose to zero"
     else (
     B := N.ring;
