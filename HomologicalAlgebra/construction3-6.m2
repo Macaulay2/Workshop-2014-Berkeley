@@ -76,6 +76,8 @@ R = QQ[x]/ideal(x^3)
 M = coker matrix {{x^2}}
 C = resolution M
 A = map(M,M,matrix{{x}})
+C' = augmentChainComplex(C)[-1]
+target A == C'_0 and source A == C'_0
 liftModuleMap(C,C,A)
 P = C
 Q = C
