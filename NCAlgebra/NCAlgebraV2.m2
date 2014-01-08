@@ -100,6 +100,12 @@ betti Mres
 N = ncMatrix {{x,y,z^2}}
 Nres = res N
 betti Nres
+--- The resolution of the following NCMatrix has a 0 kernel 
+--- in homological degree 2
+L = ncMatrix {{x^2,x*z,y}};
+Lres = res L
+betti Lres
+rightKernelBergman(Lres#2)
 ///
 
 
