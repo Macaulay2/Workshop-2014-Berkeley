@@ -116,6 +116,22 @@ betti Lres
 rightKernelBergman(Lres#2)
 ///
 
+-- Twist --     
+NCMatrix Array := (M,n) -> (
+    if #n != 1 then return "Error: Please enter a single integer" else
+    M**(assignDegrees(ncMatrix {{promote(1,M.ring)}},{-1*n#0},{-1*n#0}))
+    )
+
+TEST ///
+restart
+needsPackage "NCAlgebraV2"
+needsPackage "NCAlgebra"
+B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
+M = ncMatrix {{x,y,z}}
+M[1]
+(M[1]).source
+///
+
 
 identityMap = method()
 identityMap (List, NCRing) := (L,R) -> (
