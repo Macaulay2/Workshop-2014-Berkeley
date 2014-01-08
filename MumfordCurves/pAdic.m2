@@ -113,7 +113,9 @@ pAdicField ZZ:=(p)->(
 	newValues := for i in newKeys list prod#i;
 	computeCarryingOver(newKeys,newValues,newPrecision)
 	);
-     A 
+     A - A:= (a,b)->(a+(-b));
+   - A:= a->(toPAdicFieldElement(toList((precision a):(p-1)),A)*a);
+	A
 )
 
 
@@ -163,11 +165,10 @@ restart
 load "pAdic.m2"
 
 Q3=QQQ_3
-ZZ[x]===ZZ[x]
-QQQ_3===QQQ_3
-ZZ===ZZ
-(QQQ_3)===Q3
-x=toPAdicFieldElement({0,1,0,0,1,0},Q3)
+
+x=toPAdicFieldElement({1,0,0,0,0,0},Q3)
+x-x
+
 x=toPAdicFieldElement({0,0,0,0,0,0},Q3)
 
 valuation x
