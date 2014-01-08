@@ -36,13 +36,54 @@ truncateComplex(ZZ,ChainComplex) := (g,P) -> (
 	  )
 )
 
+-- take a complex concentrated in non-negative degrees and augment
+-- the cokernel of the differential in degree 1
+augmentChainComplex = method(TypicalValue => ChainComplex)
+augmentChainComplex (ChainComplex) := Q -> (
+     augQ := new ChainComplex;
+     augQ.ring = Q.ring;
+     N := coker Q.dd_1 ;
+     augQ.dd_1 = map(N, Q_1,id_(Q_1));
+     augQ.dd_0 = map(0*Q_0, N, 0*id_(Q_0));
+     for i from 2 to max Q do (
+	  augQ.dd_i = Q.dd_i
+	  );
+     augQ
+)
+
+
+R = QQ[x,y,z]
+M = coker matrix {{x*y*z}}
+C = resolution(M, LengthLimit => 5)
+--Q = resolution(M, LengthLimit => 5)
+D = augmentChainComplex C     
+
+
+-- given a map between modules, lift the map to a chain map between
+-- the resolutions
+liftModuleMap = method(TypicalValue => ChainComplexMap)
+liftModuleMap (ChainComplex, ChainComplex, Matrix) := (Q,P,A) -> (
+     Q' := (augmentChainComplex Q)[-1];
+     P' := (augmentChainComplex P)[-1];
+     tempLift := (extend(Q', P',A))[1]; -- yields "maps not composible"
+     tempLift_0 = 0*tempLift_0;
+     tempLift
+     )
+
+R = QQ[x]/ideal(x^3)
+M = coker matrix {{x^2}}
+C = resolution M
+A = map(M,M,matrix{{x}})
+liftModuleMap(C,C,A)
+P = C
+Q = C
+
 -- CompleteResolution = new Type of MutableHashTable
 -- globalAssignment CompleteResolution
 
 -- what follow is version 0.1 of construction 3.6 from Avramov & Martsinkovsky
 -- later versions will turn the construction into an object of the type
 -- CompleteResolution
-
 construction = method(TypicalValue => ChainComplexMap 
 --     ,Options => {LengthLimit => "3"}
 )
