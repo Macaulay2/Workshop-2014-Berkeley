@@ -79,7 +79,16 @@ construction (ZZ, Module) := (g, M) -> (
 	  cRes_j = kappaLifted_(g-1-j);
 	  );     
      --Kat's portion
+     for i from g+1 to max(g+2,n) do (
+	  cRes.source.dd_i=P.dd_i
+	  cRes.target.dd_i=P.dd_i
+	  cRes_i=id_(P_i)
+	  )
      
+     --for portion in middle (i.e. the degree g part)
+     cRes.target.dd_g=P.dd_i
+     cRes.source.dd_g=lambdaDaul*d*w
+     cRes_g=id_(P_g)
      
      
 restart     

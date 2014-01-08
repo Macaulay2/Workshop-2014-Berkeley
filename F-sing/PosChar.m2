@@ -235,35 +235,32 @@ findNumberBetween = (myInterv, maxDenom)->(
 --Computes the non-terminating base p expansion of an integer
 basePExp = (N,p) ->
 (
-e:=1; while p^e<=N do e = e+1;
-e = e-1;
-E:=new MutableList;
-a:=1; while e>=0 do 
-(
-     while a*p^e<=N do a=a+1;
-     E#e = a-1;
-     N = N - (a-1)*p^e;
-     a=1;
-     e=e-1;
-);
-new List from E
+    e:= floor(log_p N);
+    E:=new MutableList;
+    scan(0..e,i-> 
+    	(
+     	    a := N//p^(e-i);
+     	    E#(e-i) = a;
+     	    N = N - (a)*p^(e-i);
+    	)
+    );
+    new List from E
 )
 
 --Computes the non-terminating base p expansion of an integer 
 --from digits zero to e-1 (little-endian first)
 basePExpMaxE = (N,p,e1) ->
 (
-e:=e1-1;
-E:=new MutableList;
-a:=1; while e>=0 do 
-(
-     while a*p^e<=N do a=a+1;
-     E#e = a-1;
-     N = N - (a-1)*p^e;
-     a=1;
-     e=e-1;
-);
-new List from E
+    e:=e1-1;
+    E:=new MutableList;
+    scan(0..e,i-> 
+    	(
+     	    a := N//p^(e-i);
+     	    E#(e-i) = a;
+     	    N = N - (a)*p^(e-i);
+    	)
+    );
+    new List from E
 )
 
 --Computes powers of elements in char p>0, using that Frobenius
@@ -407,14 +404,11 @@ digit = (e, x, p) ->
      y
 )
 
---Gives the e-th truncation of the non-terminating base p expansion of x in [0,1] 
---as a fraction
-truncation = (e,x,p) -> 
-(
-     y:=0; 
-     for i from 1 to e do y = y + digit(i,x,p)/p^i;
-     y
-)
+--Gives the e-th truncation of the non-terminating base p expansion of a nonnegative 
+--rational x as a fraction
+truncation = method()
+
+truncation (ZZ,QQ,ZZ) := (e,x,p) -> (ceiling(p^e*x)-1)/p^e
 
 --Gives the first e digits of the non-terminating base p expansion of x in [0,1]
 --as a list
@@ -1362,6 +1356,21 @@ tauAOverPEMinus1QGorAmb = (Sk, Jk, hk, ek, fm, a1, e1) -> (
      Iasc := ascendIdeal(Jk*ideal(fm), fpow*hk1, et);
     
      Iasc*ideal(fm^k2)
+)
+
+tauAOverPEMinus1QGorAmbNew = (Sk, Jk, hk, ek, fm, a1, e1) -> (
+     pp := char Sk;
+     et := lcm(ek, e1);
+     
+     ak1 := numerator ((pp^et - 1)/(pp^ek - 1)); --an exponent for hk
+     a3 := numerator (a1*(pp^et - 1)/(pp^e1 - 1)); --we need to use a common e for both the 
+                                               --index of R and of our divisor.
+                                               
+	a2 := a3 % (pp^et - 1);
+     k2 := a3 // (pp^et - 1); --it seems faster to use the fact 
+                      
+                                               
+--     Iasc := ascendIdealSafeList(Jk*ideal(fm)^(ceiling(a1/(pp^e1 - 1))), 
 )
 
 
