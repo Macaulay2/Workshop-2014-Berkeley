@@ -149,6 +149,11 @@ visGraph(Graph) := opts -> G -> (
     return getCurrPath()|B_1;
     )
 
+
+--input: a String of a path to a directory
+--output: Copies the js library to path
+--
+--
 copyJS = method()
 copyJS(String) := dst -> (
     local jsdir; local ans; local quest;
@@ -238,9 +243,8 @@ visIdeal I
 visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
 
 
-
 copyJS "/Users/bstone/Desktop/Test/"
-yes
+
 
 
 
