@@ -18,7 +18,7 @@ newPackage("NCAlgebraV2",
 
 export {subQuotientAsCokernel,homologyAsCokernel,identityMap,NCChainComplex}
 
-needsPackage "NCAlgebra"
+debug needsPackage "NCAlgebra"
 
 subQuotientAsCokernel = method()
 subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
@@ -26,7 +26,8 @@ subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
    L := M | N;
    kerL := rightKernelBergman(L);
    rowsMN := #(M.source);
-   kerL^(toList(0..(rowsMN-1)))
+   tempKer := rightMingens (kerL^(toList(0..(rowsMN-1))));
+   tempKer
 )
 
 homologyAsCokernel = method()
@@ -39,6 +40,16 @@ homologyAsCokernel(NCMatrix,NCMatrix) := opts -> (M,N) -> (
     subQuotientAsCokernel(kerM,N)
     )
 )
+
+TEST ///
+restart
+needsPackage "NCAlgebraV2"
+debug needsPackage "NCAlgebra"
+B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
+M = ncMatrix {{x^2,y^2,z^3}}
+Msyz = rightKernelBergman M
+test = subQuotientAsCokernel(Msyz,Msyz)
+///
 
 --NCMatrix ** Matrix := 
 --Matrix ** NCMatrix := 
@@ -129,7 +140,6 @@ M = ncMatrix {{x,y,z}}
 M[1]
 (M[1]).source
 ///
-
 
 identityMap = method()
 identityMap (List, NCRing) := (L,R) -> (
