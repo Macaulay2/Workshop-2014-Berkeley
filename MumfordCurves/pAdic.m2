@@ -112,7 +112,7 @@ toPAdicFieldElement = method()
 
 toPAdicFieldElement (List,PAdicField) := (L,S) -> (
    n:=#L;
-   expans:=select(apply(n,i->(i,L_i)),j->not j_1==0);
+   expans:=entries transpose matrix select(apply(n,i->{i,L_i}),j->not j_1==0);
    new S from {"precision"=>n,"expansion"=>expans}
    )
 
@@ -131,7 +131,7 @@ end
 --Nathan's testing area
 ----------------------------
 restart
-load "~/git/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
+load "~/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
 Q3=pAdicField(3)
 
 x=toPAdicFieldElement({0,1,0,0,1,0},Q3)
