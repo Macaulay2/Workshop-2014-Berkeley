@@ -1370,7 +1370,7 @@ tauAOverPEMinus1QGorAmbNew = (Sk, Jk, hk, ek, fm, a1, e1) -> (
      k2 := a3 // (pp^et - 1); --it seems faster to use the fact 
                       
                                                
-     Iasc := ascendIdealSafeList(Jk*ideal(fm)^(ceiling(a1/(pp^e1 - 1))), 
+--     Iasc := ascendIdealSafeList(Jk*ideal(fm)^(ceiling(a1/(pp^e1 - 1))), 
 )
 
 
