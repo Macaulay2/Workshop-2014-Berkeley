@@ -16,15 +16,11 @@ newPackage("NCAlgebraV2",
      DebuggingMode => true
      )
 
-<<<<<<< HEAD
-=======
-export {subQuotientAsCokernel,identityMap}
+export {subQuotientAsCokernel,identityMap,NCChainComplex}
 
->>>>>>> 6af5ca88392e0803faceb7d6dd30792c7c99396d
+
 needsPackage "NCAlgebra"
 
-export {subQuotientAsCokernel,
-        NCChainComplex}
 
 subQuotientAsCokernel = method()
 subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
@@ -59,20 +55,21 @@ Hom (NCMatrix,NCMatrix,ZZ) := (M,N,d) -> (
    R
 )
 
-<<<<<<< HEAD
+
 -------------------------------------------
 --- NCChainComplex Methods ----------------
 -------------------------------------------
 NCChainComplex = new Type of HashTable
 
 resolution NCMatrix := opts -> M -> (
+   i := 0;
    numSyz := if opts#LengthLimit === infinity then numgens ring M else opts#LengthLimit;
    currentM := M;
-   syzList := {M} | for i from 0 to numSyz-1 list (
+   syzList := {M} | while (i < numSyz and currentM != 0) list (
       newM := rightKernelBergman currentM;
       currentM = newM;
       currentM
-   );
+   ) do i = i+1;
    new NCChainComplex from apply(#syzList, i -> (i,syzList#i))
 )
 
@@ -106,7 +103,6 @@ betti Nres
 ///
 
 
-=======
 identityMap = method()
 identityMap (List, NCRing) := (L,R) -> (
    n := #L;
@@ -115,7 +111,6 @@ identityMap (List, NCRing) := (L,R) -> (
    assignDegrees(I,toList(n:0),L)
 )
 
->>>>>>> 6af5ca88392e0803faceb7d6dd30792c7c99396d
 TEST ///
 restart
 needsPackage "NCAlgebraV2"
