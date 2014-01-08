@@ -235,6 +235,7 @@ findNumberBetween = (myInterv, maxDenom)->(
 --Computes the non-terminating base p expansion of an integer
 basePExp = (N,p) ->
 (
+    if N==0 then return {0};
     e:= floor(log_p N);
     E:=new MutableList;
     scan(0..e,i-> 
