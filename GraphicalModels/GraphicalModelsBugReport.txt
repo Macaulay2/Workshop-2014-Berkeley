@@ -1,0 +1,121 @@
+Bug in GraphicalModels v. 1.0?
+
+I ran into a bug when using GraphicalModels.
+
+If I build the Gaussian ring inside a function, I can use it.  (See the first run below.)
+
+But if I declare it locally, I can't use it (see the second run below) unless I throw in an extra "use R" command (see third run below).  
+
+I am not accustomed to needing a "use R" command in this situation, so I think it's a bug.  
+
+Dave S
+
+
+{* Commands
+
+needsPackage "GraphicalModels"
+showBugPart1 = (G) -> (
+R = gaussianRing(G);
+return gaussianVanishingIdeal(R)
+);
+G = mixedGraph(digraph {{1,{2,3}},{2,{3}},{3,{4}}},bigraph {{3,4}});
+showBugPart1(G)
+restart
+needsPackage "GraphicalModels"
+showBugPart2 = (G) -> (
+R := gaussianRing(G);
+return gaussianVanishingIdeal(R)
+);
+G = mixedGraph(digraph {{1,{2,3}},{2,{3}},{3,{4}}},bigraph {{3,4}});
+showBugPart2(G)
+restart
+needsPackage "GraphicalModels"
+showBugPart3 = (G) -> (
+R := gaussianRing(G);
+use R;
+return gaussianVanishingIdeal(R)
+);
+G = mixedGraph(digraph {{1,{2,3}},{2,{3}},{3,{4}}},bigraph {{3,4}});
+showBugPart3(G)
+
+
+*}
+
+--Transcript
+
+Fordham-David-Swinarski:~ davids$ M2
+Macaulay2, version 1.6
+with packages: ConwayPolynomials, Elimination, IntegralClosure, LLLBases, PrimaryDecomposition, ReesAlgebra,
+               TangentCone
+
+i1 : needsPackage "GraphicalModels"
+
+o1 = GraphicalModels
+
+o1 : Package
+
+i2 : showBugPart1 = (G) -> (
+     R = gaussianRing(G);
+     return gaussianVanishingIdeal(R)
+     );
+
+i3 : G = mixedGraph(digraph {{1,{2,3}},{2,{3}},{3,{4}}},bigraph {{3,4}});
+
+i4 : showBugPart1(G)
+
+o4 = ideal(s   s    - s   s   )
+            1,4 2,3    1,3 2,4
+
+o4 : Ideal of R
+
+i5 : restart
+Macaulay2, version 1.6
+with packages: ConwayPolynomials, Elimination, IntegralClosure, LLLBases, PrimaryDecomposition, ReesAlgebra,
+               TangentCone
+
+i1 : needsPackage "GraphicalModels"
+
+o1 = GraphicalModels
+
+o1 : Package
+
+i2 : showBugPart2 = (G) -> (
+     R := gaussianRing(G);
+     return gaussianVanishingIdeal(R)
+     );
+
+i3 : G = mixedGraph(digraph {{1,{2,3}},{2,{3}},{3,{4}}},bigraph {{3,4}});
+
+i4 : showBugPart2(G)
+stdio:4:8:(3):[1]: error: no method found for applying promote to:
+     argument 1 :  s    (of class IndexedVariable)
+                    1,1
+     argument 2 :  QQ[l   , l   , l   , l   , p   , p   , p   , p   , p   , s .
+                       1,2   1,3   2,3   3,4   1,1   2,2   3,3   4,4   3,4   1.
+
+i5 : restart
+Macaulay2, version 1.6
+with packages: ConwayPolynomials, Elimination, IntegralClosure, LLLBases, PrimaryDecomposition, ReesAlgebra,
+               TangentCone
+
+i1 : needsPackage "GraphicalModels"
+
+o1 = GraphicalModels
+
+o1 : Package
+
+i2 : showBugPart3 = (G) -> (
+     R := gaussianRing(G);
+     use R;
+     return gaussianVanishingIdeal(R)
+     );
+
+i3 : G = mixedGraph(digraph {{1,{2,3}},{2,{3}},{3,{4}}},bigraph {{3,4}});
+
+i4 : showBugPart3(G)
+
+o4 = ideal(s   s    - s   s   )
+            1,4 2,3    1,3 2,4
+
+o4 : Ideal of QQ[l   , l   , l   , l   , p   , p   , p   , p   , p   , s   , s   , s   , s   , s   , s   , s   , s   , s   , s   ]
+                  1,2   1,3   2,3   3,4   1,1   2,2   3,3   4,4   3,4   1,1   1,2   1,3   1,4   2,2   2,3   2,4   3,3   3,4   4,4
