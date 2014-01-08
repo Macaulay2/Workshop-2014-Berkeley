@@ -1358,6 +1358,21 @@ tauAOverPEMinus1QGorAmb = (Sk, Jk, hk, ek, fm, a1, e1) -> (
      Iasc*ideal(fm^k2)
 )
 
+tauAOverPEMinus1QGorAmbNew = (Sk, Jk, hk, ek, fm, a1, e1) -> (
+     pp := char Sk;
+     et := lcm(ek, e1);
+     
+     ak1 = numerator ((pp^et - 1)/(pp^ek - 1)); --an exponent for hk
+     a3 := numerator (a1*(pp^et - 1)/(pp^e1 - 1)); --we need to use a common e for both the 
+                                               --index of R and of our divisor.
+                                               
+	a2 := a3 % (pp^et - 1);
+     k2 := a3 // (pp^et - 1); --it seems faster to use the fact 
+                      
+                                               
+--     Iasc := ascendIdealSafeList(Jk*ideal(fm)^(ceiling(a1/(pp^e1 - 1))), 
+)
+
 
 --Computes the test ideal of (Rk, fk^t1).  Here we assume the index of the canonical
 --divides (p^ek - 1)
