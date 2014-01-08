@@ -16,7 +16,7 @@ newPackage("NCAlgebraV2",
      DebuggingMode => true
      )
 
-export {subQuotientAsCokernel,identityMap,NCChainComplex}
+export {subQuotientAsCokernel,homologyAsCokernel,identityMap,NCChainComplex}
 
 needsPackage "NCAlgebra"
 
@@ -27,6 +27,17 @@ subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
    kerL := rightKernelBergman(L);
    rowsMN := #(M.source);
    kerL^(toList(0..(rowsMN-1)))
+)
+
+homologyAsCokernel = method()
+homologyAsCokernel(NCMatrix,NCMatrix) := opts -> (M,N) -> (
+    if M*N != 0 then return "Error: maps do not compose to zero"
+    else (
+    B := N.ring;
+    Z := Z = zeroMap((N.target),(N.source),B);
+    kerM := rightKernelBergman(M);
+    subQuotientAsCokernel(kerM,N)
+    )
 )
 
 --NCMatrix ** Matrix := 
@@ -101,6 +112,22 @@ L = ncMatrix {{x^2,x*z,y}};
 Lres = res L
 betti Lres
 rightKernelBergman(Lres#2)
+///
+
+-- Twist --     
+NCMatrix Array := (M,n) -> (
+    if #n != 1 then return "Error: Please enter a single integer" else
+    M**(assignDegrees(ncMatrix {{promote(1,M.ring)}},{-1*n#0},{-1*n#0}))
+    )
+
+TEST ///
+restart
+needsPackage "NCAlgebraV2"
+needsPackage "NCAlgebra"
+B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
+M = ncMatrix {{x,y,z}}
+M[1]
+(M[1]).source
 ///
 
 
