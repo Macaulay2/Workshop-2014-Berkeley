@@ -10,7 +10,8 @@ makePAdicField:=(R,p)->(
    A := new PAdicField from {(symbol baseRing) => R,
                             (symbol uniformizingParameter) => p};
    precision A := a->a#"precision";
-   valuation A := a->min a#"expansion"_0;
+   valuation A := a->(if #a#"expansion">0 then return min a#"expansion"_0;
+	infinity);
    relativePrecision A:= a -> (precision a)-(valuation a);
    net A := a->(expans:=a#"expansion";
 	keylist:=expans_0;
@@ -93,6 +94,31 @@ makePAdicField:=(R,p)->(
 	newValues = toList deepSplice newValues;
 	computeCarryingOver(newKeys,newValues,newPrecision)
 	);
+   A * A := (a,b)->(
+	newPrecision := min(precision a+min(precision b,valuation b),
+	     precision b+min(precision a,valuation a));
+	aKeys := a#"expansion"_0;
+	aValues := a#"expansion"_1;
+	bKeys := b#"expansion"_0;
+	bValues := b#"expansion"_1;
+	prod := new MutableHashTable;
+	for i in 0..#aKeys-1 do (
+	     for j in 0..#bKeys-1 do (
+		  newKey := aKeys#i+bKeys#j;
+		  if newKey<newPrecision then (
+		       newValue := aValues#i*bValues#j;
+		       if prod#?newKey then (
+			    prod#newKey = prod#newKey + newValue;
+			    ) else (
+			    prod#newKey = newValue;
+			    );
+		       );
+		  );
+	     );
+	newKeys := sort keys prod;
+	newValues := for i in newKeys list prod#i;
+	computeCarryingOver(newKeys,newValues,newPrecision)
+	);
      A 
 )
 
@@ -112,7 +138,9 @@ toPAdicFieldElement = method()
 
 toPAdicFieldElement (List,PAdicField) := (L,S) -> (
    n:=#L;
-   expans:=entries transpose matrix select(apply(n,i->{i,L_i}),j->not j_1==0);
+   local expans;
+   if all(L,i->i==0) then expans={{},{}}    
+   else expans=entries transpose matrix select(apply(n,i->{i,L_i}),j->not j_1==0);
    new S from {"precision"=>n,"expansion"=>expans}
    )
 
@@ -123,14 +151,20 @@ end
 restart
 load "/Users/qingchun/Desktop/M2Berkeley/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
 Q3 = pAdicField(3)
-x = new Q3 from {"precision"=>5,"expansion"=>{{1,2,4},{1,2,1}}};
-x+x
+x = toPAdicFieldElement({1,2,0,1,0},Q3);
+y = new Q3 from {"precision"=>3,"expansion"=>{{},{}}};
+print(x+x)
+print(x*x)
+print(x+y)
+print(x*y)
+print(y*y)
 end
 
 ----------------------------
 --Nathan's testing area
 ----------------------------
 restart
+load "pAdic.m2"
 load "~/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
 Q3=pAdicField(3)
 

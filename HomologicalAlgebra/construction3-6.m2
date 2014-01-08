@@ -54,6 +54,22 @@ augmentChainComplex (ChainComplex) := Q -> (
      augQ
 )
 
+-- this example is making no sense
+-- The map created by hand composes just fine,
+-- but the map created using the resolution won't compose
+R = QQ[x]/ideal(x^3)
+M = coker matrix {{x^2}}
+C_1 = map(M,R^1,id_(R^1)) --I thought this should be -id_(R^1), but when I recreated
+--the resolution the map was positive
+A = map(M,M,matrix{{x}})
+D = resolution M
+D' = augmentChainComplex(D)
+A*C_1 -- this composes
+A*(D'.dd_0) -- this doesn't compose
+C_1 == D'.dd_0 -- this returns true
+C_1 === D'.dd_0 --this returns false
+
+
 
 R = QQ[x,y,z]
 M = coker matrix {{x*y*z}}
@@ -76,6 +92,8 @@ R = QQ[x]/ideal(x^3)
 M = coker matrix {{x^2}}
 C = resolution M
 A = map(M,M,matrix{{x}})
+C' = augmentChainComplex(C)[-1]
+target A == C'_0 and source A == C'_0
 liftModuleMap(C,C,A)
 P = C
 Q = C
