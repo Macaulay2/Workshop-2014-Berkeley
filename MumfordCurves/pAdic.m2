@@ -6,9 +6,10 @@ new PAdicField from List := (PAdicField, inits) -> new PAdicField of PAdicFieldE
 valuation = method()
 relativePrecision = method()
 
-makePAdicField:=(R,p)->(
-   A := new PAdicField from {(symbol baseRing) => R,
-                            (symbol uniformizingParameter) => p};
+pAdicField = method()
+pAdicField ZZ:=(p)->(
+   R := ZZ;
+   A := new PAdicField from {(symbol prime) => p};
    precision A := a->a#"precision";
    valuation A := a->(if #a#"expansion">0 then return min a#"expansion"_0;
 	infinity);
@@ -122,10 +123,12 @@ makePAdicField:=(R,p)->(
      A 
 )
 
-pAdicField = method()
-pAdicField(Ring,RingElement):=(R,p)->makePAdicField(R,p)
-pAdicField(Ring,ZZ):=(R,p)->makePAdicField(R,p)
-pAdicField(ZZ):=(p)->makePAdicField(ZZ,p)
+
+
+QQQ=new ScriptedFunctor
+QQQ#subscript=i->(pAdicField i)
+
+
 
 -- PAdicField Elements are hashtables with following keys:
 -- precision (value ZZ)
@@ -165,11 +168,16 @@ end
 ----------------------------
 restart
 load "pAdic.m2"
-load "~/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
-Q3=pAdicField(3)
 
+Q3=QQQ_3
+ZZ[x]===ZZ[x]
+QQQ_3===QQQ_3
+ZZ===ZZ
+(QQQ_3)===Q3
 x=toPAdicFieldElement({0,1,0,0,1,0},Q3)
+x=toPAdicFieldElement({0,0,0,0,0,0},Q3)
 
+valuation x
 precision x
 relativePrecision x
 valuation x

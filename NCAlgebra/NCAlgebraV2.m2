@@ -178,7 +178,7 @@ zeroMapEnt = entries zeroMap
 d = 2
 K = K1|K2
 H = (K3 | zeroMap) || (K4 | K5)
-H = K3 || K4   -- do this if Nsyz == 0
+--H = K3 || K4   -- do this if Nsyz == 0
 K.source
 H.target
 K1' = matrix apply(#(K1.target), i -> apply(#(K1.source), j -> 
@@ -195,15 +195,14 @@ zeroMap' = matrix apply(#(zeroMap.target), i -> apply(#(zeroMap.source), j ->
 	   rightMultiplicationMap(-zeroMapEnt#i#j, d - (zeroMap.source)#j, d - (zeroMap.target)#i)))
 K' = K1'|K2'
 H' = matrix {{K3',zeroMap'},{K4',K5'}}
-H' = matrix {{K3'},{K4'}}  -- do this if Nsyz == 0
+--H' = matrix {{K3'},{K4'}}  -- do this if Nsyz == 0
 myHom = prune ((ker K') / (image H'))
 homGens = mingens image(gens image myHom.cache.pruningMap)^(toList(0..(numgens source K1' - 1)))
 basisMatr = fold(apply(#(K1.source), i -> basis(d-(K1.source)#i,B)), (a,b) -> a ++ b)
 flattenedMatrs = basisMatr * homGens
-apply(apply(#(flattenedMatrs.source), i -> flatten entries flattenedMatrs_{i}), L -> transpose ncMatrix pack(#(N.target),L))
+apply(apply(#(flattenedMatrs.source), i -> flatten entries flattenedMatrs_{i}), L -> ncMatrix pack(#(N.target),L))
 applyTable(entries K1, e -> leftMultiplicationMap(e,2))
 K = K1 | -K2
-
 kerK = rightKernelBergman K
 ///
 
