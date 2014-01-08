@@ -72,7 +72,11 @@ construction (ZZ, Module) := (g, M) -> (
      --Jason's portion
      
      --Kat's portion
-     
+     for i from g+1 to max(g+2,n) do (
+	  cRes.source.dd_i=P.dd_i
+	  cRes.target.dd_i=P.dd_i
+	  cRes_i=id_(P_i)
+	  )
      
      
 restart     
