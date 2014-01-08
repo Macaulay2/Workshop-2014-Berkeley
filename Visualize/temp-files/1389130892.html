@@ -4,8 +4,7 @@
         <meta charset="utf-8">
         <title>M2 -- visGraph</title>
         <script type = "text/javascript">
-            dataData = visArray;
-            curView = "2d";
+            dataData = [[0, 1, 0, 1, 1, 0], [1, 0, 0, 1, 0, 0], [0, 0, 0, 1, 0, 0], [1, 1, 1, 0, 0, 0], [1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]];
         </script>
         <script type="text/javascript" src="js/d3.v3.js"></script>
         <script src="js/three.min.js"></script>
@@ -22,9 +21,10 @@
             #tdToggle
             {
             color:#0000FF;
+
             vertical-align: middle;
             position:relative;
-            left:15%;
+            left:0px;
             top:0px;
             z-index:1;
             }
@@ -41,7 +41,7 @@
             color:#0000FF;
             vertical-align: middle;
             position:relative;
-            left:40%;
+            left:200px;
             top:0px;
             z-index:1;
             }
@@ -58,7 +58,7 @@
             color:#0000FF;
             vertical-align: middle;
             position:relative;
-            left:65%;
+            left:400px;
             top:0px;
             z-index:1;
             }
@@ -91,7 +91,6 @@
             window.onload = function() {
                 var a = document.getElementById("tdToggle");
                 a.onclick = function() {
-
                     console.log("3d3d3d");
                 }
                 var b = document.getElementById("editToggle");
@@ -102,12 +101,8 @@
                 a.onclick = function() {
                     console.log("3d3d3d");
                 }
-
-                //start with 2d
                 generate2dGraph(dataData);
             }
-
-            window.addEventListener('resize', updateWindowSize2d, false);
         </script>
 
         <script type="text/javascript">
