@@ -19,8 +19,9 @@ Version => "0.1a", Date => "October 18th, 2013", Authors => {
 Headline => "A package for calculations in positive characteristic", DebuggingMode => true, Reload => true )
 export{
 	 "aPower",
----MK	 "ascendIdeal", 
----MK	 "ascendIdealSafe",
+	 "ascendIdeal", 
+	 "ascendIdealSafe",
+	 "ascendIdealSafeList",
 	 "basePExp",
   	 "basePExpMaxE",
   	 "BinomialCheck",
@@ -34,13 +35,16 @@ export{
   	 "estFPT",
      "ethRoot",
 ---     "ethRootSafe", 		MK
-	"ethRootSafeList",
 ---     "fancyEthRoot",		MK
      "fastExp",
+     "findGeneratingMorphisms",     --MK
+     "findHSLloci",                 --MK
      "findTestElementAmbient",
      "FinalCheck",
 	"findAllCompatibleIdeals", 	--- MK
      "findQGorGen",
+     "finduOfIdeal",
+     "canonicalIdeal",
      "firstCarry", 
      "FPTApproxList",     
      "frobeniusPower",
@@ -57,20 +61,25 @@ export{
 	"minimalCompatible",		--- MK
 ---	"Mstar",			--- MK
      "MultiThread",
+    "nonFInjectiveLocus",   --MK
      "nu",
      "nuList",
      "NuCheck",
      "Origin",
      "OutputRange",
+     "paraTestModule",
+     "paraTestModuleAmbiet",
      "sigmaAOverPEMinus1Poly", 
-     "sigmaQGorAmb", 
-     "sigmaAOverPEMinus1QGor",      
+     "sigmaQGorAmb", --needs optimization
+     "sigmaAOverPEMinus1QGor",      --needs optimization
      "tauPoly",
      "tauAOverPEMinus1Poly",
-     "tauGor",
-     "tauGorAmb",
-     "tauQGor",
-     "tauQGorAmb",
+     "tauAOverPEMinus1QGorAmbNew", --debug by Karl, should be removed eventually
+     "tauAOverPEMinus1QGorAmb", --debug by Karl, should be removed eventually
+     "tauGor",--needs optimization
+     "tauGorAmb",--needs optimization
+     "tauQGor",--needs optimization
+     "tauQGorAmb",--needs optimization
      "truncation",
      "truncationBaseP"
 }
@@ -231,35 +240,33 @@ findNumberBetween = (myInterv, maxDenom)->(
 --Computes the non-terminating base p expansion of an integer
 basePExp = (N,p) ->
 (
-e:=1; while p^e<=N do e = e+1;
-e = e-1;
-E:=new MutableList;
-a:=1; while e>=0 do 
-(
-     while a*p^e<=N do a=a+1;
-     E#e = a-1;
-     N = N - (a-1)*p^e;
-     a=1;
-     e=e-1;
-);
-new List from E
+    if N==0 then return {0};
+    e:= floor(log_p N);
+    E:=new MutableList;
+    scan(0..e,i-> 
+    	(
+     	    a := N//p^(e-i);
+     	    E#(e-i) = a;
+     	    N = N - (a)*p^(e-i);
+    	)
+    );
+    new List from E
 )
 
 --Computes the non-terminating base p expansion of an integer 
 --from digits zero to e-1 (little-endian first)
 basePExpMaxE = (N,p,e1) ->
 (
-e:=e1-1;
-E:=new MutableList;
-a:=1; while e>=0 do 
-(
-     while a*p^e<=N do a=a+1;
-     E#e = a-1;
-     N = N - (a-1)*p^e;
-     a=1;
-     e=e-1;
-);
-new List from E
+    e:=e1-1;
+    E:=new MutableList;
+    scan(0..e,i-> 
+    	(
+     	    a := N//p^(e-i);
+     	    E#(e-i) = a;
+     	    N = N - (a)*p^(e-i);
+    	)
+    );
+    new List from E
 )
 
 --Computes powers of elements in char p>0, using that Frobenius
@@ -334,6 +341,23 @@ frobeniusPower(Ideal,ZZ) := (I1,e1) ->(
      answer
 );
 
+
+
+frobeniusPower(Matrix,ZZ) := (M,e) ->(
+R:=ring M;
+p:=char R;
+G:=entries M;
+local i;
+local j;
+L:={};
+apply(G, i->
+{
+	L=append(L,apply(i, j->j^(p^e)));
+});
+matrix L
+);
+
+
 -- This function computes the element in the ambient ring S of R=S/I such that
 -- I^{[p^e]}:I = (f) + I^{[p^e]}
 -- If there is no such unique element, the function returns zero
@@ -386,14 +410,11 @@ digit = (e, x, p) ->
      y
 )
 
---Gives the e-th truncation of the non-terminating base p expansion of x in [0,1] 
---as a fraction
-truncation = (e,x,p) -> 
-(
-     y:=0; 
-     for i from 1 to e do y = y + digit(i,x,p)/p^i;
-     y
-)
+--Gives the e-th truncation of the non-terminating base p expansion of a nonnegative 
+--rational x as a fraction
+truncation = method()
+
+truncation (ZZ,QQ,ZZ) := (e,x,p) -> (ceiling(p^e*x)-1)/p^e
 
 --Gives the first e digits of the non-terminating base p expansion of x in [0,1]
 --as a list
@@ -767,28 +788,28 @@ ethRootSafe = (f, I, a, e) -> (
 
 --This tries to compute (f1^a1*f2^a2*...fk^ak*I)^{[1/p^e]} in such a way that we don't blow exponent buffers.  It can be much faster as well.
 ethRootSafeList = (elmtList, I1, aList, e1) -> (
-	R1 := ring I1;
-	p1 := char R1;
-	
-	aListRem := apply(aList, z1 -> z1%(p1^e1) );
-	aListQuot := apply(aList, z1 -> floor(z1/p1^e1) );
-	
-	expOfaList := apply(aListRem, z1-> basePExpMaxE(z1, p1, e1) );
-	
-	aPowerList := apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#0));
-	
-	IN1 := I1*ideal(fold(times, aPowerList));
-	if (e1 > 0) then (
-		IN1 = ethRoot(IN1, 1);
-		i := 1;
-		while(i < e1) do (
-			aPowerList = apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#i));
-			IN1 = ethRoot( IN1*ideal(fold(times, aPowerList)), 1);
-			i = i + 1;
-		)
-	);
-	aPowerList = apply(elmtList, aListQuot, (f1, z1) -> f1^z1);
-	IN1*ideal(fold(times, aPowerList))
+	   R1 := ring I1;
+        p1 := char R1;
+        
+        aListRem := apply(aList, z1 -> z1%(p1^e1) );
+        aListQuot := apply(aList, z1 -> floor(z1/p1^e1) );
+        
+        expOfaList := apply(aListRem, z1-> basePExpMaxE(z1, p1, e1) );
+        
+        aPowerList := apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#0));
+        
+        IN1 := I1*ideal(fold(times, aPowerList));
+        if (e1 > 0) then (
+                IN1 = ethRoot(IN1, 1);
+                i := 1;
+                while(i < e1) do (
+                        aPowerList = apply(elmtList, expOfaList, (f1, z1) -> f1^(z1#i));
+                        IN1 = ethRoot( IN1*ideal(fold(times, aPowerList)), 1);
+                        i = i + 1;
+                )
+        );
+        aPowerList = apply(elmtList, aListQuot, (f1, z1) -> f1^z1);
+        IN1*ideal(fold(times, aPowerList))
 )
 
 ethRoot(RingElement, Ideal, ZZ, ZZ) := (f, I, a, e) -> ethRootSafe (f, I, a, e) ---MK
@@ -1193,6 +1214,26 @@ ascendIdealSafe = (Jk, hk, ak, ek) -> (
      trim IP
 )
 
+
+
+
+--works just like ascendIdealSafe but also handles lists of hk to powers...
+ascendIdealSafeList = (Jk, hkList, akList, ek) -> (
+	Sk := ring Jk;
+	pp := char Sk;
+	IN := Jk;
+	IP := ideal(0_Sk);
+	
+	--we ascend the ideal as above
+	while (isSubset(IN, IP) == false) do(
+		IP = IN;
+		IN = ethRootSafeList( hkList, IP, akList, ek) + IP
+	);
+	
+	--trim the output
+	trim IP
+)
+
 --MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
 -- minimalCompatible is a method which is implemented as:
 -- (1) the finding of the smallest ideal J which satisfies uJ\subset J^{[p^e]} 
@@ -1200,11 +1241,12 @@ ascendIdealSafe = (Jk, hk, ak, ek) -> (
 -- (2) the finding of the smallest submodule V of a free module which satisfies UV\subset V^{[p^e]} 
 --     containg a given submodule for a given matrix U.
 minimalCompatible = method();
-minimalCompatible(Ideal,ZZ,ZZ) :=  (Jk, hk, ek) -> ascendIdeal (Jk, hk, ek)
-minimalCompatible(Ideal,ZZ,ZZ,ZZ) :=  (Jk, hk, ak, ek) -> ascendIdeal (Jk, hk, ak, ek)
+minimalCompatible(Ideal,RingElement,ZZ) :=  (Jk, hk, ek) -> ascendIdeal (Jk, hk, ek)
+minimalCompatible(Ideal,RingElement,ZZ,ZZ) :=  (Jk, hk, ak, ek) -> ascendIdealSafe (Jk, hk, ak, ek)
 minimalCompatible(Matrix,Matrix,ZZ) := (A,U,e) -> Mstar (A,U,e)
 
 --MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
+
 
 --Finds a test element of a ring R = k[x, y, ...]/I (or at least an ideal 
 --containing a nonzero test element).  It views it as an element of the ambient ring
@@ -1259,7 +1301,7 @@ tauAOverPEMinus1Poly = (fm, a1, e1) -> (
 
 --Computes the test ideal of (R, f^t) when R 
 --is a polynomial ring over a perfect field.
-tauPoly = (fm, t1) -> (
+tauPolyOld = (fm, t1) -> (
      Rm := ring fm; 
      pp := char Rm;
      L1 := divideFraction(t1,pp); --this breaks up t1 into the pieces we need
@@ -1276,13 +1318,34 @@ tauPoly = (fm, t1) -> (
           ethRoot(I1, L1#1) else I1
 )
 
+--a slightly faster tauPoly
+tauPoly = (fm, t1) -> (
+     Rm := ring fm; 
+     pp := char Rm;
+     L1 := divideFraction(t1,pp); --this breaks up t1 into the pieces we need
+     local I1;
+     --first we compute tau(fm^{a/(p^c-1)})
+     if (L1#2 != 0) then (
+     	I1 = tauAOverPEMinus1Poly(fm,L1#0,L1#2);
+     	if (L1#1 != 0) then
+     		I1 = ethRoot(I1, L1#1)
+     	)
+     else (
+     	if (L1#1 != 0) then
+     		I1 = ethRootSafe(fm, ideal( sub(1, Rm)), L1#0, L1#1 )
+     	else
+ 	    		I1 = ideal(fm^(L1#0))
+ 	    	);
+     I1
+)
+
 --This is an internal function
 --It is used to compute the test ideals of pairs (R, fm^(a1/p^e1-1)) where
 --R = Sk/Ik.
 --Inputs are Jk, a nonzero ideal contained in the test ideal
 --hk, the multiple used to form phi of the ambient ring.  ek is the power associated with hk
 --a1 and e1 and fm are as above
-tauAOverPEMinus1QGorAmb = (Sk, Jk, hk, ek, fm, a1, e1) -> (
+tauAOverPEMinus1QGorAmbOld = (Sk, Jk, hk, ek, fm, a1, e1) -> (
      pp := char Sk;
      et := lcm(ek, e1);
      hk1 := (hk)^(numerator ((pp^et - 1)/(pp^ek - 1)));  
@@ -1301,6 +1364,25 @@ tauAOverPEMinus1QGorAmb = (Sk, Jk, hk, ek, fm, a1, e1) -> (
      Iasc*ideal(fm^k2)
 )
 
+tauAOverPEMinus1QGorAmb = (Sk, Jk, hk, ek, fm, a1, e1) -> (
+     pp := char Sk;
+     et := lcm(ek, e1);
+     
+     ak1 := numerator ((pp^et - 1)/(pp^ek - 1)); --an exponent for hk
+     a3 := numerator (a1*(pp^et - 1)/(pp^e1 - 1)); --we need to use a common e for both the 
+                                               --index of R and of our divisor.
+                                               
+	a2 := a3 % (pp^et - 1);
+     k2 := a3 // (pp^et - 1); --it seems faster to use the fact that we can do simple Skoda for tau
+                      
+        --          assert false;                             
+     Iasc := ascendIdealSafeList(Jk*ideal(fm)^(ceiling(a3/(pp^et - 1))), (fm, hk), (a2, numerator ((pp^et - 1)/(pp^ek - 1))), et);
+     
+--     assert false;
+     
+     Iasc*ideal(fm^k2)
+)
+
 
 --Computes the test ideal of (Rk, fk^t1).  Here we assume the index of the canonical
 --divides (p^ek - 1)
@@ -1315,44 +1397,64 @@ tauQGor = (Rk, ek, fk, t1) -> (
      I1 := ideal(0_Sk); I2 := ideal(0_Sk);
      fm := lift(fk, Sk); --we lift our f to the ambient polynomial ring
      a1 := L1#0; e1 := L1#2; pPow := L1#1; --t1 = a1 / (pp^pPow * (pp^e1 - 1))
+     
+     --before continuing, we need to rewrite a1 / (pp^pPow * (pp^e1 - 1)) as 
+     --                                      a3 / (pp^(n1*ek) * (pp^e1 - 1))
+     --the point is that ek needs to divide pPow
+     remain := pPow % ek;
+     dualRemain := ek - remain;
+     
+     pPow = pPow + dualRemain; --note in the end here, ek divides pPow
+     a3 := a1*pp^(dualRemain);
+     
+     if (e1 != 0) then assert (t1 == a3/((pp^e1-1)*pp^pPow) ) else assert (t1 == a3/(pp^pPow) );
+     
      d1 := pp^(pPow); if (e1 != 0) then d1 = d1*(pp^e1-1); --this is our denominator, used
                                                            --for simplifying computations
-     a2 := a1 % d1;
-     k2 := a1 // d1; --it seems faster to use the fact 
+     a2 := a3 % d1;
+     k2 := a3 // d1; --it seems faster to use the fact 
                               --that tau(f^(k+t)) = f^k*tau(f^t).  We'll toss on the multiple 
 			      --f^k at the end
-     
+	     			  
+     local I2;
      --first we compute tau(fk^{a2/(p^e1-1)})
-     if (e1 != 0) then 
-          I1 = tauAOverPEMinus1QGorAmb(Sk,Jk,hk,ek,fm,a2,e1)
+     if (e1 != 0) then (
+          I1 = tauAOverPEMinus1QGorAmb(Sk,Jk,hk,ek,fm,a2,e1);
+          if (pPow != 0) then (
+          	I2 = ethRootSafe(hk, I1, numerator((pp^pPow - 1)/(pp^ek - 1)), pPow)
+		)
+		else I2 = I1
+     )
      else (
-	  I1 = ideal(fm^(a2))*ascendIdeal(Jk, hk, ek)
-      );
- 
+	  	I1 = ascendIdeal(Jk, hk, ek);
+	  	if (pPow != 0) then (
+	  		I2 = ethRootSafeList( (hk, fm), I1, (numerator((pp^pPow - 1)/(pp^ek - 1)), a2), pPow)
+	  	)
+	  	else I2 = I1
+     );
+
      --now we compute the test ideal using a generalization of the fact that 
      --tau(fm^t)^{[1/p^b]} = tau(fm^(t/p^b))
-     --this follows from Schwede-Tucker.
-     if (pPow != 0) then (
+     --this follows from Schwede-Tucker or other places
           --we do a check to see if the indexes match well enough...
           --the problem is we can only take ek'th roots, but my t1 might be something like
           --1/p.  I fix that by acting as if t1 is p^(ek-1)/p^ek.  
           --We can take an ekth root of that.  Often, t1 = 1, so that will keep things easy.
-          remain := pPow % ek;
-          dualRemain := ek - remain;
-          if (remain != 0) then (
-               I1 = I1*ideal(fm^(pp^dualRemain) );
-     	       pPow = pPow + dualRemain;
-          ); --note in the end here, ek divides pPow.
+--          if (remain != 0) then (
+--               I1 = I1*ideal(fm^(pp^dualRemain) );
+--     	       pPow = pPow + dualRemain;
+--          ); --note in the end here, ek divides pPow.
  
           --I also need to adjust hk if it is different from pPow.
-          if (ek != pPow) then (
-	       hk = hk^(numerator ((pp^pPow - 1)/(pp^ek - 1)))	       
-	  ); --the division above makes sense because ek divides the modified pPow
- 
-          I2 = ethRoot(I1*ideal(hk), pPow) 
-     )
-     else --unless we don't have any p's in the denominator
-          I2 = I1;
+--	    	if (ek != pPow) then (
+--			hk = hk^(numerator ((pp^pPow - 1)/(pp^ek - 1)))	       
+--	  	); --the division above makes sense because ek divides the modified pPow
+assert false; 
+--          I2 = ethRoot(I1*ideal(hk), pPow) 
+--		I2 = ethRootSafe(hk, I1, numerator((pp^pPow - 1)/(pp^ek - 1)), pPow)
+--     )
+--     else --unless we don't have any p's in the denominator
+--        I2 = I1;
 	  
      sub(I2, Rk)*ideal(fk^k2)
 )
@@ -1387,9 +1489,9 @@ sigmaAOverPEMinus1Poly ={HSL=> false}>> o -> (fm, a1, e1) -> (
      
      --our initial value is something containing sigma.  This stops after finitely many steps.  
      while (IN != IP) do(
-	  IP = IN;
-	  IN = ethRootSafe(fm,IP,a2,e2); -- eR(ideal(fpow)*IP,e2);
-	  count = count + 1
+		IP = IN;
+	  	IN = ethRootSafe(fm,IP,a2,e2); -- eR(ideal(fpow)*IP,e2);
+	  	count = count + 1
      );
 
      --return the final ideal and the HSL number of this function
@@ -1445,7 +1547,7 @@ sigmaAOverPEMinus1QGor  ={HSL=> false}>> o -> (fk, a1, e1, gg) -> (
 
 ----------------------------------------------------------------
 --************************************************************--
---Functions for computing parameter test modules              --
+--Functions for computing parameter test modules and ideals   --
 --************************************************************--
 ----------------------------------------------------------------
 
@@ -1537,16 +1639,19 @@ paraTestModule = (fk, t1) -> ( --maintained by Karl
 		uPower = floor((pp^cc-1)/(pp-1));
 	firstTau := J1;
 	
+--	assert false;
 	if (cc != 0) then	
-		firstTau = ascendIdeal(J1*ideal(f1^(ceiling(t1))), f1^aa*u1^(uPower), cc)
+		firstTau = ascendIdealSafeList( J1*ideal(f1^(pp^bb*ceiling(t1))), (f1, u1), (aa, uPower), cc)		
+--		firstTau = ascendIdeal(J1*ideal(f1^(aa)), f1^aa*u1^(uPower), cc)
 		--I should write an ascendIdealSafe that works for multiple elements raised to powers...	
 	else 
-		firstTau = ascendIdeal(J1, u1^(uPower), 1)*ideal(f1^aa);
+--		firstTau = ascendIdeal(J1, u1^(uPower), 1)*ideal(f1^aa);
+		firstTau = ascendIdealSafe(J1, u1, uPower, 1);
 			
 	secondTau := firstTau;
 	if (bb != 0) then
-		secondTau = ethRoot(u1, firstTau, uPower, bb);
-		
+		secondTau = ethRootSafe(u1, firstTau, floor((pp^bb-1)/(pp-1)) , bb);
+
 	(sub(secondTau, R1), omegaAmb, u1)
 )
 
@@ -1842,6 +1947,114 @@ isFJumpingNumberPoly ={Verbose=> false}>> o -> (f1, t1) -> (
 
 	not (isSubset(mySigma, myTau))
 )
+
+
+
+--MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
+-- F-loci (HSL, nonFInjective, simple)
+
+-- Produce a sequence of maps Ext^i(R/I,R) ->  Ext^i(R/I^{[p]},R) induced
+-- by the surjections R/I^{[p]} -> R/I
+-- for i=1..pdim(coker I)
+-- The output consists of a sequence of pairs (A,B) where the induced maps are
+-- B: coker A -> coker A^{[p]}
+findGeneratingMorphisms = (I) ->
+(
+	local i;
+	Ip:=frobeniusPower(I,1);
+	M:=coker I;
+	Mp:=coker Ip;
+	resM:=res M;
+	resMp:=res Mp;
+	f:=inducedMap(M,Mp);
+	resf:=res f;
+	resLength:=length(resM);
+	answer:=();
+	apply(1..resLength, i->
+	{
+		G:=resf#i; G=transpose(G);
+		F1:=(resM.dd)_(i+1); F1=transpose(F1);
+		F0:=(resM.dd)_(i); F0=transpose(F0);
+		K:=ker F1;
+		C:=subquotient(gens K,F0);
+		C1:=prune(C);
+		h:=C1.cache.pruningMap;
+--
+		generatingMorphism0:=G*gens(K)*matrix(entries h);
+		F1p:=(resMp.dd)_(i+1); F1p=transpose(F1p);
+		F0p:=(resMp.dd)_(i); F0p=transpose(F0p);
+		Kp:=ker F1p; 
+		Cp:=subquotient(gens Kp,F0p);
+		C1p:=prune(Cp);
+		hp:=C1p.cache.pruningMap;
+--
+		A0:=gens(Kp)*matrix(entries hp); 
+		A:=A0| F0p;
+		gbA:=gb(A, ChangeMatrix => true) ;
+		B:=generatingMorphism0// A;
+--- Now generatingMorphism0=A*B
+		k:=rank source A0;
+		generatingMorphism:=submatrix(B,toList(0..(k-1)),);
+		answer=append(answer, (C1,generatingMorphism));
+---		print(generatingMorphism);
+	});
+answer
+)
+
+
+----------------------------------------------------------------------------------------
+--- Given an Artinian module with Frobenius action F whose Delta functor (=the Matlis dual
+--- which keeps track of the given Frobenius action) U: coker A -> coker A^{[p]}
+--- produce a sequence (I_0, I_1, ..., I_h) so that
+--- the locus of primes on which HSL(F)>h is V(I_h).
+--- I_h is always the unit ideal the "global HSL number" is h-1.
+--- Note that the "non-F-injective" locus is V(I_0), 
+----------------------------------------------------------------------------------------
+findHSLloci = (A,U0) ->
+(
+U:=U0;
+local M1;
+local M2;
+M2=id_(target A); M2=matrix entries M2;
+answer:=();
+f:=true;
+e:=1;
+while (f) do
+{
+	M1=M2;
+	M2=ethRoot(U,e) | A;
+	W:=subquotient(M1,M2);
+	locus:=annihilator W;
+	answer=append(answer,locus);
+	if (locus==1) then f=false;  --- is this Kosher?
+	e=e+1;
+	U=U*frobeniusPower(U,1);
+};
+answer
+)
+
+
+nonFInjectiveLocus = (I) ->
+(
+R:=ring(I);
+answer:=ideal(1_R);
+local t;
+generatingMorphisms:=findGeneratingMorphisms (I); 
+apply (generatingMorphisms, t->
+{
+	A:=relations ((t)#0);
+	if (A!=0) then
+	{
+		U:=(t)#1;
+		HSLLoci:=findHSLloci(A,U);
+		answer=intersect(answer,HSLLoci#0);
+	};	
+});
+answer
+)
+
+
+--MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
 
 --****************************************************--
 --*****************Documentation**********************--
