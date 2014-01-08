@@ -1986,7 +1986,7 @@ findHSLloci = (A,U0) ->
 U:=U0;
 local M1;
 local M2;
-M2:=id_(target A); M2=matrix entries M2;
+M2=id_(target A); M2=matrix entries M2;
 answer:=();
 f:=true;
 e:=1;
