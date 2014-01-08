@@ -193,7 +193,7 @@ restart
 loadPackage"Graphs"
 loadPackage"Visualize"
 
-G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}}Singletons => {x_5},EntryMode => "edges")
+G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5},EntryMode => "edges")
 visGraph G
 
 R = QQ[x,y,z]
@@ -205,6 +205,19 @@ S = QQ[x,y]
 I = ideal"x4,xy3,y50"
 visIdeal I
 visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
+
+
+copyJS = method()
+copyJS(String) := dst -> (
+    
+    dst = dst|"js/";
+    
+    copyDirectory(getCurrPath()|"/temp-files/js/",dst);
+    
+    return "Created directory "|dst;
+)
+
+copyJS "/Users/bstone/Desktop/Test/"
 
 -----------------------------
 -----------------------------
