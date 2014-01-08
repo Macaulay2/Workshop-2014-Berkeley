@@ -49,6 +49,7 @@ construction (ZZ, Module) := (g, M) -> (
      G = omega(g, M);
      Gd = dual G;
      L = resolution(Gd, LengthLimit => max(g+2, n)); -- check that max works
+     Ld = dual L;
      P = resolution(M, LengthLimit => max(n,g+2));  -- ditto
      Pd = dual P;
      toLiftFirstFactor = map(image(Pd.dd_(-g+1)), omega(1-g, Pd), id_(Pd_(1-g)));  
@@ -61,7 +62,7 @@ construction (ZZ, Module) := (g, M) -> (
      Pt = truncateComplex(g, P);
      Ptd = dual Pt;
      Q = Ptd[-(g-1)];
-     extend(L, Q, kappa);
+     kappaLifted = extend(L, Q, kappa);
      w = map(G, P_g, id_(P_g));
      d = bidualitymap(G);
      lambda = map(HH_0(L), L_0, id_(L_0));
@@ -70,14 +71,29 @@ construction (ZZ, Module) := (g, M) -> (
      cRes = id_(resolution (ring M)^0);
      
      --Jason's portion
-     
+     for j from (g-1-max(g+2, n)) to g-1 do (
+	  cRes.target_j = P_j;
+	  cRes.target.dd_j = P.dd_j;
+	  cRes.source_j = Ld_(g-1-j);
+	  cRes.source.dd_j = Ld_(g-1-j);
+	  cRes_j = kappaLifted_(g-1-j);
+	  );     
      --Kat's portion
+     for i from g+1 to max(g+2,n) do (
+	  cRes.source.dd_i=P.dd_i
+	  cRes.target.dd_i=P.dd_i
+	  cRes_i=id_(P_i)
+	  )
      
+     --for portion in middle (i.e. the degree g part)
+     cRes.target.dd_g=P.dd_i
+     cRes.source.dd_g=lambdaDaul*d*w
+     cRes_g=id_(P_g)
      
      
 restart     
 R = QQ[x,y,z]
-C = resolution(R^0)
+C = resolution(R^1)
 K = id_C
 M = coker matrix {{x,y,z}}
 C = resolution M
