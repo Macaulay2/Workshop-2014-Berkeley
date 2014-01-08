@@ -58,7 +58,6 @@ isHomogeneous L
 M*L == 0
 L
 M
-
 T = rightKernelBergman(M) | L
 isHomogeneous T
 rightKernelBergman(T)
