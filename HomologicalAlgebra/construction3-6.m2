@@ -43,8 +43,9 @@ augmentChainComplex (ChainComplex) := Q -> (
      augQ := new ChainComplex;
      augQ.ring = Q.ring;
      N := coker Q.dd_1 ;
-     augQ.dd_1 = map(N, Q_1,id_(Q_1));
-     augQ.dd_0 = map(0*Q_0, N, 0*id_(Q_0));
+--     augQ.dd_1 = map(N, Q_1,id_(Q_1));
+     augQ.dd_(0) = map(N, Q_0,id_(Q_0));
+     augQ.dd_(-1) = map(0*cover(N), N, id_(cover M));
      for i from 2 to max Q do (
 	  augQ.dd_i = Q.dd_i
 	  );
