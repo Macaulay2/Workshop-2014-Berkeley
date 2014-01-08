@@ -194,6 +194,11 @@ loadPackage"Graphs"
 loadPackage"Visualize"
 
 G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5},EntryMode => "edges")
+adjacencyMatrix G
+H = new MutableHashTable from G
+peek H
+
+
 visGraph G
 
 R = QQ[x,y,z]
