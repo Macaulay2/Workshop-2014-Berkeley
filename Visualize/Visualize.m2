@@ -1,4 +1,4 @@
---------------------------------------------------------------------------
+---------------------------------------------------------------------------
 -- PURPOSE : Visualize package for Macaulay2 provides the ability to 
 -- visualize various algebraic objects in java script using a 
 -- modern browser.
@@ -95,7 +95,7 @@ visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
     	replace(visKey, visString , get visTemplate) << 
 	close;
                   
-    return show new URL from { "file://"|PATH };
+    return (show new URL from { "file://"|PATH }, fileName);
     )
 
 
@@ -106,6 +106,7 @@ visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
 visIdeal = method(Options => {Path => getCurrPath()|"/temp-files/", visTemplate => getCurrPath() |"/templates/visIdeal/visIdeal"})
 visIdeal(Ideal) := opts -> J -> (
     local R; local arrayList; local arrayString; local numVar; local visTemp;
+    local A;
     
     R = ring J;
     numVar = rank source vars R;
@@ -125,8 +126,10 @@ visIdeal(Ideal) := opts -> J -> (
     	arrayList = toArray arrayList;
     	arrayString = toString arrayList;
     );
-	
-    return visOutput( "visArray", arrayString, visTemp, Path => opts.Path );
+    
+    A = visOutput( "visArray", arrayString, visTemp, Path => opts.Path );
+    
+    return getCurrPath()|A_1;
     )
 
 --input: A graph
@@ -134,13 +137,15 @@ visIdeal(Ideal) := opts -> J -> (
 --
 visGraph = method(Options => {Path => getCurrPath()|"/temp-files/", visTemplate => getCurrPath() | "/templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
-    local A; local arrayList; local arrayString;
+    local A; local arrayList; local arrayString; local B;
     
     A = adjacencyMatrix G;
     arrayList = toArray entries A;
     arrayString = toString arrayList;
     
-    return visOutput( "visArray", arrayString, opts.visTemplate, Path => opts.Path );
+    B = visOutput( "visArray", arrayString, opts.visTemplate, Path => opts.Path );
+    
+    return getCurrPath()|B_1;
     )
 
 
@@ -188,7 +193,7 @@ restart
 loadPackage"Graphs"
 loadPackage"Visualize"
 
-G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
+G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}}Singletons => {x_5},EntryMode => "edges")
 visGraph G
 
 R = QQ[x,y,z]
@@ -209,20 +214,32 @@ visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
 
 
 restart
-loadPackage"Graphs"
 loadPackage"Visualize"
 
+-- Creates staircase diagram 
+-- 2 variables
+S = QQ[x,y]
+I = ideal"x4,xy3,y5"
+visIdeal I
+
+-- User can choose where to place files
+visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
+
+-- 3 variables
+R = QQ[x,y,z]
+J = ideal"x4,xyz3,yz2,xz3,z6,y5"
+visIdeal J
+visIdeal( J, Path => "/Users/bstone/Desktop/Test/")
+
+restart
+needsPackage"Graphs"
+loadPackage"Visualize"
+
+-- we are also focusing on graphs
 G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
+-- displayGraph A
 visGraph G
 
-R = QQ[x,y,z]
-I = ideal"x4,xyz3,yz,xz,z6,y5"
-visIdeal I
-visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
-
-S = QQ[x,y]
-I = ideal"x4,xy3,y50"
-visIdeal I
-visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
-
-
+M = 
+A = graph M
+visGraph A

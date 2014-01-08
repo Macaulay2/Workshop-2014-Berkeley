@@ -37,6 +37,8 @@ export{
 ---     "ethRootSafe", 		MK
 ---     "fancyEthRoot",		MK
      "fastExp",
+     "findGeneratingMorphisms",     --MK
+     "findHSLloci",                 --MK
      "findTestElementAmbient",
      "FinalCheck",
 	"findAllCompatibleIdeals", 	--- MK
@@ -59,6 +61,7 @@ export{
 	"minimalCompatible",		--- MK
 ---	"Mstar",			--- MK
      "MultiThread",
+    "nonFInjectiveLocus",   --MK
      "nu",
      "nuList",
      "NuCheck",
@@ -237,6 +240,7 @@ findNumberBetween = (myInterv, maxDenom)->(
 --Computes the non-terminating base p expansion of an integer
 basePExp = (N,p) ->
 (
+    if N==0 then return {0};
     e:= floor(log_p N);
     E:=new MutableList;
     scan(0..e,i-> 
@@ -1922,6 +1926,114 @@ isFJumpingNumberPoly ={Verbose=> false}>> o -> (f1, t1) -> (
 
 	not (isSubset(mySigma, myTau))
 )
+
+
+
+--MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
+-- F-loci (HSL, nonFInjective, simple)
+
+-- Produce a sequence of maps Ext^i(R/I,R) ->  Ext^i(R/I^{[p]},R) induced
+-- by the surjections R/I^{[p]} -> R/I
+-- for i=1..pdim(coker I)
+-- The output consists of a sequence of pairs (A,B) where the induced maps are
+-- B: coker A -> coker A^{[p]}
+findGeneratingMorphisms = (I) ->
+(
+	local i;
+	Ip:=frobeniusPower(I,1);
+	M:=coker I;
+	Mp:=coker Ip;
+	resM:=res M;
+	resMp:=res Mp;
+	f:=inducedMap(M,Mp);
+	resf:=res f;
+	resLength:=length(resM);
+	answer:=();
+	apply(1..resLength, i->
+	{
+		G:=resf#i; G=transpose(G);
+		F1:=(resM.dd)_(i+1); F1=transpose(F1);
+		F0:=(resM.dd)_(i); F0=transpose(F0);
+		K:=ker F1;
+		C:=subquotient(gens K,F0);
+		C1:=prune(C);
+		h:=C1.cache.pruningMap;
+--
+		generatingMorphism0:=G*gens(K)*matrix(entries h);
+		F1p:=(resMp.dd)_(i+1); F1p=transpose(F1p);
+		F0p:=(resMp.dd)_(i); F0p=transpose(F0p);
+		Kp:=ker F1p; 
+		Cp:=subquotient(gens Kp,F0p);
+		C1p:=prune(Cp);
+		hp:=C1p.cache.pruningMap;
+--
+		A0:=gens(Kp)*matrix(entries hp); 
+		A:=A0| F0p;
+		gbA:=gb(A, ChangeMatrix => true) ;
+		B:=generatingMorphism0// A;
+--- Now generatingMorphism0=A*B
+		k:=rank source A0;
+		generatingMorphism:=submatrix(B,toList(0..(k-1)),);
+		answer=append(answer, (C1,generatingMorphism));
+---		print(generatingMorphism);
+	});
+answer
+)
+
+
+----------------------------------------------------------------------------------------
+--- Given an Artinian module with Frobenius action F whose Delta functor (=the Matlis dual
+--- which keeps track of the given Frobenius action) U: coker A -> coker A^{[p]}
+--- produce a sequence (I_0, I_1, ..., I_h) so that
+--- the locus of primes on which HSL(F)>h is V(I_h).
+--- I_h is always the unit ideal the "global HSL number" is h-1.
+--- Note that the "non-F-injective" locus is V(I_0), 
+----------------------------------------------------------------------------------------
+findHSLloci = (A,U0) ->
+(
+U:=U0;
+local M1;
+local M2;
+M2=id_(target A); M2=matrix entries M2;
+answer:=();
+f:=true;
+e:=1;
+while (f) do
+{
+	M1=M2;
+	M2=ethRoot(U,e) | A;
+	W:=subquotient(M1,M2);
+	locus:=annihilator W;
+	answer=append(answer,locus);
+	if (locus==1) then f=false;  --- is this Kosher?
+	e=e+1;
+	U=U*frobeniusPower(U,1);
+};
+answer
+)
+
+
+nonFInjectiveLocus = (I) ->
+(
+R:=ring(I);
+answer:=ideal(1_R);
+local t;
+generatingMorphisms:=findGeneratingMorphisms (I); 
+apply (generatingMorphisms, t->
+{
+	A:=relations ((t)#0);
+	if (A!=0) then
+	{
+		U:=(t)#1;
+		HSLLoci:=findHSLloci(A,U);
+		answer=intersect(answer,HSLLoci#0);
+	};	
+});
+answer
+)
+
+
+--MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
 
 --****************************************************--
 --*****************Documentation**********************--

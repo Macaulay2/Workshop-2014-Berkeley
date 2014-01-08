@@ -18,7 +18,7 @@ restart
 needsPackage "SpectralSequences"
 needs "~/Desktop/Workshop-2014-Berkeley/HomologicalAlgebra/SpectralSequences/SS-demo/Hopf-Preload.m2";
 K = filteredComplex({S3,F1S3,F0S3}, ReducedHomology => false);
--- the filtered complex K above arises from a combinatorial 
+-- the filtered complex K above arises from a simplicial 
 -- realization of the hopf fibration SS^1 --> SS^3 --> SS^2
 E = prune spectralSequence K		    
 E^0		    
@@ -33,7 +33,7 @@ prune HH K_infinity
 --
 -- Example 2 --
 -----------------------------------------------------------------
--- Examples pretaining to g^1_3's on a general curve of genus 4. 
+-- Examples related to g^1_3's on a general curve of genus 4. 
 -----------------------------------------------------------------
 -- An example related to g^1_3s on a canoncially embedded genus 4 curve 
 -- C \subseteq X := PP^1 x PP^1
@@ -50,7 +50,7 @@ needsPackage"SpectralSequences"
 		 B = B_*/(x -> x^5)//ideal ; -- Sufficentily high Frobenius power 
 		 G = res image gens B ;
 	  	 I = ideal random(R^1, R^{{-3,-3}}) ; -- ideal of C
-		 F = res comodule I 
+		 F = res comodule I ;
 		 K = Hom(G , filteredComplex (F ** R^{{1,0}})) ; -- Twist F by a line of ruling and make filtered complex whose ss abuts to HH OO_C(1,0) 
 		 E = prune spectralSequence K ; --the spectral sequence degenerates on the second page 
 		 E^1 
@@ -74,6 +74,9 @@ needsPackage"SpectralSequences"
 	       E^2
 	       E^3
 	       E^3 .dd
+	       E^3 .dd_{-1,2}
+    	       source E^3 .dd_{-1,2}	
+    	       target E^3 .dd_{-1,2}
 	       E^4
 	       E^4 .dd
     	       E^infinity
