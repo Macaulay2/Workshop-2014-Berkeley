@@ -18,9 +18,7 @@ newPackage("NCAlgebraV2",
 
 export {subQuotientAsCokernel,homologyAsCokernel,identityMap,NCChainComplex}
 
-
 needsPackage "NCAlgebra"
-
 
 subQuotientAsCokernel = method()
 subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
@@ -63,17 +61,6 @@ NCMatrix ++ NCMatrix := (M,N) -> (
    ds := ncMatrix {{M,urZero},{lrZero,N}};
    assignDegrees(ds,M.target | N.target, M.source | N.source)
 )
-
-Hom (NCMatrix,NCMatrix,ZZ) := (M,N,d) -> (
-   R := coefficientRing ring M;
-   sourceM := M.source;
-   sourceN := N.source;
-   targetM := M.target;
-   targetN := N.target;
-   error "err";
-   R
-)
-
 
 -------------------------------------------
 --- NCChainComplex Methods ----------------
@@ -162,6 +149,51 @@ zeroMap (List, List, NCRing) := (tar,src,B) -> (
    myZero
 )
 
+Hom (NCMatrix,NCMatrix,ZZ) := (M,N,d) -> (
+   B := ring M;
+   Nsyz := rightKernelBergman N;  -- be careful if Nsyz is zero!
+   L1 := identityMap(N.target,B);
+   K1 := L1 ** (transpose M);
+   L2 := identityMap(M.source,B);
+   L3 := identityMap(M.target,B);
+   L4 := identityMap(N.source,B);
+   K2 := N ** (transpose L2);
+   K3 := N ** (transpose L3);
+   K4 := L4 ** (transpose M);
+   K5 := Nsyz ** (transpose L2);
+   myZeroMap := zeroMap(K3.target,K5.source,B);
+   K1ent := entries K1;
+   K2ent := entries K2;
+   K3ent := entries K3;
+   K4ent := entries K4;
+   K5ent := entries K5;
+   myZeroMapEnt := entries myZeroMap;
+   --K := K1|K2;
+   --H := (K3 | myZeroMap) || (K4 | K5);
+   --H = K3 || K4   -- do this if Nsyz == 0
+   K1' := matrix apply(#(K1.target), i -> apply(#(K1.source), j -> 
+	leftMultiplicationMap(K1ent#i#j, d - (K1.source)#j, d - (K1.target)#i)));
+   K2' := matrix apply(#(K2.target), i -> apply(#(K2.source), j -> 
+	rightMultiplicationMap(-K2ent#i#j, d - (K2.source)#j, d - (K2.target)#i)));
+   K3' := matrix apply(#(K3.target), i -> apply(#(K3.source), j -> 
+	rightMultiplicationMap(-K3ent#i#j, d - (K3.source)#j, d - (K3.target)#i)));
+   K4' := matrix apply(#(K4.target), i -> apply(#(K4.source), j -> 
+	leftMultiplicationMap(-K4ent#i#j, d - (K4.source)#j, d - (K4.target)#i)));
+   K5' := matrix apply(#(K5.target), i -> apply(#(K5.source), j -> 
+	rightMultiplicationMap(-K5ent#i#j, d - (K5.source)#j, d - (K5.target)#i)));
+   myZeroMap' := matrix apply(#(myZeroMap.target), i -> apply(#(myZeroMap.source), j -> 
+   	   rightMultiplicationMap(-myZeroMapEnt#i#j, d - (myZeroMap.source)#j, d - (myZeroMap.target)#i)));
+   K' := K1'|K2';
+   H' := matrix {{K3',myZeroMap'},{K4',K5'}};
+   --H' = matrix {{K3'},{K4'}}  -- do this if Nsyz == 0
+   myHom := prune ((ker K') / (image H'));
+   homGens := mingens image(gens image myHom.cache.pruningMap)^(toList(0..(numgens source K1' - 1)));
+   basisMatr := fold(apply(#(K1.source), i -> basis(d-(K1.source)#i,B)), (a,b) -> a ++ b);
+   flattenedMatrs := basisMatr * homGens;
+   retVal := apply(apply(#(flattenedMatrs.source), i -> flatten entries flattenedMatrs_{i}), L -> ncMatrix pack(#(N.target),L));
+   retVal
+)
+
 TEST ///
 restart
 needsPackage "NCAlgebraV2"
@@ -170,7 +202,9 @@ B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
 M = ncMatrix {{x,y}}
 N = ncMatrix {{x^2,y^2}}
 subQuotientAsCokernel(M,N)
+///
 
+TEST ///
 restart
 needsPackage "NCAlgebraV2"
 needsPackage "NCAlgebra"
@@ -178,59 +212,7 @@ B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
 R = coefficientRing B
 M = ncMatrix {{x,y,0},{0,y,z}}
 N = ncMatrix {{x,y},{x,y}}
-Nsyz = rightKernelBergman N  -- be careful if Nsyz is zero!
-L1 = identityMap(N.target,B)
-K1 = L1 ** (transpose M)
-L2 = identityMap(M.source,B)
-L3 = identityMap(M.target,B)
-L4 = identityMap(N.source,B)
-K2 = N ** (transpose L2)
-K3 = N ** (transpose L3)
-K4 = L4 ** (transpose M)
-K5 = Nsyz ** (transpose L2)
-zeroMap = ncMatrix applyTable(entries map(R^#(K3.target),R^#(K5.source),0), e -> promote(e,B))
-assignDegrees(zeroMap, K3.target, K5.source)
-K1
-K1.source
-K1.target
-K2
-K2.source
-K2.target
-K1ent = entries K1
-K2ent = entries K2
-K3ent = entries K3
-K4ent = entries K4
-K5ent = entries K5
-zeroMapEnt = entries zeroMap
-d = 2
-K = K1|K2
-H = (K3 | zeroMap) || (K4 | K5)
---H = K3 || K4   -- do this if Nsyz == 0
-K.source
-H.target
-K1' = matrix apply(#(K1.target), i -> apply(#(K1.source), j -> 
-	leftMultiplicationMap(K1ent#i#j, d - (K1.source)#j, d - (K1.target)#i)))
-K2' = matrix apply(#(K2.target), i -> apply(#(K2.source), j -> 
-	rightMultiplicationMap(-K2ent#i#j, d - (K2.source)#j, d - (K2.target)#i)))
-K3' = matrix apply(#(K3.target), i -> apply(#(K3.source), j -> 
-	rightMultiplicationMap(-K3ent#i#j, d - (K3.source)#j, d - (K3.target)#i)))
-K4' = matrix apply(#(K4.target), i -> apply(#(K4.source), j -> 
-	leftMultiplicationMap(-K4ent#i#j, d - (K4.source)#j, d - (K4.target)#i)))
-K5' = matrix apply(#(K5.target), i -> apply(#(K5.source), j -> 
-	rightMultiplicationMap(-K5ent#i#j, d - (K5.source)#j, d - (K5.target)#i)))
-zeroMap' = matrix apply(#(zeroMap.target), i -> apply(#(zeroMap.source), j -> 
-	   rightMultiplicationMap(-zeroMapEnt#i#j, d - (zeroMap.source)#j, d - (zeroMap.target)#i)))
-K' = K1'|K2'
-H' = matrix {{K3',zeroMap'},{K4',K5'}}
---H' = matrix {{K3'},{K4'}}  -- do this if Nsyz == 0
-myHom = prune ((ker K') / (image H'))
-homGens = mingens image(gens image myHom.cache.pruningMap)^(toList(0..(numgens source K1' - 1)))
-basisMatr = fold(apply(#(K1.source), i -> basis(d-(K1.source)#i,B)), (a,b) -> a ++ b)
-flattenedMatrs = basisMatr * homGens
-apply(apply(#(flattenedMatrs.source), i -> flatten entries flattenedMatrs_{i}), L -> ncMatrix pack(#(N.target),L))
-applyTable(entries K1, e -> leftMultiplicationMap(e,2))
-K = K1 | -K2
-kerK = rightKernelBergman K
+Hom(M,N,2)
 ///
 
 end

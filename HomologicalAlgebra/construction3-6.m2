@@ -52,8 +52,8 @@ augmentChainComplex (Module) := opts -> M -> (
 -- but the map created using the resolution won't compose
 R = QQ[x]/ideal(x^3)
 M = coker matrix {{x^2}}
-C_1 = map(M,R^1,id_(R^1)) --I thought this should be -id_(R^1), but when I recreated
---the resolution the map was positive
+C_1 = map(M,R^1,id_(R^1)) -- check this against the resolution map
+-- at least once the resolution gave that this should be -id_(R^1)
 A = map(M,M,matrix{{x}})
 D = resolution M
 D' = augmentChainComplex(D)
