@@ -153,3 +153,17 @@ jacobian f
 help jacobian
 diff(y,f)
 help diff
+
+--------------------------------
+--Ralph's finding inverses area
+--------------------------------
+
+--Let's say we want to find the inverse of a=a_0+a_1*p+a_2*p^2+... up to the 6th p-adic place.
+--In this example we'll take p=7.  It's a coincidence that p=7 and we're taking i<7, since
+--i goes up desired precision +1, which happens to be 6+1=7.
+ R=ZZ; p=7; a_0=6; a_1=0; a_2=3; a_3=1; a_4=1; a_5=5; a_6=5; S=R/p;
+i=1; b_0=(sub(1/sub(a_0,S),R)+p)%p; s_0=-1; 
+while i<7 do(s_i=s_(i-1)+sum(0..i-1, j-> a_j*b_(i-1-j))*p^(i-1);
+b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->a_j*b_(i-j)),S)/sub(a_0,S),R)+p)%p;i=i+1)
+
+--Running the code computes b_0, b_1,..., which gives a^-1=b=b_0+b_1*p+b_2*p^2+...
