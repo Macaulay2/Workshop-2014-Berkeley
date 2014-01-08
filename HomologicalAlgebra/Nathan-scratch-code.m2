@@ -167,3 +167,62 @@ I = coker vars A
 C = res I
 C_0
 inducedMap(I, C_0, id_(C_0))
+
+-- trying to understand pshFwd method;
+-- then want to push forward a chain complex
+
+kk = QQ
+R = kk[a,b]
+S = kk[z,t]
+
+
+--- trying to understand Ext^1(M,N) where M and N are modules over a PID
+-- step 1:
+-- resolve M and N we get
+-- 0 -->F_1 --> F_0 --> M --> 0
+-- 0 -->G_1 --> G_0 --> N --> 0
+
+-- step 2:
+-- want to convert elements \psi \in Hom(F_0,G_1) to extensions M_\psi
+
+-- step 3:  determine when \psi and \psi' determine equivalent extensions
+-- enough to check if \psi - \psi' map to zero under the canonical map
+-- Hom(F_0,G_1) --> Im(Hom(F_0,G_0) --> Hom(F_0,G_1)) where this map 
+-- comes from the Hom complex.
+
+R = ZZ/11[x]
+
+makeMandN := (m,n) -> {coker(matrix(R,{{x^m}})), coker(matrix(R,{{x^n}}))}
+makeMandN(3,4)
+makeMandN(11,10)
+
+L = makeMandN(3,4)
+needsPackage"SpectralSequences"
+L#1
+L#0
+
+C = Hom(complete res L#0, complete res L#1)
+
+C_1 .cache.components
+
+C_1 .cache.indices
+
+image C.dd_0
+
+HH_0 C
+prune HH_(-1) C
+
+C
+image C.dd_0
+prune C_(-1) / (image C.dd_0)
+
+
+HH C
+prune HH C
+Ext^1(L#0,L#1)
+prune Ext(L#0,L#1)
+
+prune Ext^0(L#0,L#1)
+C
+
+help Ext
