@@ -684,11 +684,6 @@ newBasis (ZZ,NCIdeal) := NCMatrix => opts -> (n,I) -> (
    ncMatrix{terms}*minGens
 )
 
-
-
-
-
-
 ------------------------------------------------
 
 ------------------------------------------------
@@ -1067,8 +1062,8 @@ sparseCoeffs NCRingElement := opts -> f -> (
 )
 
 sparseCoeffs List := opts -> L -> (
-  d:=L#(position(L,m->m!=0));
-  if not all(L, m-> (isHomogeneous(m) and ((degree m)==(degree d) or m==0))) then 
+  d := if all(L, m -> m == 0) then 0 else L#(position(L,m->m!=0));
+  if not all(L, m-> (isHomogeneous(m) and (m == 0 or (degree m)==(degree d)))) then 
 	error "Expected homogeneous elements of the same degree.";
   B := (L#0).ring;
   R := coefficientRing B;
@@ -1838,6 +1833,7 @@ cumulativeBasis(ZZ,NCRing) := NCMatrix => (n,B) ->
    newBasis(n,B,CumulativeBasis=>true)
 
 newBasis(ZZ,NCRing) := NCMatrix => opts -> (n,B) -> (
+   if n == 0 then return ncMatrix {{promote(1,B)}};
    ncgbGens := if class B === NCQuotientRing then pairs (ncGroebnerBasis B.ideal).generators else {};
    basisList := {ncMonomial({},B)};
    doneList := if opts#CumulativeBasis then basisList else {};
@@ -1882,24 +1878,40 @@ leftMultiplicationMap = method()
 leftMultiplicationMap(NCRingElement,ZZ) := (f,n) -> (
    B := f.ring;
    m := degree f;
+   if m === -infinity then m = 0;
    nBasis := flatten entries basis(n,B);
    nmBasis := flatten entries basis(n+m,B);
    leftMultiplicationMap(f,nBasis,nmBasis)
 )
 
+leftMultiplicationMap(NCRingElement,ZZ,ZZ) := (f,n,m) -> (
+   B := f.ring;
+   nBasis := flatten entries basis(n,B);
+   mBasis := flatten entries basis(m,B);
+   leftMultiplicationMap(f,nBasis,mBasis)
+)
+
 leftMultiplicationMap(NCRingElement,List,List) := (f,fromBasis,toBasis) -> (
    if not isHomogeneous f then error "Expected a homogeneous element.";
    sparseCoeffs(f*fromBasis, Monomials=>toBasis)
-
 )
 
 rightMultiplicationMap = method()
 rightMultiplicationMap(NCRingElement,ZZ) := (f,n) -> (
    B := f.ring;
    m := degree f;
+   if m === -infinity then m = 0;
    nBasis := flatten entries basis(n,B);
    nmBasis := flatten entries basis(n+m,B);
    rightMultiplicationMap(f,nBasis,nmBasis)
+)
+
+rightMultiplicationMap(NCRingElement,ZZ,ZZ) := (f,n,m) -> (   
+   if f != 0 and degree f != m-n then error "Expected third argument to be the degree of f, if nonzero.";
+   B := f.ring;
+   nBasis := flatten entries basis(n,B);
+   mBasis := flatten entries basis(m,B);
+   rightMultiplicationMap(f,nBasis,mBasis)
 )
 
 rightMultiplicationMap(NCRingElement,List,List) := (f,fromBasis,toBasis) -> (
@@ -2562,11 +2574,19 @@ NCMatrix || NCMatrix := (M,N) -> (
    pipe
 )
 
-NCMatrix * ZZ := (M,r) -> ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)))
-ZZ * NCMatrix := (r,M) -> M*r
-NCMatrix * QQ := (M,r) -> ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)))
+NCMatrix * ZZ := (M,r) -> (
+   newM := ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)));
+   if isHomogeneous M then assignDegrees(newM,M.target,M.source);
+   newM
+)
+ZZ * NCMatrix := (r,M) -> M*r;
+NCMatrix * QQ := (M,r) -> (
+   newM := ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)));
+   if isHomogeneous M then assignDegrees(newM,M.target,M.source);
+   newM
+)
 QQ * NCMatrix := (r,M) -> M*r
-- NCMatrix := M -> (-1)*M
+- NCMatrix := M -> (-1)*M;
 NCMatrix * RingElement := (M,r) -> M*(promote(r,M.ring))
 RingElement * NCMatrix := (r,M) -> (promote(r,M.ring)*M)
 
@@ -2610,7 +2630,11 @@ NCRingElement * NCMatrix := (r,M) -> (
 )
 
 entries NCMatrix := M -> M.matrix
-transpose NCMatrix := M -> ncMatrix transpose M.matrix
+transpose NCMatrix := M -> (
+    Mtrans := ncMatrix transpose M.matrix;
+    assignDegrees(Mtrans,-M.source,-M.target);
+    Mtrans
+)
 
 --- flag an entire matrix as having reduced entries
 --- internal routine
