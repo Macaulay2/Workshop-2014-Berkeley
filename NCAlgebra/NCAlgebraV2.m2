@@ -37,7 +37,7 @@ homologyAsCokernel(NCMatrix,NCMatrix) := (M,N) -> (
     B := N.ring;
     Z := Z = zeroMap((N.target),(N.source),B);
     kerM := rightKernelBergman(M);
-    rightMinGens(subQuotientAsCokernel(kerM,N))
+    subQuotientAsCokernel(kerM,N)
     )
 )
 
