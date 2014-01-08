@@ -1362,7 +1362,7 @@ tauAOverPEMinus1QGorAmbNew = (Sk, Jk, hk, ek, fm, a1, e1) -> (
      pp := char Sk;
      et := lcm(ek, e1);
      
-     ak1 = numerator ((pp^et - 1)/(pp^ek - 1)); --an exponent for hk
+     ak1 := numerator ((pp^et - 1)/(pp^ek - 1)); --an exponent for hk
      a3 := numerator (a1*(pp^et - 1)/(pp^e1 - 1)); --we need to use a common e for both the 
                                                --index of R and of our divisor.
                                                
