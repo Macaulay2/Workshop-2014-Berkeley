@@ -47,65 +47,27 @@ augmentChainComplex (Module) := opts -> M -> (
      augQ
 )
 
--- this example is making no sense
--- The map created by hand composes just fine,
--- but the map created using the resolution won't compose
-R = QQ[x]/ideal(x^3)
-M = coker matrix {{x^2}}
-C_1 = map(M,R^1,id_(R^1)) -- check this against the resolution map
--- at least once the resolution gave that this should be -id_(R^1)
-A = map(M,M,matrix{{x}})
-D = resolution M
-D' = augmentChainComplex(D)
-A*C_1 -- this composes
-A*(D'.dd_0) -- this doesn't compose
-C_1 == D'.dd_0 -- this returns true
-C_1 === D'.dd_0 --this returns false
-
--- an alternate test, slightly different order
-R = QQ[x]/ideal(x^3)
-M = coker matrix {{x^2}}
-D = resolution M
-f = map(M, D_0, id_(D_0))
-A = map(M,M,matrix{{x}})
---E = augmentChainComplex(D)
-E = augmentChainComplex(M)
-f == E.dd_0 -- this returns true
---f === E.dd_0 --this returns false
-A*f -- this composes
-A*(E.dd_0) -- this doesn't compose
-
-
-
-R = QQ[x,y,z]
-M = coker matrix {{x*y*z}}
-C = resolution(M, LengthLimit => 5)
---Q = resolution(M, LengthLimit => 5)
-D = augmentChainComplex C     
-
 -- given a map between modules, lift the map to a chain map between
 -- the resolutions
 liftModuleMap = method(TypicalValue => ChainComplexMap)
-liftModuleMap (ChainComplex, ChainComplex, Matrix) := (Q,P,A) -> (
-     Q' := (augmentChainComplex Q)[-1];
-     P' := (augmentChainComplex P)[-1];
-     tempLift := (extend(Q', P',A))[1]; -- yields "maps not composible"
-     tempLift_0 = 0*tempLift_0;
+liftModuleMap (Module, Module, Matrix) := (N,M,A) -> (
+     Q := (augmentChainComplex N)[-1];
+     P := (augmentChainComplex M)[-1];
+     tempLift := (extend(Q,P,A))[1]; 
+--     tempLift_0 = 0*tempLift_0;
      tempLift
      )
-
-R = QQ[x]/ideal(x^3)
+-- example to test liftModuleMap
+R = QQ[x]/ideal (x^3)
 M = coker matrix {{x^2}}
-C = resolution M
 A = map(M,M,matrix{{x}})
-C' = augmentChainComplex(C)[-1]
-target A == C'_0 and source A == C'_0
-liftModuleMap(C,C,A)
-P = C
-Q = C
+P = augmentChainComplex M
+P' = P[-1]
+f = extend(P',P',A)
+g =f[1]
+t = liftModuleMap(M,M,A)
+assert (g == t) -- it works!
 
--- CompleteResolution = new Type of MutableHashTable
--- globalAssignment CompleteResolution
 
 -- what follow is version 0.1 of construction 3.6 from Avramov & Martsinkovsky
 -- later versions will turn the construction into an object of the type
@@ -162,23 +124,5 @@ construction (ZZ, Module) := (g, M) -> (
      cRes_g=id_(P_g)--;
      cRes
      )
-     
-     
---restart 
-kk = ZZ/101    
-R = kk[x,y,z]
-S = R/ideal (x*y*z)
-M = coker map(S^1, , {gens S})
-g = 2
-n = 2
-construction(2,K)
-
-
-C = resolution(R^1)
-K = id_C
-M = coker matrix {{x,y,z}}
-C = resolution M
-D = C[1]
-
      
      
