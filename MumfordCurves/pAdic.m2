@@ -100,22 +100,15 @@ pAdicField ZZ:=(p)->(
 	     precision b+min(precision a,valuation a));
 	aKeys := a#"expansion"_0;
 	aValues := a#"expansion"_1;
+	aTable := new HashTable from for i in 0..#aKeys-1 list {aKeys#i,aValues#i};
 	bKeys := b#"expansion"_0;
 	bValues := b#"expansion"_1;
-	prod := new MutableHashTable;
-	for i in 0..#aKeys-1 do (
-	     for j in 0..#bKeys-1 do (
-		  newKey := aKeys#i+bKeys#j;
-		  if newKey<newPrecision then (
-		       newValue := aValues#i*bValues#j;
-		       if prod#?newKey then (
-			    prod#newKey = prod#newKey + newValue;
-			    ) else (
-			    prod#newKey = newValue;
-			    );
-		       );
-		  );
+	bTable := new HashTable from for i in 0..#bKeys-1 list {bKeys#i,bValues#i};
+	combineFunction := (aKey,bKey)-> (
+	     s := aKey+bKey;
+	     if (s<newPrecision) then s else continue
 	     );
+	prod := combine(aTable,bTable,combineFunction,times,plus);
 	newKeys := sort keys prod;
 	newValues := for i in newKeys list prod#i;
 	computeCarryingOver(newKeys,newValues,newPrecision)
