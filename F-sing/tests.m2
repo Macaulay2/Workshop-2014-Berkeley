@@ -42,5 +42,5 @@ U=(generatingMorphisms#2)#1
 findHSLloci(A,U)
 
 
-nonInjectiveLocus (I)
+nonFInjectiveLocus (I)
 

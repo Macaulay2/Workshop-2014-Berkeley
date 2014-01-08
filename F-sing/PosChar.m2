@@ -37,6 +37,8 @@ export{
 ---     "ethRootSafe", 		MK
 ---     "fancyEthRoot",		MK
      "fastExp",
+     "findGeneratingMorphisms",     --MK
+     "findHSLloci",                 --MK
      "findTestElementAmbient",
      "FinalCheck",
 	"findAllCompatibleIdeals", 	--- MK
@@ -59,6 +61,7 @@ export{
 	"minimalCompatible",		--- MK
 ---	"Mstar",			--- MK
      "MultiThread",
+    "nonFInjectiveLocus",   --MK
      "nu",
      "nuList",
      "NuCheck",
@@ -1939,7 +1942,7 @@ findGeneratingMorphisms = (I) ->
 	resMp:=res Mp;
 	f:=inducedMap(M,Mp);
 	resf:=res f;
-	resLength=length(resM);
+	resLength:=length(resM);
 	answer:=();
 	apply(1..resLength, i->
 	{
@@ -2005,7 +2008,7 @@ answer
 )
 
 
-nonInjectiveLocus = (I) ->
+nonFInjectiveLocus = (I) ->
 (
 R:=ring(I);
 answer:=ideal(1_R);
@@ -2013,10 +2016,10 @@ local t;
 generatingMorphisms:=findGeneratingMorphisms (I); 
 apply (generatingMorphisms, t->
 {
-	A=relations ((t)#0);
+	A:=relations ((t)#0);
 	if (A!=0) then
 	{
-		U=(t)#1;
+		U:=(t)#1;
 		HSLLoci:=findHSLloci(A,U);
 		answer=intersect(answer,HSLLoci#0);
 	};	
