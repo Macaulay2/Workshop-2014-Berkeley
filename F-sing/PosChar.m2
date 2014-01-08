@@ -71,6 +71,8 @@ export{
      "sigmaAOverPEMinus1QGor",      --needs optimization
      "tauPoly",
      "tauAOverPEMinus1Poly",
+     "tauAOverPEMinus1QGorAmbNew", --debug by Karl, should be removed eventually
+     "tauAOverPEMinus1QGorAmb", --debug by Karl, should be removed eventually
      "tauGor",--needs optimization
      "tauGorAmb",--needs optimization
      "tauQGor",--needs optimization
@@ -1339,7 +1341,7 @@ tauPoly = (fm, t1) -> (
 --Inputs are Jk, a nonzero ideal contained in the test ideal
 --hk, the multiple used to form phi of the ambient ring.  ek is the power associated with hk
 --a1 and e1 and fm are as above
-tauAOverPEMinus1QGorAmb = (Sk, Jk, hk, ek, fm, a1, e1) -> (
+tauAOverPEMinus1QGorAmbOld = (Sk, Jk, hk, ek, fm, a1, e1) -> (
      pp := char Sk;
      et := lcm(ek, e1);
      hk1 := (hk)^(numerator ((pp^et - 1)/(pp^ek - 1)));  
@@ -1358,7 +1360,7 @@ tauAOverPEMinus1QGorAmb = (Sk, Jk, hk, ek, fm, a1, e1) -> (
      Iasc*ideal(fm^k2)
 )
 
-tauAOverPEMinus1QGorAmbNew = (Sk, Jk, hk, ek, fm, a1, e1) -> (
+tauAOverPEMinus1QGorAmb = (Sk, Jk, hk, ek, fm, a1, e1) -> (
      pp := char Sk;
      et := lcm(ek, e1);
      
@@ -1367,10 +1369,12 @@ tauAOverPEMinus1QGorAmbNew = (Sk, Jk, hk, ek, fm, a1, e1) -> (
                                                --index of R and of our divisor.
                                                
 	a2 := a3 % (pp^et - 1);
-     k2 := a3 // (pp^et - 1); --it seems faster to use the fact 
+     k2 := a3 // (pp^et - 1); --it seems faster to use the fact that we can do simple Skoda for tau
                       
                                                
---     Iasc := ascendIdealSafeList(Jk*ideal(fm)^(ceiling(a1/(pp^e1 - 1))), 
+     Iasc := ascendIdealSafeList(Jk*ideal(fm)^(ceiling(a3/(pp^et - 1))), (fm, hk), (a2, numerator ((pp^et - 1)/(pp^ek - 1))), et);
+     
+     Iasc*ideal(fm^k2)
 )
 
 
@@ -1398,12 +1402,12 @@ tauQGor = (Rk, ek, fk, t1) -> (
      if (e1 != 0) then 
           I1 = tauAOverPEMinus1QGorAmb(Sk,Jk,hk,ek,fm,a2,e1)
      else (
-	  I1 = ideal(fm^(a2))*ascendIdeal(Jk, hk, ek)
-      );
+	  	I1 = ideal(fm^(a2))*ascendIdeal(Jk, hk, ek)
+     );
  
      --now we compute the test ideal using a generalization of the fact that 
      --tau(fm^t)^{[1/p^b]} = tau(fm^(t/p^b))
-     --this follows from Schwede-Tucker.
+     --this follows from Schwede-Tucker or other places
      if (pPow != 0) then (
           --we do a check to see if the indexes match well enough...
           --the problem is we can only take ek'th roots, but my t1 might be something like
@@ -1417,11 +1421,12 @@ tauQGor = (Rk, ek, fk, t1) -> (
           ); --note in the end here, ek divides pPow.
  
           --I also need to adjust hk if it is different from pPow.
-          if (ek != pPow) then (
-	       hk = hk^(numerator ((pp^pPow - 1)/(pp^ek - 1)))	       
-	  ); --the division above makes sense because ek divides the modified pPow
+--	    	if (ek != pPow) then (
+--			hk = hk^(numerator ((pp^pPow - 1)/(pp^ek - 1)))	       
+--	  	); --the division above makes sense because ek divides the modified pPow
  
-          I2 = ethRoot(I1*ideal(hk), pPow) 
+--          I2 = ethRoot(I1*ideal(hk), pPow) 
+		I2 = ethRootSafe(hk, I1, numerator((pp^pPow - 1)/(pp^ek - 1)), pPow)
      )
      else --unless we don't have any p's in the denominator
           I2 = I1;
