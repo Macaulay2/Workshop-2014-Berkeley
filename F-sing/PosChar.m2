@@ -41,6 +41,8 @@ export{
      "FinalCheck",
 	"findAllCompatibleIdeals", 	--- MK
      "findQGorGen",
+     "finduOfIdeal",
+     "canonicalIdeal",
      "firstCarry", 
      "FPTApproxList",     
      "frobeniusPower",
@@ -62,15 +64,17 @@ export{
      "NuCheck",
      "Origin",
      "OutputRange",
+     "paraTestModule",
+     "paraTestModuleAmbiet",
      "sigmaAOverPEMinus1Poly", 
-     "sigmaQGorAmb", 
-     "sigmaAOverPEMinus1QGor",      
+     "sigmaQGorAmb", --needs optimization
+     "sigmaAOverPEMinus1QGor",      --needs optimization
      "tauPoly",
      "tauAOverPEMinus1Poly",
-     "tauGor",
-     "tauGorAmb",
-     "tauQGor",
-     "tauQGorAmb",
+     "tauGor",--needs optimization
+     "tauGorAmb",--needs optimization
+     "tauQGor",--needs optimization
+     "tauQGorAmb",--needs optimization
      "truncation",
      "truncationBaseP"
 }
@@ -231,35 +235,32 @@ findNumberBetween = (myInterv, maxDenom)->(
 --Computes the non-terminating base p expansion of an integer
 basePExp = (N,p) ->
 (
-e:=1; while p^e<=N do e = e+1;
-e = e-1;
-E:=new MutableList;
-a:=1; while e>=0 do 
-(
-     while a*p^e<=N do a=a+1;
-     E#e = a-1;
-     N = N - (a-1)*p^e;
-     a=1;
-     e=e-1;
-);
-new List from E
+    e:= floor(log_p N);
+    E:=new MutableList;
+    scan(0..e,i-> 
+    	(
+     	    a := N//p^(e-i);
+     	    E#(e-i) = a;
+     	    N = N - (a)*p^(e-i);
+    	)
+    );
+    new List from E
 )
 
 --Computes the non-terminating base p expansion of an integer 
 --from digits zero to e-1 (little-endian first)
 basePExpMaxE = (N,p,e1) ->
 (
-e:=e1-1;
-E:=new MutableList;
-a:=1; while e>=0 do 
-(
-     while a*p^e<=N do a=a+1;
-     E#e = a-1;
-     N = N - (a-1)*p^e;
-     a=1;
-     e=e-1;
-);
-new List from E
+    e:=e1-1;
+    E:=new MutableList;
+    scan(0..e,i-> 
+    	(
+     	    a := N//p^(e-i);
+     	    E#(e-i) = a;
+     	    N = N - (a)*p^(e-i);
+    	)
+    );
+    new List from E
 )
 
 --Computes powers of elements in char p>0, using that Frobenius
@@ -403,14 +404,11 @@ digit = (e, x, p) ->
      y
 )
 
---Gives the e-th truncation of the non-terminating base p expansion of x in [0,1] 
---as a fraction
-truncation = (e,x,p) -> 
-(
-     y:=0; 
-     for i from 1 to e do y = y + digit(i,x,p)/p^i;
-     y
-)
+--Gives the e-th truncation of the non-terminating base p expansion of a nonnegative 
+--rational x as a fraction
+truncation = method()
+
+truncation (ZZ,QQ,ZZ) := (e,x,p) -> (ceiling(p^e*x)-1)/p^e
 
 --Gives the first e digits of the non-terminating base p expansion of x in [0,1]
 --as a list
@@ -1297,7 +1295,7 @@ tauAOverPEMinus1Poly = (fm, a1, e1) -> (
 
 --Computes the test ideal of (R, f^t) when R 
 --is a polynomial ring over a perfect field.
-tauPoly = (fm, t1) -> (
+tauPolyOld = (fm, t1) -> (
      Rm := ring fm; 
      pp := char Rm;
      L1 := divideFraction(t1,pp); --this breaks up t1 into the pieces we need
@@ -1312,6 +1310,27 @@ tauPoly = (fm, t1) -> (
      --tau(fm^t)^{[1/p^a]} = tau(fm^(t/p^a))
      if (L1#1 != 0) then 
           ethRoot(I1, L1#1) else I1
+)
+
+--a slightly faster tauPoly
+tauPoly = (fm, t1) -> (
+     Rm := ring fm; 
+     pp := char Rm;
+     L1 := divideFraction(t1,pp); --this breaks up t1 into the pieces we need
+     local I1;
+     --first we compute tau(fm^{a/(p^c-1)})
+     if (L1#2 != 0) then (
+     	I1 = tauAOverPEMinus1Poly(fm,L1#0,L1#2);
+     	if (L1#1 != 0) then
+     		I1 = ethRoot(I1, L1#1)
+     	)
+     else (
+     	if (L1#1 != 0) then
+     		I1 = ethRootSafe(fm, ideal( sub(1, Rm)), L1#0, L1#1 )
+     	else
+ 	    		I1 = ideal(fm^(L1#0))
+ 	    	);
+     I1
 )
 
 --This is an internal function
@@ -1425,9 +1444,9 @@ sigmaAOverPEMinus1Poly ={HSL=> false}>> o -> (fm, a1, e1) -> (
      
      --our initial value is something containing sigma.  This stops after finitely many steps.  
      while (IN != IP) do(
-	  IP = IN;
-	  IN = ethRootSafe(fm,IP,a2,e2); -- eR(ideal(fpow)*IP,e2);
-	  count = count + 1
+		IP = IN;
+	  	IN = ethRootSafe(fm,IP,a2,e2); -- eR(ideal(fpow)*IP,e2);
+	  	count = count + 1
      );
 
      --return the final ideal and the HSL number of this function
@@ -1575,16 +1594,19 @@ paraTestModule = (fk, t1) -> ( --maintained by Karl
 		uPower = floor((pp^cc-1)/(pp-1));
 	firstTau := J1;
 	
+--	assert false;
 	if (cc != 0) then	
-		firstTau = ascendIdeal(J1*ideal(f1^(ceiling(t1))), f1^aa*u1^(uPower), cc)
+		firstTau = ascendIdealSafeList( J1*ideal(f1^(pp^bb*ceiling(t1))), (f1, u1), (aa, uPower), cc)		
+--		firstTau = ascendIdeal(J1*ideal(f1^(aa)), f1^aa*u1^(uPower), cc)
 		--I should write an ascendIdealSafe that works for multiple elements raised to powers...	
 	else 
-		firstTau = ascendIdeal(J1, u1^(uPower), 1)*ideal(f1^aa);
+--		firstTau = ascendIdeal(J1, u1^(uPower), 1)*ideal(f1^aa);
+		firstTau = ascendIdealSafe(J1, u1, uPower, 1);
 			
 	secondTau := firstTau;
 	if (bb != 0) then
-		secondTau = ethRoot(u1, firstTau, uPower, bb);
-		
+		secondTau = ethRootSafe(u1, firstTau, floor((pp^bb-1)/(pp-1)) , bb);
+
 	(sub(secondTau, R1), omegaAmb, u1)
 )
 

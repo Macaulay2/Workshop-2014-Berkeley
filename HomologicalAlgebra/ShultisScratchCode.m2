@@ -30,17 +30,6 @@ N=coker matrix{{3}}
 M=L++N
 doubleDualMap(M)
 
---learning sufficiently much about the truncate command to implement it
-restart
-R=QQ[x,y,z]
-M=coker matrix{{x,y,z}}
-C=resolution(M,LengthLimit=>10)
-truncateComplex(2,C)
-pmax C
-max C-1
-loadPackage "SpectralSequences" --don't have this...
-help truncate
-
 --creating method to truncate
 restart
 truncateComplex = method()
@@ -56,6 +45,13 @@ truncateComplex(ZZ,ChainComplex) := (g,P) -> (
 	  return K
 	  )
      )
+
+--example to check created method
+restart
+R=QQ[x,y,z]
+M=coker matrix{{x,y,z}}
+C=resolution(M,LengthLimit=>10)
+truncateComplex(2,C)
 
 -- truncate chain complex code below taken from SpectralSequence package and added here by Nathan.
 -- truncate a chain complex at a given homological degree 
