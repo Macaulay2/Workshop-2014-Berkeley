@@ -52,47 +52,17 @@ pAdicField ZZ:=(p)->(
 	);
    A + A := (a,b) -> (
 	newPrecision := min(a#"precision",b#"precision");
-	aKeys := a#"expansion"_0;
+        aKeys := a#"expansion"_0;
 	aValues := a#"expansion"_1;
+	aTable := new HashTable from for i in 0..#aKeys-1 list (
+	     if aKeys#i<newPrecision then {aKeys#i,aValues#i} else continue);
 	bKeys := b#"expansion"_0;
 	bValues := b#"expansion"_1;
-	newKeys := ();
-	newValues := ();
-	aPointer := 0;
-	bPointer := 0;
-	while (aPointer<#aKeys) or (bPointer<#bKeys) do (
-	     newKey := Nothing;
-	     newValue := Nothing;
-	     if (bPointer==#bKeys) then (
-		  newKey = aKeys#aPointer;
-		  newValue = aValues#aPointer;
-		  aPointer = aPointer + 1;
-		  ) else if (aPointer==#aKeys) then (
-		  newKey = bKeys#bPointer;
-		  newValue = bValues#bPointer;
-		  bPointer = bPointer + 1;
-		  ) else if (aKeys#aPointer<bKeys#bPointer) then (
-		  newKey = aKeys#aPointer;
-		  newValue = aValues#aPointer;
-		  aPointer = aPointer + 1;
-		  ) else if (bKeys#bPointer<aKeys#aPointer) then (
-		  newKey = bKeys#bPointer;
-		  newValue = bValues#bPointer;
-		  bPointer = bPointer + 1;
-		  ) else (
-		  newKey = bKeys#bPointer;
-		  newValue = aValues#aPointer + bValues#bPointer;
-		  aPointer = aPointer + 1;
-		  bPointer = bPointer + 1;
-		  );
-	     if (newKey>=newPrecision) then (
-		  break;
-		  );
-	     newKeys = (newKeys,newKey);
-	     newValues = (newValues,newValue);
-	     );
-	newKeys = toList deepSplice newKeys;
-	newValues = toList deepSplice newValues;
+	bTable := new HashTable from for i in 0..#bKeys-1 list (
+	     if bKeys#i<newPrecision then {bKeys#i,bValues#i} else continue);
+	s := merge(aTable,bTable,plus);
+	newKeys := sort keys s;
+	newValues := for i in newKeys list s#i;
 	computeCarryingOver(newKeys,newValues,newPrecision)
 	);
    A * A := (a,b)->(
