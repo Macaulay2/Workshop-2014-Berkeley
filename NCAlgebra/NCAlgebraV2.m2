@@ -16,7 +16,7 @@ newPackage("NCAlgebraV2",
      DebuggingMode => true
      )
 
-export {subQuotientAsCokernel,identityMap,NCChainComplex}
+export {subQuotientAsCokernel,homologyAsCokernel,identityMap,NCChainComplex}
 
 
 needsPackage "NCAlgebra"
@@ -29,6 +29,17 @@ subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
    kerL := rightKernelBergman(L);
    rowsMN := #(M.source);
    kerL^(toList(0..(rowsMN-1)))
+)
+
+homologyAsCokernel = method()
+homologyAsCokernel(NCMatrix,NCMatrix) := opts -> (M,N) -> (
+    if M*N != 0 then return "Error: maps do not compose to zero"
+    else (
+    B := N.ring;
+    Z := Z = zeroMap((N.target),(N.source),B);
+    kerM := rightKernelBergman(M);
+    subQuotientAsCokernel(kerM,N)
+    )
 )
 
 --NCMatrix ** Matrix := 
