@@ -43,10 +43,12 @@ augmentChainComplex (ChainComplex) := Q -> (
      augQ := new ChainComplex;
      augQ.ring = Q.ring;
      N := coker Q.dd_1 ;
---     augQ.dd_1 = map(N, Q_1,id_(Q_1));
+--     augQ.dd_1 = map(N, Q_1,id_(Q_1)); fails; wrong indexing
      augQ.dd_(0) = map(N, Q_0,id_(Q_0));
-     augQ.dd_(-1) = map(0*cover(N), N, id_(cover M));
-     for i from 2 to max Q do (
+--     augQ.dd_(-1) = inducedMap(R^0, N, id_(cover N)); 
+--     the degree -1 differential is already made to be 0 via the previous 
+--     construction
+     for i from 1 to max Q do (
 	  augQ.dd_i = Q.dd_i
 	  );
      augQ
@@ -58,7 +60,6 @@ M = coker matrix {{x*y*z}}
 C = resolution(M, LengthLimit => 5)
 --Q = resolution(M, LengthLimit => 5)
 D = augmentChainComplex C     
-
 
 -- given a map between modules, lift the map to a chain map between
 -- the resolutions
