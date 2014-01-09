@@ -41,26 +41,31 @@ freeProduct (NCRing,NCRing) := (A,B) -> (
    incA := ncMap(C,A',gensAinC);
    incB := ncMap(C,B',gensBinC);
    IinC := I / incA;
-   JinC := J / incB;     
-   newI := ncIdeal select( (IinC | JinC), x -> x!=0);
-   C/new I
+   JinC := J / incB;
+   newIdealGens := select( (IinC | JinC), x -> x!=0);       
+   if newIdealGens == {} then C 
+   else C/(ncIdeal newIdealGens)
 )
 
 qTensorProduct = method()
+qTensorProduct (NCRing, NCRing, QQ) :=
 qTensorProduct (NCRing, NCRing, RingElement) := (A,B,q) -> (
    -- this is the q-commuting tensor product of rings
    R := coefficientRing A;
-   if q.ring =!= R then error "Twisting parameter must belong to coefficient ring.";
+   if class q =!= QQ and q.ring =!= R then error "Twisting parameter must belong to coefficient ring.";
    F := freeProduct(A,B);
-   gensAinF := take(gens F, #gensA);
-   gensBinF := drop(gens F, #gensA);   
+   gensAinF := take(gens F, #gens A);
+   gensBinF := drop(gens F, #gens A);   
    -- create the commutation relations among generators of A and B
    K := flatten apply( gensAinF, g-> apply( gensBinF, h-> h*g-q*g*h));
-   I := gens ideal F;
-   C := ambient F;
-   newI := ncIdeal (I | K);
-   
-   C/newI
+
+   if class F === NCPolynomialRing then F/(ncIdeal K)
+   else (
+      I := gens ideal F;
+      C := ambient F;
+      newI := ncIdeal select( (I | K), g -> g!=0);
+      C/newI
+   )
      
 )
 
@@ -74,13 +79,17 @@ e (NCRing, Symbol) := (A,x) -> (
    R := coefficientRing A;
    Aop := oppositeRing A;
    B := R apply(#gens A, g-> x_g);  -- remove # once indexing works without printing ( ) 
-   A' := if class A === NCPolynomialRing then Aop else ambient Aop;
-   f := ncMap(B,A',gens B);
-   J := ncIdeal (gens ideal Aop / f);
-   (B/J) ** A
+   if class A === NCPolynomialRing then (B ** A) 
+   else (
+      A' := ambient Aop;   
+      f := ncMap(B,A',gens B);
+      J := ncIdeal (gens ideal Aop / f);
+      (B/J) ** A
+   )
 )
 
 TEST ///
+quit
 restart
 needsPackage "NCAlgebraV2"
 debug needsPackage "NCAlgebra"
@@ -90,7 +99,7 @@ Igb = ncGroebnerBasis(I,InstallGB=>true)
 C=A/I
 B = QQ{x,y,z}
 D = C ** B
-e(A,t)
+e(A,s)
 e(C,t)
 ///
 

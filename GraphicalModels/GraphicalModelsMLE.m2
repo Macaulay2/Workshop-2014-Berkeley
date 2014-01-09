@@ -260,6 +260,76 @@ scoreEquationsCovariance2(MixedGraph,List) := (G, U) -> (
 );
 *}
 
+{*
+scoreEquationsConcentration2 = method();
+scoreEquationsConcentration2(MixedGraph,List) := (G, U) -> (
+    V := sampleCovarianceMatrix(U);   
+    R := gaussianRing(G); 
+    use R;
+    I := gaussianVanishingIdeal(R);
+    use R;   
+    -- Lambda
+    L := directedEdgesMatrix R;
+    -- d is equal to the number of vertices in G
+    d := numRows L;
+    numSvars:=lift(d*(d+1)/2,ZZ);
+    --lp rings is the ring without the s variables
+    sRvarlist:=apply(numSvars, i->(gens(R))_(i+numgens(R)-numSvars));
+    KK:=coefficientRing(R);
+    kVarsExtended = toList(k_(1,1)..k_(d,d));
+    kVars = {};
+    for i from 1 to d do (
+	for j from i to d do (
+	    kVars = append(kVars, k_(i,j));
+	);
+    );    
+    skR:=KK[sRvarlist | kVars];
+    J := substitute(I, skR);
+    FskR := frac(skR);
+    S := mutableMatrix(skR, d, d);
+    for i to d-1 do (
+	for j from i to d-1 do (
+	    use skR;
+	    S_(i,j) = s_(i+1,j+1);
+	    use skR;
+	    S_(j,i) = s_(i+1,j+1);
+	);
+    );
+    K := mutableMatrix(skR, d, d);
+    for i to d-1 do (
+	for j from i to d-1 do (
+	    use skR;
+	    K_(i,j) = k_(i+1,j+1);
+	    use skR;
+	    K_(j,i) = k_(i+1,j+1);
+	);
+    );
+    J = J + ideal((matrix(K))*(matrix(S)) - id_(skR^d));
+    sRvarlist=apply(numSvars, i->(gens(skR))_i);    
+    J1 = eliminate(sRvarlist, J);
+    m := numColumns(mingens J1);
+    kxR = coefficientRing(skR)[kVars | toList(x_1..x_m)];
+--    kxR = coefficientRing(skxR)[kVars]
+--    J2 := substitute(J1, kxR)
+    C1 := substitute((trace((matrix(K)) * V)/2), kxR);
+    FkxR = frac(kxR);
+    jacobian(matrix{{C1}});
+    LL := (substitute((jacobian(substitute(matrix{{det(matrix(K))}}, kxR)), FkxR)))*(matrix{{((#U)/(substitute(2*det(matrix(K)), FkxR)))}}) - jacobian(matrix{{C1}});
+    LL=flatten entries(LL);
+    gensDerivatives = {};
+    for i to m-1 do (
+    	gensDerivatives = append(gensDerivatives, 
+	    jacobian(substitute(matrix{{(mingens J1)_(0,i)}}, kxR))* substitute(matrix{{x_(i+1)}}, kxR));
+    );
+    gensDerivativesSum := sum(gensDerivatives);
+    J2:=ideal apply(#LL, i -> (numerator(LL_i) - denominator(LL_i) * gensDerivativesSum_(i,0)));
+    J3 := saturate(J2, substitute(det(matrix(K)), kxR));
+    J4 := substitute(J1, kxR) + J3;
+    return J4;
+);
+
+*}
+
 --******************************************--
 -- DOCUMENTATION     	       	    	    -- 
 --******************************************--
