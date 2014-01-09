@@ -6,11 +6,13 @@ new PAdicField from List := (PAdicField, inits) -> new PAdicField of PAdicFieldE
 valuation = method()
 relativePrecision = method()
 
-makePAdicField:=(R,p)->(
-   A := new PAdicField from {(symbol baseRing) => R,
-                            (symbol uniformizingParameter) => p};
+pAdicField = method()
+pAdicField ZZ:=(p)->(
+   R := ZZ;
+   A := new PAdicField from {(symbol prime) => p};
    precision A := a->a#"precision";
-   valuation A := a->min a#"expansion"_0;
+   valuation A := a->(if #a#"expansion">0 then return min a#"expansion"_0;
+	infinity);
    relativePrecision A:= a -> (precision a)-(valuation a);
    net A := a->(expans:=a#"expansion";
 	keylist:=expans_0;
@@ -50,47 +52,17 @@ makePAdicField:=(R,p)->(
 	);
    A + A := (a,b) -> (
 	newPrecision := min(a#"precision",b#"precision");
-	aKeys := a#"expansion"_0;
+        aKeys := a#"expansion"_0;
 	aValues := a#"expansion"_1;
+	aTable := new HashTable from for i in 0..#aKeys-1 list (
+	     if aKeys#i<newPrecision then {aKeys#i,aValues#i} else continue);
 	bKeys := b#"expansion"_0;
 	bValues := b#"expansion"_1;
-	newKeys := ();
-	newValues := ();
-	aPointer := 0;
-	bPointer := 0;
-	while (aPointer<#aKeys) or (bPointer<#bKeys) do (
-	     newKey := Nothing;
-	     newValue := Nothing;
-	     if (bPointer==#bKeys) then (
-		  newKey = aKeys#aPointer;
-		  newValue = aValues#aPointer;
-		  aPointer = aPointer + 1;
-		  ) else if (aPointer==#aKeys) then (
-		  newKey = bKeys#bPointer;
-		  newValue = bValues#bPointer;
-		  bPointer = bPointer + 1;
-		  ) else if (aKeys#aPointer<bKeys#bPointer) then (
-		  newKey = aKeys#aPointer;
-		  newValue = aValues#aPointer;
-		  aPointer = aPointer + 1;
-		  ) else if (bKeys#bPointer<aKeys#aPointer) then (
-		  newKey = bKeys#bPointer;
-		  newValue = bValues#bPointer;
-		  bPointer = bPointer + 1;
-		  ) else (
-		  newKey = bKeys#bPointer;
-		  newValue = aValues#aPointer + bValues#bPointer;
-		  aPointer = aPointer + 1;
-		  bPointer = bPointer + 1;
-		  );
-	     if (newKey>=newPrecision) then (
-		  break;
-		  );
-	     newKeys = (newKeys,newKey);
-	     newValues = (newValues,newValue);
-	     );
-	newKeys = toList deepSplice newKeys;
-	newValues = toList deepSplice newValues;
+	bTable := new HashTable from for i in 0..#bKeys-1 list (
+	     if bKeys#i<newPrecision then {bKeys#i,bValues#i} else continue);
+	s := merge(aTable,bTable,plus);
+	newKeys := sort keys s;
+	newValues := for i in newKeys list s#i;
 	computeCarryingOver(newKeys,newValues,newPrecision)
 	);
    A * A := (a,b)->(
@@ -98,33 +70,30 @@ makePAdicField:=(R,p)->(
 	     precision b+min(precision a,valuation a));
 	aKeys := a#"expansion"_0;
 	aValues := a#"expansion"_1;
+	aTable := new HashTable from for i in 0..#aKeys-1 list {aKeys#i,aValues#i};
 	bKeys := b#"expansion"_0;
 	bValues := b#"expansion"_1;
-	prod := new MutableHashTable;
-	for i in 0..#aKeys-1 do (
-	     for j in 0..#bKeys-1 do (
-		  newKey := aKeys#i+bKeys#j;
-		  if newKey<newPrecision then (
-		       newValue := aValues#i*bValues#j;
-		       if prod#?newKey then (
-			    prod#newKey = prod#newKey + newValue;
-			    ) else (
-			    prod#newKey = newValue;
-			    );
-		       );
-		  );
+	bTable := new HashTable from for i in 0..#bKeys-1 list {bKeys#i,bValues#i};
+	combineFunction := (aKey,bKey)-> (
+	     s := aKey+bKey;
+	     if (s<newPrecision) then s else continue
 	     );
+	prod := combine(aTable,bTable,combineFunction,times,plus);
 	newKeys := sort keys prod;
 	newValues := for i in newKeys list prod#i;
 	computeCarryingOver(newKeys,newValues,newPrecision)
 	);
-     A 
+     A - A:= (a,b)->(a+(-b));
+   - A:= a->(toPAdicFieldElement(toList((precision a):(p-1)),A)*a);
+	A
 )
 
-pAdicField = method()
-pAdicField(Ring,RingElement):=(R,p)->makePAdicField(R,p)
-pAdicField(Ring,ZZ):=(R,p)->makePAdicField(R,p)
-pAdicField(ZZ):=(p)->makePAdicField(ZZ,p)
+
+
+QQQ=new ScriptedFunctor
+QQQ#subscript=i->(pAdicField i)
+
+
 
 -- PAdicField Elements are hashtables with following keys:
 -- precision (value ZZ)
@@ -137,7 +106,9 @@ toPAdicFieldElement = method()
 
 toPAdicFieldElement (List,PAdicField) := (L,S) -> (
    n:=#L;
-   expans:=entries transpose matrix select(apply(n,i->{i,L_i}),j->not j_1==0);
+   local expans;
+   if all(L,i->i==0) then expans={{},{}}    
+   else expans=entries transpose matrix select(apply(n,i->{i,L_i}),j->not j_1==0);
    new S from {"precision"=>n,"expansion"=>expans}
    )
 
@@ -161,11 +132,16 @@ end
 --Nathan's testing area
 ----------------------------
 restart
-load "~/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
-Q3=pAdicField(3)
+load "pAdic.m2"
 
-x=toPAdicFieldElement({0,1,0,0,1,0},Q3)
+Q3=QQQ_3
 
+x=toPAdicFieldElement({1,0,0,0,0,0},Q3)
+x-x
+
+x=toPAdicFieldElement({0,0,0,0,0,0},Q3)
+
+valuation x
 precision x
 relativePrecision x
 valuation x
@@ -178,3 +154,17 @@ jacobian f
 help jacobian
 diff(y,f)
 help diff
+
+--------------------------------
+--Ralph's finding inverses area
+--------------------------------
+
+--Let's say we want to find the inverse of a=a_0+a_1*p+a_2*p^2+... up to the 6th p-adic place.
+--In this example we'll take p=7.  It's a coincidence that p=7 and we're taking i<7, since
+--i goes up desired precision +1, which happens to be 6+1=7.
+ R=ZZ; p=7; a_0=6; a_1=0; a_2=3; a_3=1; a_4=1; a_5=5; a_6=5; S=R/p;
+i=1; b_0=(sub(1/sub(a_0,S),R)+p)%p; s_0=-1; 
+while i<7 do(s_i=s_(i-1)+sum(0..i-1, j-> a_j*b_(i-1-j))*p^(i-1);
+b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->a_j*b_(i-j)),S)/sub(a_0,S),R)+p)%p;i=i+1)
+
+--Running the code computes b_0, b_1,..., which gives a^-1=b=b_0+b_1*p+b_2*p^2+...

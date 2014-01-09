@@ -16,10 +16,64 @@ newPackage("NCAlgebraV2",
      DebuggingMode => true
      )
 
-export {subQuotientAsCokernel,identityMap,NCChainComplex}
+export {subQuotientAsCokernel,homologyAsCokernel,identityMap,NCChainComplex,e}
 
+debug needsPackage "NCAlgebra"
 
-needsPackage "NCAlgebra"
+NCRing ** NCRing := (A,B) -> (
+   -- this is the usual (commuting) tensor product of rings
+   R := coefficientRing A;
+   if R =!= (coefficientRing B) then error "Input rings must have same coefficient ring.";
+   gensA := gens A;
+   gensB := gens B;
+   newgens := gensA | gensB;     
+   if #unique(newgens) != (#gensA + #gensB) then error "Input rings have a common generator.";
+
+   I := gens ideal A;
+   J := gens ideal B;
+   
+   A' := if class A === NCPolynomialRing then A else ambient A;
+   B' := if class B === NCPolynomialRing then B else ambient B;
+    
+   C := R newgens;
+   gensAinC := take(gens C, #gensA);
+   gensBinC := drop(gens C, #gensA);
+   incA := ncMap(C,A',gensAinC);
+   incB := ncMap(C,B',gensBinC);
+   IinC := I / incA;
+   JinC := J / incB;
+   -- create the commutation relations among generators of A and B
+   K := flatten apply( gensAinC, g-> apply( gensBinC, h-> h*g-g*h));
+   
+   newI := ncIdeal select( (IinC | JinC | K), x-> x!=0);
+   
+   C/newI
+)
+
+e = method()
+e (NCRing, Symbol) := (A,x) -> (
+   R := coefficientRing A;
+   Aop := oppositeRing A;
+   B := R apply(#gens A, g-> x_g); 
+   A' := if class A === NCPolynomialRing then Aop else ambient Aop;
+   f := ncMap(B,A',gens B);
+   J := ncIdeal (gens ideal Aop / f);
+   (B/J) ** A
+)
+
+TEST ///
+restart
+needsPackage "NCAlgebraV2"
+debug needsPackage "NCAlgebra"
+A = QQ{a,b,c}
+I = ncIdeal{a*b-c^2}
+Igb = ncGroebnerBasis(I,InstallGB=>true)
+C=A/I
+B = QQ{x,y,z}
+D = C ** B
+e(A,t)
+e(C,t)
+///
 
 
 subQuotientAsCokernel = method()
@@ -28,8 +82,45 @@ subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
    L := M | N;
    kerL := rightKernelBergman(L);
    rowsMN := #(M.source);
-   kerL^(toList(0..(rowsMN-1)))
+   tempKer := rightMingens (kerL^(toList(0..(rowsMN-1))));
+   tempKer
 )
+
+homologyAsCokernel = method()
+homologyAsCokernel(NCMatrix,NCMatrix) := (M,N) -> (
+    if M*N != 0 then return "Error: maps do not compose to zero"
+    else (
+    B := N.ring;
+    Z := Z = zeroMap((N.target),(N.source),B);
+    kerM := rightKernelBergman(M);
+    subQuotientAsCokernel(kerM,N)
+    )
+)
+
+TEST ///
+restart
+needsPackage "NCAlgebraV2"
+debug needsPackage "NCAlgebra"
+B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
+M = ncMatrix {{x^2,y^2,z^3}}
+Msyz = rightKernelBergman M
+test = subQuotientAsCokernel(Msyz,Msyz)
+
+N = rightKernelBergman(M)
+L = transpose ncMatrix{(entries transpose N)_0,(entries transpose N)_1}
+L = assignDegrees (L, N.target, N.source)
+L.target
+isHomogeneous L
+M*L == 0
+L
+M
+T = rightKernelBergman(M) | L
+isHomogeneous T
+rightKernelBergman(T)
+
+homologyAsCokernel(M,N)
+homologyAsCokernel(M,L)
+///
 
 --NCMatrix ** Matrix := 
 --Matrix ** NCMatrix := 
@@ -42,19 +133,16 @@ NCMatrix ** NCMatrix := (M,N) -> (
          apply(#(N.source), j -> ((M.source)#i)+((N.source)#j)));
    newTarget := flatten apply(#(M.target), i ->
          apply(#(N.target), j -> ((M.target)#i)+((N.target)#j)));
-   assignDegrees(MtensN,newSource,newTarget)
+   assignDegrees(MtensN,newTarget,newSource)
 )
 
-Hom (NCMatrix,NCMatrix,ZZ) := (M,N,d) -> (
-   R := coefficientRing ring M;
-   sourceM := M.source;
-   sourceN := N.source;
-   targetM := M.target;
-   targetN := N.target;
-   error "err";
-   R
+NCMatrix ++ NCMatrix := (M,N) -> (
+   B := ring M;
+   urZero := zeroMap(M.target,N.source,B);
+   lrZero := zeroMap(N.target,M.source,B);
+   ds := ncMatrix {{M,urZero},{lrZero,N}};
+   assignDegrees(ds,M.target | N.target, M.source | N.source)
 )
-
 
 -------------------------------------------
 --- NCChainComplex Methods ----------------
@@ -108,13 +196,83 @@ betti Lres
 rightKernelBergman(Lres#2)
 ///
 
+-- Twist --     
+NCMatrix Array := (M,n) -> (
+    if #n != 1 then return "Error: Please enter a single integer" else
+    M**(assignDegrees(ncMatrix {{promote(1,M.ring)}},{-1*n#0},{-1*n#0}))
+    )
+
+TEST ///
+restart
+needsPackage "NCAlgebraV2"
+needsPackage "NCAlgebra"
+B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
+M = ncMatrix {{x,y,z}}
+M[1]
+(M[1]).source
+///
 
 identityMap = method()
 identityMap (List, NCRing) := (L,R) -> (
    n := #L;
    B := coefficientRing R;
    I := ncMatrix applyTable(entries id_(B^n), e -> promote(e,R));
-   assignDegrees(I,toList(n:0),L)
+   assignDegrees(I,L,L)
+)
+
+identityMap (ZZ,NCRing) := (n,R) -> identityMap(toList(n:0),R)
+
+zeroMap = method()
+zeroMap (List, List, NCRing) := (tar,src,B) -> (
+   R := coefficientRing B;
+   myZero := ncMatrix applyTable(entries map(R^#tar,R^#src,0), e -> promote(e,B));
+   assignDegrees(myZero,tar,src);
+   myZero
+)
+
+Hom (NCMatrix,NCMatrix,ZZ) := (M,N,d) -> (
+   B := ring M;
+   Nsyz := rightKernelBergman N;  -- be careful if Nsyz is zero!
+   L1 := identityMap(N.target,B);
+   K1 := L1 ** (transpose M);
+   L2 := identityMap(M.source,B);
+   L3 := identityMap(M.target,B);
+   L4 := identityMap(N.source,B);
+   K2 := N ** (transpose L2);
+   K3 := N ** (transpose L3);
+   K4 := L4 ** (transpose M);
+   K5 := Nsyz ** (transpose L2);
+   myZeroMap := zeroMap(K3.target,K5.source,B);
+   K1ent := entries K1;
+   K2ent := entries K2;
+   K3ent := entries K3;
+   K4ent := entries K4;
+   K5ent := entries K5;
+   myZeroMapEnt := entries myZeroMap;
+   --K := K1|K2;
+   --H := (K3 | myZeroMap) || (K4 | K5);
+   --H = K3 || K4   -- do this if Nsyz == 0
+   K1' := matrix apply(#(K1.target), i -> apply(#(K1.source), j -> 
+	leftMultiplicationMap(K1ent#i#j, d - (K1.source)#j, d - (K1.target)#i)));
+   K2' := matrix apply(#(K2.target), i -> apply(#(K2.source), j -> 
+	rightMultiplicationMap(-K2ent#i#j, d - (K2.source)#j, d - (K2.target)#i)));
+   K3' := matrix apply(#(K3.target), i -> apply(#(K3.source), j -> 
+	rightMultiplicationMap(-K3ent#i#j, d - (K3.source)#j, d - (K3.target)#i)));
+   K4' := matrix apply(#(K4.target), i -> apply(#(K4.source), j -> 
+	leftMultiplicationMap(-K4ent#i#j, d - (K4.source)#j, d - (K4.target)#i)));
+   K5' := matrix apply(#(K5.target), i -> apply(#(K5.source), j -> 
+	rightMultiplicationMap(-K5ent#i#j, d - (K5.source)#j, d - (K5.target)#i)));
+   myZeroMap' := matrix apply(#(myZeroMap.target), i -> apply(#(myZeroMap.source), j -> 
+   	   rightMultiplicationMap(-myZeroMapEnt#i#j, d - (myZeroMap.source)#j, d - (myZeroMap.target)#i)));
+   K' := K1'|K2';
+   H' := matrix {{K3',myZeroMap'},{K4',K5'}};
+   --H' = matrix {{K3'},{K4'}}  -- do this if Nsyz == 0
+   myHom := prune ((ker K') / (image H'));
+   homGens := mingens image(gens image myHom.cache.pruningMap)^(toList(0..(numgens source K1' - 1)));
+   basisMatr := fold(apply(#(K1.source), i -> basis(d-(K1.source)#i,B)), (a,b) -> a ++ b);
+   flattenedMatrs := basisMatr * homGens;
+   retVal := apply(apply(#(flattenedMatrs.source), i -> flatten entries flattenedMatrs_{i}), L -> ncMatrix pack(#(N.target),L));
+   retVal
 )
 
 TEST ///
@@ -125,21 +283,17 @@ B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
 M = ncMatrix {{x,y}}
 N = ncMatrix {{x^2,y^2}}
 subQuotientAsCokernel(M,N)
+///
 
+TEST ///
 restart
 needsPackage "NCAlgebraV2"
 needsPackage "NCAlgebra"
-R = QQ[w]/ideal(w^2+w+1)
-B = threeDimSklyanin(R,{1,1,-1},{x,y,z})
+B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
+R = coefficientRing B
 M = ncMatrix {{x,y,0},{0,y,z}}
-N = ncMatrix {{x,y}}
-Hom(M,N,1)
-L1 = identityMap({0},B)
-K1 = L1 ** (transpose M)
-L2 = identityMap({0,0,0},B)
-K2 = L2 ** N
-K = K1 | -K2
-kerK = rightKernelBergman K
+N = ncMatrix {{x,y},{x,y}}
+Hom(M,N,2)
 ///
 
 end
