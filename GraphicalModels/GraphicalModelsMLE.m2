@@ -206,6 +206,60 @@ scoreEquationsConcentration1(MixedGraph, List) := (G, U) -> (
 
 *}
 
+{*
+
+scoreEquationsCovariance2 = method();
+scoreEquationsCovariance2(MixedGraph,List) := (G, U) -> (
+    V := sampleCovarianceMatrix(U);   
+    R := gaussianRing(G); 
+    use R;
+    I := gaussianVanishingIdeal(R);
+    use R;   
+    -- Lambda
+    L := directedEdgesMatrix R;
+    -- d is equal to the number of vertices in G
+    d := numRows L;
+    numSvars:=lift(d*(d+1)/2,ZZ);
+    --lp rings is the ring without the s variables
+    sRvarlist:=apply(numSvars, i->(gens(R))_(i+numgens(R)-numSvars));
+    KK:=coefficientRing(R);
+    sR:=KK[sRvarlist];
+    J = substitute(I, sR);
+    FsR := frac(sR);
+    S := mutableMatrix(sR, d, d);
+    for i to d-1 do (
+	for j from i to d-1 do (
+	    use sR;
+	    S_(i,j) = s_(i+1,j+1);
+	    use sR;
+	    S_(j,i) = s_(i+1,j+1);
+	)
+    )
+    S
+    Sinv := inverse substitute((matrix(S)), FsR);    
+    C1 := trace(Sinv * V)/2;
+    C1derivative := JacobianMatrixOfRationalFunction(trace(Sinv * V)/2);
+    C1derivative
+    LL := (substitute((jacobian(matrix{{det(matrix(S))}})), FsR))*matrix{{(-(#U)/(2*det(matrix(S))))}} - (transpose C1derivative);
+    m := numColumns(mingens J);
+    sxR = coefficientRing(sR)[(flatten entries(vars(sR))) | toList(x_1..x_m)]
+    LL = substitute(LL, frac(sxR));
+    LL=flatten entries(LL);
+    gensDerivatives := {};
+    for i to m-1 do (
+    	gensDerivatives = append(gensDerivatives, 
+	    substitute(jacobian(matrix{{(mingens J)_(0,i)}}), sxR)*matrix{{x_(i+1)}});
+    );
+    gensDerivativesSum := sum(gensDerivatives);
+    J1:=ideal apply(#LL, i -> (numerator(LL_i) - gensDerivativesSum_(i,0)));
+    J2 := saturate(J1, substitute(det(matrix(S)), sxR));
+    J3 := substitute(J, sxR) + J2;
+    dim J3;
+    degree J3;
+    return J3;
+);
+*}
+
 --******************************************--
 -- DOCUMENTATION     	       	    	    -- 
 --******************************************--
