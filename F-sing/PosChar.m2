@@ -22,6 +22,7 @@ export{
 	 "ascendIdeal", 
 	 "ascendIdealSafe",
 	 "ascendIdealSafeList",
+	 "AscentCount",
 	 "basePExp",
   	 "basePExpMaxE",
   	 "BinomialCheck",
@@ -68,14 +69,12 @@ export{
      "Origin",
      "OutputRange",
      "paraTestModule",
-     "paraTestModuleAmbiet",
+     "paraTestModuleAmbient",
      "sigmaAOverPEMinus1Poly", 
      "sigmaQGorAmb", --needs optimization
      "sigmaAOverPEMinus1QGor",      --needs optimization
      "tauPoly",
      "tauAOverPEMinus1Poly",
-     "tauAOverPEMinus1QGorAmbNew", --debug by Karl, should be removed eventually
-     "tauAOverPEMinus1QGorAmb", --debug by Karl, should be removed eventually
      "tauGor",--needs optimization
      "tauGorAmb",--needs optimization
      "tauQGor",--needs optimization
@@ -1218,20 +1217,23 @@ ascendIdealSafe = (Jk, hk, ak, ek) -> (
 
 
 --works just like ascendIdealSafe but also handles lists of hk to powers...
-ascendIdealSafeList = (Jk, hkList, akList, ek) -> (
+ascendIdealSafeList ={AscentCount=>false} >> o ->  (Jk, hkList, akList, ek) -> (
 	Sk := ring Jk;
 	pp := char Sk;
 	IN := Jk;
 	IP := ideal(0_Sk);
-	
+	i1 := 0;
 	--we ascend the ideal as above
 	while (isSubset(IN, IP) == false) do(
+		i1 = i1 + 1; --
 		IP = IN;
 		IN = ethRootSafeList( hkList, IP, akList, ek) + IP
 	);
 	
 	--trim the output
-	trim IP
+	if (o.AscentCount == false) then 
+		trim IP
+	else (trim IP, i1)
 )
 
 --MKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMKMK
@@ -1593,7 +1595,7 @@ paraTestIdealAmbient = (R1) -> (
 )
 
 --this computes the parameter test module \tau(R, f^t).  It does not assume that R is a polynomial ring.
-paraTestModule = (fk, t1) -> ( --maintained by Karl
+paraTestModule ={AscentCount=>false} >> o -> (fk, t1) -> ( --maintained by Karl
 	R1 := ring fk;
 	S1 := ambient R1;
 	f1 := sub(fk, S1);
@@ -1618,10 +1620,15 @@ paraTestModule = (fk, t1) -> ( --maintained by Karl
 	if (cc != 0) then
 		uPower = floor((pp^cc-1)/(pp-1));
 	firstTau := J1;
-	
+	local tempList;
+	ascendingCount := 0;
 --	assert false;
 	if (cc != 0) then	
-		firstTau = ascendIdealSafeList( J1*ideal(f1^(pp^bb*ceiling(t1))), (f1, u1), (aa, uPower), cc)		
+		if (o.AscentCount == false) then (firstTau = ascendIdealSafeList( J1*ideal(f1^(pp^bb*ceiling(t1))), (f1, u1), (aa, uPower), cc))
+		else (tempList = ascendIdealSafeList( J1*ideal(f1^(pp^bb*ceiling(t1))), (f1, u1), (aa, uPower), cc, AscentCount=>true);
+			firstTau = tempList#0;
+			ascendingCount = tempList#1;
+		)
 --		firstTau = ascendIdeal(J1*ideal(f1^(aa)), f1^aa*u1^(uPower), cc)
 		--I should write an ascendIdealSafe that works for multiple elements raised to powers...	
 	else 
@@ -1632,7 +1639,7 @@ paraTestModule = (fk, t1) -> ( --maintained by Karl
 	if (bb != 0) then
 		secondTau = ethRootSafe(u1, firstTau, floor((pp^bb-1)/(pp-1)) , bb);
 
-	(sub(secondTau, R1), omegaAmb, u1)
+	if (o.AscentCount == false) then (sub(secondTau, R1), omegaAmb, u1) else (sub(secondTau, R1), omegaAmb, u1, ascendingCount)
 )
 
 

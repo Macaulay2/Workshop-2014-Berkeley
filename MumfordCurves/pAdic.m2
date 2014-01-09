@@ -1,3 +1,5 @@
+PAdicFields = new MutableHashTable
+
 PAdicField = new Type of InexactField
 PAdicFieldElement = new Type of HashTable
 
@@ -8,6 +10,7 @@ relativePrecision = method()
 
 pAdicField = method()
 pAdicField ZZ:=(p)->(
+   if PAdicFields#?p then return PAdicFields#p;
    R := ZZ;
    A := new PAdicField from {(symbol prime) => p};
    precision A := a->a#"precision";
@@ -86,12 +89,12 @@ pAdicField ZZ:=(p)->(
 	newValues := for i in newKeys list prod#i;
 	computeCarryingOver(newKeys,newValues,newPrecision)
 	);
-     A - A:= (a,b)->(a+(-b));
      +A := a->a;
      -A := a->(
 	  newValues := for i in a#"expansion"_1 list -i;
 	  computeCarryingOver(a#"expansion"_0,newValues,a#"precision")
 	  );
+     A - A:= (a,b)->(a+(-b));
      A + ZZ := (a,n)->(
 	  b := toPAdicFieldElement(n,precision a,A);
 	  a+b
@@ -116,6 +119,7 @@ pAdicField ZZ:=(p)->(
 	       )
 	  );
      ZZ * A := (n,a)->a*n;
+     PAdicFields#p=A;
      A
 )
 
@@ -170,7 +174,8 @@ end
 --Nathan's testing area
 ----------------------------
 restart
-load "pAdic.m2"
+load "~/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
+
 
 Q3=QQQ_3
 
