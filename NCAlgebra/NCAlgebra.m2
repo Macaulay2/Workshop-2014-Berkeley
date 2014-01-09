@@ -102,6 +102,8 @@ NCLeftIdeal = new Type of HashTable
 NCRightIdeal = new Type of HashTable
 NCRingMap = new Type of HashTable
 
+globalAssignment NCRing
+
 ---------------------------------------------------------------
 --- Helpful general-purpose functions
 ---------------------------------------------------------------
@@ -253,31 +255,48 @@ Ring List := (R, varList) -> (
 
    promote (A,A) := (f,A) -> f;
    
+   addVals := (c,d) -> (
+      e := c+d;
+      if e == 0 then continue else e
+   );
+
+   multVals := (c,d) -> c*d;
+      
+   multKeys := (m,n) -> m | n;
+
    A + A := (f,g) -> (
-      newHash := new MutableHashTable from pairs f.terms;
-   
-      for s in pairs g.terms do (
-         newMon := s#0;
-         if newHash#?newMon then newHash#newMon = newHash#newMon + s#1 else newHash#newMon = s#1;
-      );
+      -- new way
+      newHash := merge(f.terms,g.terms,addVals);
+      -- old way
+      --newHash := new MutableHashTable from pairs f.terms;
+      --for s in pairs g.terms do (
+      --   newMon := s#0;
+      --   if newHash#?newMon then newHash#newMon = newHash#newMon + s#1 else newHash#newMon = s#1;
+      --);
+      --newHash = removeZeroes hashTable pairs newHash;
       new A from hashTable {(symbol ring, f.ring),
 	                    (symbol isReduced, false),
                             (symbol cache, new CacheTable from {}),
-                            (symbol terms, removeZeroes hashTable pairs newHash)}   
+                            (symbol terms, newHash)}   
    );
+
    A * A := (f,g) -> (
-      newHash := new MutableHashTable;
-      for t in pairs f.terms do (
-         for s in pairs g.terms do (
-            newMon := t#0 | s#0;
-            newCoeff := (t#1)*(s#1);
-            if newHash#?newMon then newHash#newMon = newHash#newMon + newCoeff else newHash#newMon = newCoeff;
-         );
-      );
+      -- new way
+      newHash := combine(f.terms,g.terms,multKeys,multVals,addVals);
+      -- old way
+      --newHash := new MutableHashTable;
+      --for t in pairs f.terms do (
+      --   for s in pairs g.terms do (
+      --      newMon := t#0 | s#0;
+      --      newCoeff := (t#1)*(s#1);
+      --      if newHash#?newMon then newHash#newMon = newHash#newMon + newCoeff else newHash#newMon = newCoeff;
+      --   );
+      --);
+      --newHash = removeZeroes hashTable pairs newHash;
       new A from hashTable {(symbol ring, f.ring),
   	                    (symbol isReduced, false),
                             (symbol cache, new CacheTable from {}),
-                            (symbol terms, removeZeroes hashTable pairs newHash)}
+                            (symbol terms, newHash)}
    );
 
    A ^ ZZ := (f,n) -> product toList (n:f);
@@ -311,7 +330,13 @@ Ring List := (R, varList) -> (
    A
 )
 
-net NCRing := A -> net A.CoefficientRing | net A.generators
+net NCRing := A -> (
+    hasAttribute := value Core#"private dictionary"#"hasAttribute";
+    getAttribute := value Core#"private dictionary"#"getAttribute";
+    ReverseDictionary := value Core#"private dictionary"#"ReverseDictionary";
+    if hasAttribute(A,ReverseDictionary) then toString getAttribute(A,ReverseDictionary)
+    else net A.CoefficientRing | net A.generators
+)
 
 ideal NCPolynomialRing := NCIdeal => A ->
    new NCIdeal from new HashTable from {(symbol ring) => A,
@@ -424,10 +449,18 @@ NCPolynomialRing / NCIdeal := (A, I) -> (
    B
 )
 
-net NCQuotientRing := B -> net (B.ambient) |
-                           net " / " |
-			   net take(B.ideal.generators,10) |
-			   net if (#(B.ideal.generators) > 10) then " + More..." else ""
+net NCQuotientRing := B -> (
+    hasAttribute := value Core#"private dictionary"#"hasAttribute";
+    getAttribute := value Core#"private dictionary"#"getAttribute";
+    ReverseDictionary := value Core#"private dictionary"#"ReverseDictionary";
+    if hasAttribute(B,ReverseDictionary) then toString getAttribute(B,ReverseDictionary)
+    else (
+       net (B.ambient) |
+       net " / " |
+       net take(B.ideal.generators,10) |
+       net if (#(B.ideal.generators) > 10) then " + More..." else ""
+    )
+)
 
 ideal NCQuotientRing := NCIdeal => B -> B.ideal;
 ambient NCQuotientRing := B -> B.ambient;
@@ -2791,84 +2824,11 @@ installPackage "NCAlgebra"
 needsPackage "NCAlgebra"
 viewHelp "NCAlgebra"
 
---- demo
+--- arithmetic benchmark
 restart
 needsPackage "NCAlgebra"
 A = QQ{x,y,z}
-f = y*z + z*y - x^2
-g = x*z + z*x - y^2
-h = z^2 - x*y - y*x
-f*g
-I=ncIdeal{f,g,h}
-Igb = twoSidedNCGroebnerBasisBergman I
-B = A/I
-z^10
-generators B
-numgens B
-isCommutative B
-x*y-y*x
-coefficientRing B
-x
-C = skewPolynomialRing(QQ,(-1)_QQ,{x,y,z,w}) 
-x
-use B
-x
-use C
-sigma = ncMap(C,C,{y,z,w,x})
-D = oreExtension(C,sigma,a)
-gens D
-y*a
-a*y
+f = x+y+z
+time(f^12);
+time(f^6*f^6);
 
-restart
-needsPackage "NCAlgebra"
-B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
-A = ambient B
-g = 2*(-y^3-x*y*z+y*x*z+x^3)  -- g is central
-ideal B
-J = (ideal B) + ncIdeal {g}
-B' = A/J -- Factor of sklyanin
-k = ncMatrix {{x,y,z}}
-BprimeToB = ncMap(B,B',gens B) -- way to lift back from B' to B
-M1 = rightKernelBergman k
-M2 = rightKernelBergman M1
-M = BprimeToB M2
-gId = g*(ncMatrix applyTable(entries id_(ZZ^4), i -> promote(i,B)))
-gId.source
-gId.target
-assignDegrees(gId,{2,2,2,3},{5,5,5,6});
--- now factor through g*id
-M' = gId // M
-M*M' == gId
-M'*M == gId
-
-restart
-debug needsPackage "NCAlgebra"
-Q = QQ[a,b,c]
-R = Q/ideal{a*b-c^2}
-kRes = res(coker vars R, LengthLimit=>7)
-M = coker kRes.dd_5
-B = endomorphismRing(M,X)
-gensI = gens ideal B
-netList gensI
-gensIMin = minimizeRelations(gensI)
-maps = B.cache.endomorphismRingGens
-maps_3 == maps_0*maps_2
-checkHomRelations(gensIMin,maps)
-
-restart
-needsPackage "NCAlgebra"
-C = threeDimSklyanin(QQ,{a,b,c}, DegreeLimit=>6)
-ncGroebnerBasis ideal C
-f = centralElements(C,3)
-
-restart
-needsPackage "NCAlgebra"
-B = skewPolynomialRing(QQ,-1_QQ,{a,b,c})
-sigma = ncMap(B,B,{b,c,a})
-isWellDefined sigma
-C = oreExtension(B,sigma,w)
-isCentral w
-isNormal w      
-phi = normalAutomorphism w
-matrix phi
