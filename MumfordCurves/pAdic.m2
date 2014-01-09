@@ -126,6 +126,10 @@ pAdicField ZZ:=(p)->(
 	  );
      A - A:= (a,b)->(a+(-b));
      A / A:= (a,b)->(a*inverse(b));
+     A ^ ZZ := (a,n) ->(local c; c=1; i:=0;
+	  if n>-1 
+	  then while i<n do(c=c*a;i=i+1) else while i<abs(n) do(c=c*inverse(a);i=i+1);
+	  c);
      A + ZZ := (a,n)->(
 	  b := toPAdicFieldElement(n,precision a,A);
 	  a+b
