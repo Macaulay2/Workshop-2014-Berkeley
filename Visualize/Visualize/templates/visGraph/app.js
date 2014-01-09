@@ -346,6 +346,7 @@ function restart() {
 
       restart();
     })
+
     .on('mouseup', function(d) {
       if(!mousedown_node) return;
 
@@ -386,6 +387,9 @@ function restart() {
         link[direction] = false;
         links.push(link);
       }
+
+      // testing fixed vertices
+      selected_node.fixed = true;
 
       // select new link
       selected_link = link;

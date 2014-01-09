@@ -1,0 +1,50 @@
+n=precision(x); 
+i=x#"expansion"_0#0; 
+while i<n do(if member(i,x#"expansion"_0) then c_i=x#"expansion"_1#(position(x#"expansion"_0,j->j==i)) else c_i=0;a_(i-x#"expansion"_0#0)=c_i ;i=i+1)
+i=1; b_0=(sub(1/sub(a_0,ZZ/p),ZZ)+p)%p; s_0=-1; 
+while i<n do(s_i=s_(i-1)+sum(0..i-1, j-> a_j*b_(i-1-j))*p^(i-1);
+b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->a_j*b_(i-j)),ZZ/p)/sub(a_0,ZZ/p),ZZ)+p)%p;d_(i+x#"expansion"_0#0);i=i+1)
+
+
+
+toPAdicInverse (List) := (L) -> (
+	       n=#L;
+	       i=1; b_0=(sub(1/sub(L_0,ZZ/p),ZZ)+p)%p; s_0=-1; S={b_0};
+	       while i<n
+	       do(
+			s_i=s_(i-1)+sum(0..i-1, j-> L_j*b_(i-1-j))*p^(i-1); 
+	       		b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->L_j*b_(i-j)),ZZ/p)/sub(L_0,ZZ/p),ZZ)+p)%p;
+			append(S,b_i);
+			i=i+1);
+	       S
+	       )
+
+
+
+
+
+L={1,0,2,0,0,1,1,0}
+n:=#L;
+i=1; b_0=(sub(1/sub(L_0,ZZ/p),Z)+p)%p; s_0=-1; S={b_0}
+while i<n
+do(s_i=s_(i-1)+sum(0..i-1, j-> L_j*b_(i-1-j))*p^(i-1); b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->L_j*b_(i-j)),ZZ/p)/sub(L_0,ZZ/p),ZZ)+p)%p;append(S,b_i);i=i+1);
+S
+
+
+
+
+toPAdicFieldElement (List,PAdicField) := (L,S) -> (
+   n:=#L;
+   local expans;
+   if all(L,i->i==0) then expans={{},{}}    
+   else expans=entries transpose matrix select(apply(n,i->{i,L_i}),j->not j_1==0);
+   new S from {"precision"=>n,"expansion"=>expans}
+   )
+
+
+
+
+R=ZZ; p=29; a_0=15; a_1=8; a_2=25; a_3=0; a_4=21; a_5=5; a_6=28; S=R/p;
+i=1; b_0=(sub(1/sub(a_0,S),R)+p)%p; s_0=-1; 
+while i<7 do(s_i=s_(i-1)+sum(0..i-1, j-> a_j*b_(i-1-j))*p^(i-1);
+b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->a_j*b_(i-j)),S)/sub(a_0,S),R)+p)%p;i=i+1)
