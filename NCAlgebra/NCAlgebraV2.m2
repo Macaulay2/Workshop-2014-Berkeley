@@ -16,9 +16,93 @@ newPackage("NCAlgebraV2",
      DebuggingMode => true
      )
 
-export {subQuotientAsCokernel,homologyAsCokernel,identityMap,NCChainComplex}
+export {subQuotientAsCokernel,homologyAsCokernel,identityMap,NCChainComplex,e,qTensorProduct,freeProduct}
 
 debug needsPackage "NCAlgebra"
+
+freeProduct = method()
+freeProduct (NCRing,NCRing) := (A,B) -> (
+   R := coefficientRing A;
+   if R =!= (coefficientRing B) then error "Input rings must have same coefficient ring.";
+   gensA := gens A;
+   gensB := gens B;
+   newgens := gensA | gensB;     
+   if #unique(newgens) != (#gensA + #gensB) then error "Input rings have a common generator.";
+
+   I := gens ideal A;
+   J := gens ideal B;
+   
+   A' := if class A === NCPolynomialRing then A else ambient A;
+   B' := if class B === NCPolynomialRing then B else ambient B;
+    
+   C := R newgens;
+   gensAinC := take(gens C, #gensA);
+   gensBinC := drop(gens C, #gensA);
+   incA := ncMap(C,A',gensAinC);
+   incB := ncMap(C,B',gensBinC);
+   IinC := I / incA;
+   JinC := J / incB;
+   newIdealGens := select( (IinC | JinC), x -> x!=0);       
+   if newIdealGens == {} then C 
+   else C/(ncIdeal newIdealGens)
+)
+
+qTensorProduct = method()
+qTensorProduct (NCRing, NCRing, QQ) :=
+qTensorProduct (NCRing, NCRing, RingElement) := (A,B,q) -> (
+   -- this is the q-commuting tensor product of rings
+   R := coefficientRing A;
+   if class q =!= QQ and q.ring =!= R then error "Twisting parameter must belong to coefficient ring.";
+   F := freeProduct(A,B);
+   gensAinF := take(gens F, #gens A);
+   gensBinF := drop(gens F, #gens A);   
+   -- create the commutation relations among generators of A and B
+   K := flatten apply( gensAinF, g-> apply( gensBinF, h-> h*g-q*g*h));
+
+   if class F === NCPolynomialRing then F/(ncIdeal K)
+   else (
+      I := gens ideal F;
+      C := ambient F;
+      newI := ncIdeal select( (I | K), g -> g!=0);
+      C/newI
+   )
+     
+)
+
+NCRing ** NCRing := (A,B) -> (
+   qTensorProduct(A,B,promote(1,coefficientRing A))
+)
+
+e = method()
+e (NCRing, Symbol) := (A,x) -> (
+   --  want to add an option to index op variables by number rather than a ring element?
+   R := coefficientRing A;
+   Aop := oppositeRing A;
+   B := R apply(#gens A, g-> x_g);  -- remove # once indexing works without printing ( ) 
+   if class A === NCPolynomialRing then (B ** A) 
+   else (
+      A' := ambient Aop;   
+      f := ncMap(B,A',gens B);
+      J := ncIdeal (gens ideal Aop / f);
+      (B/J) ** A
+   )
+)
+
+TEST ///
+quit
+restart
+needsPackage "NCAlgebraV2"
+debug needsPackage "NCAlgebra"
+A = QQ{a,b,c}
+I = ncIdeal{a*b-c^2}
+Igb = ncGroebnerBasis(I,InstallGB=>true)
+C=A/I
+B = QQ{x,y,z}
+D = C ** B
+e(A,s)
+e(C,t)
+///
+
 
 subQuotientAsCokernel = method()
 subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
@@ -37,7 +121,7 @@ homologyAsCokernel(NCMatrix,NCMatrix) := (M,N) -> (
     B := N.ring;
     Z := Z = zeroMap((N.target),(N.source),B);
     kerM := rightKernelBergman(M);
-    rightMinGens(subQuotientAsCokernel(kerM,N))
+    subQuotientAsCokernel(kerM,N)
     )
 )
 
@@ -58,7 +142,6 @@ isHomogeneous L
 M*L == 0
 L
 M
-
 T = rightKernelBergman(M) | L
 isHomogeneous T
 rightKernelBergman(T)
@@ -88,6 +171,22 @@ NCMatrix ++ NCMatrix := (M,N) -> (
    ds := ncMatrix {{M,urZero},{lrZero,N}};
    assignDegrees(ds,M.target | N.target, M.source | N.source)
 )
+
+--- The method below is in a state of disrepair... I need to 
+--- get acquainted with all the bergman stuff
+
+-- digraph(NCGroebnerBasis) := G -> (
+    -- N := {normal forms};
+    -- F := {obstructions};
+    -- ringGens := {get the gens from the ring} 
+    ---- maybe this is why the method should take NCIdeal, to pull the ring gens?
+    --suffixes := apply(keys G, k -> flatten apply( degree k - 1, i -> ncMonomial drop(k#monslist,i)));
+    -- vertset := {1} | ringGens | suffixes;
+    -- secondEdges := flatten apply(vertset,v -> {v,{w | vw contains a unique elt of F as a suffix}})
+    ----  need to figure out how to write that function...
+    -- edgeset :=  {{1,ringGens}, secondEdges;
+    -- digraph(edgeset)   
+--    )
 
 -------------------------------------------
 --- NCChainComplex Methods ----------------
