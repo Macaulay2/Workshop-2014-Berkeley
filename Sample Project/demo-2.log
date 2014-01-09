@@ -1,0 +1,139 @@
+einsteinium$ git status
+# On branch master
+# Changes to be committed:
+#   (use "git reset HEAD <file>..." to unstage)
+#
+#	modified:   M2/Macaulay2/packages/=distributed-packages
+#	new file:   M2/Macaulay2/packages/Foo.m2
+#	new file:   M2/Macaulay2/packages/Foo/data
+#
+einsteinium$ git diff
+einsteinium$ git diff --cached
+diff --git a/M2/Macaulay2/packages/=distributed-packages b/M2/Macaulay2/packages/=distributed-packages
+index 9518b71..0cee607 100644
+--- a/M2/Macaulay2/packages/=distributed-packages
++++ b/M2/Macaulay2/packages/=distributed-packages
+@@ -99,3 +99,4 @@ MultiplierIdeals
+ InvariantRing
+ QuillenSuslin
+ EnumerationCurves
++Foo
+diff --git a/M2/Macaulay2/packages/Foo.m2 b/M2/Macaulay2/packages/Foo.m2
+new file mode 100644
+index 0000000..9a0365a
+--- /dev/null
++++ b/M2/Macaulay2/packages/Foo.m2
+@@ -0,0 +1,30 @@
++newPackage ("Foo",
++     Headline => "foo",
++     AuxiliaryFiles => true,
++     Reload => true,
++     DebuggingMode => true
++     )
++
++beginDocumentation()
++
++document {
++     Key => Foo,
++     ExampleFiles => {"data"},
++     EXAMPLE lines ///
++     	currentDirectory()
++        get "data"
++     ///
++     }
++
++f = () -> error "hi"
++f()
++
++doc ///
++  Key
++   "foo"
++  ExampleFiles
++   data
++  Description
++   Example
++    get "data"
++///
+\ No newline at end of file
+diff --git a/M2/Macaulay2/packages/Foo/data b/M2/Macaulay2/packages/Foo/data
+new file mode 100644
+index 0000000..762df5d
+--- /dev/null
++++ b/M2/Macaulay2/packages/Foo/data
+@@ -0,0 +1,2 @@
++data line 1
++data line 2
+einsteinium$ git commit
+[master ab77e5d] add package Foo
+ 3 files changed, 33 insertions(+)
+ create mode 100644 M2/Macaulay2/packages/Foo.m2
+ create mode 100644 M2/Macaulay2/packages/Foo/data
+einsteinium$ git remote -v
+origin	git@github.com:DanGrayson/M2.git (fetch)
+origin	git@github.com:DanGrayson/M2.git (push)
+einsteinium$ git push
+Counting objects: 22, done.
+Delta compression using up to 8 threads.
+Compressing objects:  14% (1/7)   Compressing objects:  28% (2/7)   Compressing objects:  42% (3/7)   Compressing objects:  57% (4/7)   Compressing objects:  71% (5/7)   Compressing objects:  85% (6/7)   Compressing objects: 100% (7/7)   Compressing objects: 100% (7/7), done.
+Writing objects:  11% (1/9)   Writing objects:  22% (2/9)   Writing objects:  33% (3/9)   Writing objects:  44% (4/9)   Writing objects:  55% (5/9)   Writing objects:  66% (6/9)   Writing objects:  77% (7/9)   Writing objects:  88% (8/9)   Writing objects: 100% (9/9)   Writing objects: 100% (9/9), 930 bytes | 0 bytes/s, done.
+Total 9 (delta 4), reused 0 (delta 0)
+To git@github.com:DanGrayson/M2.git
+   7c11da3..ab77e5d  master -> master
+einsteinium$ brew install gcc
+Error: No available formula for gcc
+GCC is now maintained in homebrew-versions, with major version
+number in formula name as suffix. Please tap using:
+
+
+
+and then install GCC based on its version, e.g., 'brew install gcc47'.
+einsteinium$     brew tap homebrew/versions
+Cloning into '/usr/local/Library/Taps/homebrew-versions'...
+remote: Reusing existing pack: 1578, done.        
+Receiving objects:   0% (1/1578)   Receiving objects:   1% (16/1578)   Receiving objects:   2% (32/1578)   Receiving objects:   3% (48/1578)   Receiving objects:   4% (64/1578)   Receiving objects:   5% (79/1578)   Receiving objects:   6% (95/1578)   Receiving objects:   7% (111/1578)   Receiving objects:   8% (127/1578)   Receiving objects:   9% (143/1578)   Receiving objects:  10% (158/1578)   Receiving objects:  11% (174/1578)   Receiving objects:  12% (190/1578)   Receiving objects:  13% (206/1578)   Receiving objects:  14% (221/1578)   Receiving objects:  15% (237/1578)   Receiving objects:  16% (253/1578)   Receiving objects:  17% (269/1578)   Receiving objects:  18% (285/1578)   Receiving objects:  19% (300/1578)   Receiving objects:  20% (316/1578)   Receiving objects:  21% (332/1578)   Receiving objects:  22% (348/1578)   Receiving objects:  23% (363/1578)   Receiving objects:  24% (379/1578)   Receiving objects:  25% (395/1578)   Receiving objects:  26% (411/1578)   Receiving objects:  27% (427/1578)   Receiving objects:  28% (442/1578)   Receiving objects:  29% (458/1578)   Receiving objects:  30% (474/1578)   Receiving objects:  31% (490/1578)   Receiving objects:  32% (505/1578)   Receiving objects:  33% (521/1578)   Receiving objects:  34% (537/1578)   Receiving objects:  35% (553/1578)   Receiving objects:  36% (569/1578)   Receiving objects:  37% (584/1578)   Receiving objects:  38% (600/1578)   Receiving objects:  39% (616/1578)   Receiving objects:  40% (632/1578)   Receiving objects:  41% (647/1578)   Receiving objects:  42% (663/1578)   Receiving objects:  43% (679/1578)   Receiving objects:  44% (695/1578)   Receiving objects:  45% (711/1578)   Receiving objects:  46% (726/1578)   Receiving objects:  47% (742/1578)   Receiving objects:  48% (758/1578)   Receiving objects:  49% (774/1578)   Receiving objects:  50% (789/1578)   Receiving objects:  51% (805/1578)   Receiving objects:  52% (821/1578)   Receiving objects:  53% (837/1578)   Receiving objects:  54% (853/1578)   Receiving objects:  55% (868/1578)   Receiving objects:  56% (884/1578)   Receiving objects:  57% (900/1578)   Receiving objects:  58% (916/1578)   Receiving objects:  59% (932/1578)   Receiving objects:  60% (947/1578)   Receiving objects:  61% (963/1578)   Receiving objects:  62% (979/1578)   Receiving objects:  63% (995/1578)   Receiving objects:  64% (1010/1578)   Receiving objects:  65% (1026/1578)   Receiving objects:  66% (1042/1578)   Receiving objects:  67% (1058/1578)   Receiving objects:  68% (1074/1578)   Receiving objects:  69% (1089/1578)   Receiving objects:  70% (1105/1578)   Receiving objects:  71% (1121/1578)   Receiving objects:  72% (1137/1578)   Receiving objects:  73% (1152/1578)   Receiving objects:  74% (1168/1578)   Receiving objects:  75% (1184/1578)   Receiving objects:  76% (1200/1578)   Receiving objects:  77% (1216/1578)   Receiving objects:  78% (1231/1578)   Receiving objects:  79% (1247/1578)   Receiving objects:  80% (1263/1578)   Receiving objects:  81% (1279/1578)   Receiving objects:  82% (1294/1578)   Receiving objects:  83% (1310/1578)   Receiving objects:  84% (1326/1578)   Receiving objects:  85% (1342/1578)   Receiving objects:  86% (1358/1578)   Receiving objects:  87% (1373/1578)   Receiving objects:  88% (1389/1578)   Receiving objects:  89% (1405/1578)   Receiving objects:  90% (1421/1578)   Receiving objects:  91% (1436/1578)   Receiving objects:  92% (1452/1578)   remote: Total 1578 (delta 0), reused 0 (delta 0) Receiving objects:  93% (1468/1578)          
+Receiving objects:  94% (1484/1578)   Receiving objects:  95% (1500/1578)   Receiving objects:  96% (1515/1578)   Receiving objects:  97% (1531/1578)   Receiving objects:  98% (1547/1578)   Receiving objects:  99% (1563/1578)   Receiving objects: 100% (1578/1578)   Receiving objects: 100% (1578/1578), 508.60 KiB | 0 bytes/s, done.
+Resolving deltas:   0% (0/814)   Resolving deltas:   1% (11/814)   Resolving deltas:   2% (18/814)   Resolving deltas:   3% (26/814)   Resolving deltas:   4% (37/814)   Resolving deltas:   5% (47/814)   Resolving deltas:   6% (51/814)   Resolving deltas:   7% (57/814)   Resolving deltas:   8% (73/814)   Resolving deltas:   9% (74/814)   Resolving deltas:  10% (84/814)   Resolving deltas:  11% (92/814)   Resolving deltas:  12% (102/814)   Resolving deltas:  13% (108/814)   Resolving deltas:  14% (116/814)   Resolving deltas:  15% (124/814)   Resolving deltas:  16% (131/814)   Resolving deltas:  17% (139/814)   Resolving deltas:  18% (151/814)   Resolving deltas:  20% (163/814)   Resolving deltas:  21% (178/814)   Resolving deltas:  22% (181/814)   Resolving deltas:  28% (230/814)   Resolving deltas:  29% (242/814)   Resolving deltas:  30% (246/814)   Resolving deltas:  31% (258/814)   Resolving deltas:  32% (261/814)   Resolving deltas:  33% (269/814)   Resolving deltas:  34% (277/814)   Resolving deltas:  38% (310/814)   Resolving deltas:  40% (330/814)   Resolving deltas:  41% (335/814)   Resolving deltas:  42% (342/814)   Resolving deltas:  44% (361/814)   Resolving deltas:  45% (373/814)   Resolving deltas:  46% (376/814)   Resolving deltas:  47% (383/814)   Resolving deltas:  48% (391/814)   Resolving deltas:  49% (399/814)   Resolving deltas:  50% (408/814)   Resolving deltas:  51% (417/814)   Resolving deltas:  52% (426/814)   Resolving deltas:  53% (437/814)   Resolving deltas:  54% (440/814)   Resolving deltas:  56% (458/814)   Resolving deltas:  57% (465/814)   Resolving deltas:  58% (477/814)   Resolving deltas:  59% (483/814)   Resolving deltas:  60% (495/814)   Resolving deltas:  63% (516/814)   Resolving deltas:  69% (562/814)   Resolving deltas:  70% (570/814)   Resolving deltas:  71% (578/814)   Resolving deltas:  72% (590/814)   Resolving deltas:  73% (597/814)   Resolving deltas:  74% (604/814)   Resolving deltas:  75% (612/814)   Resolving deltas:  78% (642/814)   Resolving deltas:  79% (645/814)   Resolving deltas:  80% (657/814)   Resolving deltas:  83% (680/814)   Resolving deltas:  84% (684/814)   Resolving deltas:  85% (693/814)   Resolving deltas:  86% (701/814)   Resolving deltas:  88% (720/814)   Resolving deltas:  89% (729/814)   Resolving deltas:  90% (734/814)   Resolving deltas:  95% (779/814)   Resolving deltas:  96% (783/814)   Resolving deltas:  97% (795/814)   Resolving deltas: 100% (814/814)   Resolving deltas: 100% (814/814), done.
+Checking connectivity... done
+Tapped 127 formula
+einsteinium$ brew install gcc
+Error: No available formula for gcc
+GCC is now maintained in homebrew-versions, with major version
+number in formula name as suffix. Please tap using:
+
+    brew tap homebrew/versions
+
+and then install GCC based on its version, e.g., 'brew install gcc47'.
+einsteinium$ pwd
+/Users/dan/src/M2/git-demo/M2
+einsteinium$ git status
+# On branch master
+nothing to commit, working directory clean
+einsteinium$ git remote -v
+origin	git@github.com:DanGrayson/M2.git (fetch)
+origin	git@github.com:DanGrayson/M2.git (push)
+einsteinium$ git remote add git@github.com:Macaulay2/M2.git
+usage: git remote add [<options>] <name> <url>
+
+    -f, --fetch           fetch the remote branches
+    --tags                import all tags and associated objects when fetching
+                          or do not fetch any tag at all (--no-tags)
+    -t, --track <branch>  branch(es) to track
+    -m, --master <branch>
+                          master branch
+    --mirror[=<push|fetch>]
+                          set up remote as a mirror to push to or fetch from
+
+einsteinium$ git remote add upstream git@github.com:Macaulay2/M2.git
+einsteinium$ git remote -v
+origin	git@github.com:DanGrayson/M2.git (fetch)
+origin	git@github.com:DanGrayson/M2.git (push)
+upstream	git@github.com:Macaulay2/M2.git (fetch)
+upstream	git@github.com:Macaulay2/M2.git (push)
+einsteinium$ git pull upstream master
+From github.com:Macaulay2/M2
+ * branch            master     -> FETCH_HEAD
+ * [new branch]      master     -> upstream/master
+Already up-to-date.
+einsteinium$ git push
+Everything up-to-date
+einsteinium$ 

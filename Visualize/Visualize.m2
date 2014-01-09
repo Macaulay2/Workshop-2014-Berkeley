@@ -27,7 +27,9 @@ newPackage(
 	     {Name => "Jim Vallandingham", Email => "vlandham@gmail.com", HomePage => "http://vallandingham.me/"}
 	     },
     	Headline => "Visualize",
-    	DebuggingMode => true
+    	DebuggingMode => true,
+	AuxiliaryFiles => false,
+	Configuration => {} 
     	)
 
 export {
@@ -42,7 +44,8 @@ export {
      "visGraph",
      "runServer", --helper
      "toArray", --helper
-     "getCurrPath" --helper
+     "getCurrPath", --helper
+     "copyJS"
 }
 
 needsPackage"Graphs"
@@ -74,10 +77,18 @@ toArray(List) := L -> (
 --input: A path
 --output: runs a server for displaying objects
 --
-runServer = method(Options => {Path => getCurrPath()})
+runServer = method(Options => {Path => currentDirectory()})
 runServer(String) := opts -> (visPath) -> (
     return run visPath;
     )
+
+--- add methods for output here:
+--
+
+
+
+
+
 
 
 --input: Three Stings. The first is a key word to look for.  The second
@@ -85,7 +96,7 @@ runServer(String) := opts -> (visPath) -> (
 --    	 where template file is located.
 --output: A file with visKey replaced with visString.
 --
-visOutput = method(Options => {Path => getCurrPath()})
+visOutput = method(Options => {Path => currentDirectory()})
 visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
     local fileName; local openFile; local PATH;
     
@@ -103,7 +114,7 @@ visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
 --input: A monomial ideal of a polynomial ring in 2 or 3 variables.
 --output: The newton polytope of the of the ideal.
 --
-visIdeal = method(Options => {Path => getCurrPath()|"/temp-files/", visTemplate => getCurrPath() |"/templates/visIdeal/visIdeal"})
+visIdeal = method(Options => {Path => currentDirectory()|"temp-files/", visTemplate => currentDirectory() |"Visualize/templates/visIdeal/visIdeal"})
 visIdeal(Ideal) := opts -> J -> (
     local R; local arrayList; local arrayString; local numVar; local visTemp;
     local A;
@@ -129,13 +140,13 @@ visIdeal(Ideal) := opts -> J -> (
     
     A = visOutput( "visArray", arrayString, visTemp, Path => opts.Path );
     
-    return getCurrPath()|A_1;
+    return currentDirectory()|A_1;
     )
 
 --input: A graph
 --output: the graph in the browswer
 --
-visGraph = method(Options => {Path => getCurrPath()|"/temp-files/", visTemplate => getCurrPath() | "/templates/visGraph/visGraph-template.html"})
+visGraph = method(Options => {Path => currentDirectory()|"temp-files/", visTemplate => currentDirectory() | "templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
     local A; local arrayList; local arrayString; local B;
     
@@ -143,10 +154,47 @@ visGraph(Graph) := opts -> G -> (
     arrayList = toArray entries A;
     arrayString = toString arrayList;
     
-    B = visOutput( "visArray", arrayString, opts.visTemplate, Path => opts.Path );
+    B = visOutput( "visArray", arrayString, opts.visTemplate, Path => opts.Path );    
     
-    return getCurrPath()|B_1;
+    return currentDirectory()|B_1;
     )
+
+
+--input: a String of a path to a directory
+--output: Copies the js library to path
+--
+--caveat: Checks to see if files exist. If they do exist, the user
+--        must give permission to continue. Continuing will overwrite
+--        current files and cannont be undone.
+copyJS = method()
+copyJS(String) := dst -> (
+    local jsdir; local ans; local quest;
+    
+    dst = dst|"js/";    
+    
+    -- get list of filenames in js/
+    jsdir = delete("..",delete(".",
+	    readDirectory(currentDirectory()|"temp-files/js/")
+	    ));
+    
+    -- test to see if files exist in target
+    if (scan(jsdir, j -> if fileExists(concatenate(dst,j)) then break true) === true)
+    then (
+    	   quest = concatenate(" -- Some files in ",dst," will be overwritten.\n -- This action cannot be undone.");
+	   print quest;
+	   ans = read "Would you like to continue? (yes or no):  ";
+	   while (ans != "yes" and ans != "no") do (
+	       ans = read "Would you like to continue? (yes or no):  ";
+	       );  
+	   if ans == "no" then (
+	       error "Process was aborted."
+	       );
+    	);
+    
+    copyDirectory(currentDirectory()|"temp-files/js/",dst);
+    
+    return "Created directory "|dst;
+)
 
 
 --------------------------------------------------
@@ -188,12 +236,12 @@ end
 -- Stable Tests
 -----------------------------
 -----------------------------
-
+-- branden
 restart
 loadPackage"Graphs"
 loadPackage"Visualize"
 
-G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}}Singletons => {x_5},EntryMode => "edges")
+G = graph(toList(x_0..x_5),{{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5},EntryMode => "edges")
 visGraph G
 
 R = QQ[x,y,z]
@@ -205,6 +253,23 @@ S = QQ[x,y]
 I = ideal"x4,xy3,y50"
 visIdeal I
 visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
+
+
+copyJS "/Users/bstone/Desktop/Test/"
+
+
+
+-----------------------------
+-- Julio's tests
+-----------------------------
+
+
+
+-----------------------------
+-- end Julio's Test
+-----------------------------
+
+
 
 -----------------------------
 -----------------------------

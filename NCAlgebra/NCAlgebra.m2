@@ -102,6 +102,8 @@ NCLeftIdeal = new Type of HashTable
 NCRightIdeal = new Type of HashTable
 NCRingMap = new Type of HashTable
 
+globalAssignment NCRing
+
 ---------------------------------------------------------------
 --- Helpful general-purpose functions
 ---------------------------------------------------------------
@@ -253,31 +255,48 @@ Ring List := (R, varList) -> (
 
    promote (A,A) := (f,A) -> f;
    
+   addVals := (c,d) -> (
+      e := c+d;
+      if e == 0 then continue else e
+   );
+
+   multVals := (c,d) -> c*d;
+      
+   multKeys := (m,n) -> m | n;
+
    A + A := (f,g) -> (
-      newHash := new MutableHashTable from pairs f.terms;
-   
-      for s in pairs g.terms do (
-         newMon := s#0;
-         if newHash#?newMon then newHash#newMon = newHash#newMon + s#1 else newHash#newMon = s#1;
-      );
+      -- new way
+      newHash := merge(f.terms,g.terms,addVals);
+      -- old way
+      --newHash := new MutableHashTable from pairs f.terms;
+      --for s in pairs g.terms do (
+      --   newMon := s#0;
+      --   if newHash#?newMon then newHash#newMon = newHash#newMon + s#1 else newHash#newMon = s#1;
+      --);
+      --newHash = removeZeroes hashTable pairs newHash;
       new A from hashTable {(symbol ring, f.ring),
 	                    (symbol isReduced, false),
                             (symbol cache, new CacheTable from {}),
-                            (symbol terms, removeZeroes hashTable pairs newHash)}   
+                            (symbol terms, newHash)}   
    );
+
    A * A := (f,g) -> (
-      newHash := new MutableHashTable;
-      for t in pairs f.terms do (
-         for s in pairs g.terms do (
-            newMon := t#0 | s#0;
-            newCoeff := (t#1)*(s#1);
-            if newHash#?newMon then newHash#newMon = newHash#newMon + newCoeff else newHash#newMon = newCoeff;
-         );
-      );
+      -- new way
+      newHash := combine(f.terms,g.terms,multKeys,multVals,addVals);
+      -- old way
+      --newHash := new MutableHashTable;
+      --for t in pairs f.terms do (
+      --   for s in pairs g.terms do (
+      --      newMon := t#0 | s#0;
+      --      newCoeff := (t#1)*(s#1);
+      --      if newHash#?newMon then newHash#newMon = newHash#newMon + newCoeff else newHash#newMon = newCoeff;
+      --   );
+      --);
+      --newHash = removeZeroes hashTable pairs newHash;
       new A from hashTable {(symbol ring, f.ring),
   	                    (symbol isReduced, false),
                             (symbol cache, new CacheTable from {}),
-                            (symbol terms, removeZeroes hashTable pairs newHash)}
+                            (symbol terms, newHash)}
    );
 
    A ^ ZZ := (f,n) -> product toList (n:f);
@@ -311,7 +330,13 @@ Ring List := (R, varList) -> (
    A
 )
 
-net NCRing := A -> net A.CoefficientRing | net A.generators
+net NCRing := A -> (
+    hasAttribute := value Core#"private dictionary"#"hasAttribute";
+    getAttribute := value Core#"private dictionary"#"getAttribute";
+    ReverseDictionary := value Core#"private dictionary"#"ReverseDictionary";
+    if hasAttribute(A,ReverseDictionary) then toString getAttribute(A,ReverseDictionary)
+    else net A.CoefficientRing | net A.generators
+)
 
 ideal NCPolynomialRing := NCIdeal => A ->
    new NCIdeal from new HashTable from {(symbol ring) => A,
@@ -424,10 +449,18 @@ NCPolynomialRing / NCIdeal := (A, I) -> (
    B
 )
 
-net NCQuotientRing := B -> net (B.ambient) |
-                           net " / " |
-			   net take(B.ideal.generators,10) |
-			   net if (#(B.ideal.generators) > 10) then " + More..." else ""
+net NCQuotientRing := B -> (
+    hasAttribute := value Core#"private dictionary"#"hasAttribute";
+    getAttribute := value Core#"private dictionary"#"getAttribute";
+    ReverseDictionary := value Core#"private dictionary"#"ReverseDictionary";
+    if hasAttribute(B,ReverseDictionary) then toString getAttribute(B,ReverseDictionary)
+    else (
+       net (B.ambient) |
+       net " / " |
+       net take(B.ideal.generators,10) |
+       net if (#(B.ideal.generators) > 10) then " + More..." else ""
+    )
+)
 
 ideal NCQuotientRing := NCIdeal => B -> B.ideal;
 ambient NCQuotientRing := B -> B.ambient;
@@ -683,11 +716,6 @@ newBasis (ZZ,NCIdeal) := NCMatrix => opts -> (n,I) -> (
    minGens := mingens image asCoeffs;
    ncMatrix{terms}*minGens
 )
-
-
-
-
-
 
 ------------------------------------------------
 
@@ -1067,8 +1095,8 @@ sparseCoeffs NCRingElement := opts -> f -> (
 )
 
 sparseCoeffs List := opts -> L -> (
-  d:=L#(position(L,m->m!=0));
-  if not all(L, m-> (isHomogeneous(m) and ((degree m)==(degree d) or m==0))) then 
+  d := if all(L, m -> m == 0) then 0 else L#(position(L,m->m!=0));
+  if not all(L, m-> (isHomogeneous(m) and (m == 0 or (degree m)==(degree d)))) then 
 	error "Expected homogeneous elements of the same degree.";
   B := (L#0).ring;
   R := coefficientRing B;
@@ -1838,6 +1866,7 @@ cumulativeBasis(ZZ,NCRing) := NCMatrix => (n,B) ->
    newBasis(n,B,CumulativeBasis=>true)
 
 newBasis(ZZ,NCRing) := NCMatrix => opts -> (n,B) -> (
+   if n == 0 then return ncMatrix {{promote(1,B)}};
    ncgbGens := if class B === NCQuotientRing then pairs (ncGroebnerBasis B.ideal).generators else {};
    basisList := {ncMonomial({},B)};
    doneList := if opts#CumulativeBasis then basisList else {};
@@ -1882,24 +1911,40 @@ leftMultiplicationMap = method()
 leftMultiplicationMap(NCRingElement,ZZ) := (f,n) -> (
    B := f.ring;
    m := degree f;
+   if m === -infinity then m = 0;
    nBasis := flatten entries basis(n,B);
    nmBasis := flatten entries basis(n+m,B);
    leftMultiplicationMap(f,nBasis,nmBasis)
 )
 
+leftMultiplicationMap(NCRingElement,ZZ,ZZ) := (f,n,m) -> (
+   B := f.ring;
+   nBasis := flatten entries basis(n,B);
+   mBasis := flatten entries basis(m,B);
+   leftMultiplicationMap(f,nBasis,mBasis)
+)
+
 leftMultiplicationMap(NCRingElement,List,List) := (f,fromBasis,toBasis) -> (
    if not isHomogeneous f then error "Expected a homogeneous element.";
    sparseCoeffs(f*fromBasis, Monomials=>toBasis)
-
 )
 
 rightMultiplicationMap = method()
 rightMultiplicationMap(NCRingElement,ZZ) := (f,n) -> (
    B := f.ring;
    m := degree f;
+   if m === -infinity then m = 0;
    nBasis := flatten entries basis(n,B);
    nmBasis := flatten entries basis(n+m,B);
    rightMultiplicationMap(f,nBasis,nmBasis)
+)
+
+rightMultiplicationMap(NCRingElement,ZZ,ZZ) := (f,n,m) -> (   
+   if f != 0 and degree f != m-n then error "Expected third argument to be the degree of f, if nonzero.";
+   B := f.ring;
+   nBasis := flatten entries basis(n,B);
+   mBasis := flatten entries basis(m,B);
+   rightMultiplicationMap(f,nBasis,mBasis)
 )
 
 rightMultiplicationMap(NCRingElement,List,List) := (f,fromBasis,toBasis) -> (
@@ -2562,11 +2607,19 @@ NCMatrix || NCMatrix := (M,N) -> (
    pipe
 )
 
-NCMatrix * ZZ := (M,r) -> ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)))
-ZZ * NCMatrix := (r,M) -> M*r
-NCMatrix * QQ := (M,r) -> ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)))
+NCMatrix * ZZ := (M,r) -> (
+   newM := ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)));
+   if isHomogeneous M then assignDegrees(newM,M.target,M.source);
+   newM
+)
+ZZ * NCMatrix := (r,M) -> M*r;
+NCMatrix * QQ := (M,r) -> (
+   newM := ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)));
+   if isHomogeneous M then assignDegrees(newM,M.target,M.source);
+   newM
+)
 QQ * NCMatrix := (r,M) -> M*r
-- NCMatrix := M -> (-1)*M
+- NCMatrix := M -> (-1)*M;
 NCMatrix * RingElement := (M,r) -> M*(promote(r,M.ring))
 RingElement * NCMatrix := (r,M) -> (promote(r,M.ring)*M)
 
@@ -2610,7 +2663,11 @@ NCRingElement * NCMatrix := (r,M) -> (
 )
 
 entries NCMatrix := M -> M.matrix
-transpose NCMatrix := M -> ncMatrix transpose M.matrix
+transpose NCMatrix := M -> (
+    Mtrans := ncMatrix transpose M.matrix;
+    assignDegrees(Mtrans,-M.source,-M.target);
+    Mtrans
+)
 
 --- flag an entire matrix as having reduced entries
 --- internal routine
@@ -2649,6 +2706,8 @@ assignDegrees NCMatrix := M -> (
 
 assignDegrees (NCMatrix, List, List) := (M,targetDeg,sourceDeg) -> (
    -- this function is for manual assignment of degrees
+   if (#(targetDeg) != #(entries M)) then error "Target degree list does not match number of rows of matrix";
+   if (#(sourceDeg) != #(first entries M)) then error "Source degree list does not match number of columns of matriix";
    M#(symbol source) = sourceDeg;
    M#(symbol target) = targetDeg;
    -- set the isHomogeneous flag.
@@ -2765,84 +2824,11 @@ installPackage "NCAlgebra"
 needsPackage "NCAlgebra"
 viewHelp "NCAlgebra"
 
---- demo
+--- arithmetic benchmark
 restart
 needsPackage "NCAlgebra"
 A = QQ{x,y,z}
-f = y*z + z*y - x^2
-g = x*z + z*x - y^2
-h = z^2 - x*y - y*x
-f*g
-I=ncIdeal{f,g,h}
-Igb = twoSidedNCGroebnerBasisBergman I
-B = A/I
-z^10
-generators B
-numgens B
-isCommutative B
-x*y-y*x
-coefficientRing B
-x
-C = skewPolynomialRing(QQ,(-1)_QQ,{x,y,z,w}) 
-x
-use B
-x
-use C
-sigma = ncMap(C,C,{y,z,w,x})
-D = oreExtension(C,sigma,a)
-gens D
-y*a
-a*y
+f = x+y+z
+time(f^12);
+time(f^6*f^6);
 
-restart
-needsPackage "NCAlgebra"
-B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
-A = ambient B
-g = 2*(-y^3-x*y*z+y*x*z+x^3)  -- g is central
-ideal B
-J = (ideal B) + ncIdeal {g}
-B' = A/J -- Factor of sklyanin
-k = ncMatrix {{x,y,z}}
-BprimeToB = ncMap(B,B',gens B) -- way to lift back from B' to B
-M1 = rightKernelBergman k
-M2 = rightKernelBergman M1
-M = BprimeToB M2
-gId = g*(ncMatrix applyTable(entries id_(ZZ^4), i -> promote(i,B)))
-gId.source
-gId.target
-assignDegrees(gId,{2,2,2,3},{5,5,5,6});
--- now factor through g*id
-M' = gId // M
-M*M' == gId
-M'*M == gId
-
-restart
-debug needsPackage "NCAlgebra"
-Q = QQ[a,b,c]
-R = Q/ideal{a*b-c^2}
-kRes = res(coker vars R, LengthLimit=>7)
-M = coker kRes.dd_5
-B = endomorphismRing(M,X)
-gensI = gens ideal B
-netList gensI
-gensIMin = minimizeRelations(gensI)
-maps = B.cache.endomorphismRingGens
-maps_3 == maps_0*maps_2
-checkHomRelations(gensIMin,maps)
-
-restart
-needsPackage "NCAlgebra"
-C = threeDimSklyanin(QQ,{a,b,c}, DegreeLimit=>6)
-ncGroebnerBasis ideal C
-f = centralElements(C,3)
-
-restart
-needsPackage "NCAlgebra"
-B = skewPolynomialRing(QQ,-1_QQ,{a,b,c})
-sigma = ncMap(B,B,{b,c,a})
-isWellDefined sigma
-C = oreExtension(B,sigma,w)
-isCentral w
-isNormal w      
-phi = normalAutomorphism w
-matrix phi

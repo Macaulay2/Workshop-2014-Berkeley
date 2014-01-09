@@ -36,20 +36,45 @@ truncateComplex(ZZ,ChainComplex) := (g,P) -> (
 	  )
 )
 
--- take a complex concentrated in non-negative degrees and augment
--- the cokernel of the differential in degree 1
-augmentChainComplex = method(TypicalValue => ChainComplex)
-augmentChainComplex (ChainComplex) := Q -> (
-     augQ := new ChainComplex;
-     augQ.ring = Q.ring;
-     N := coker Q.dd_1 ;
-     augQ.dd_1 = map(N, Q_1,id_(Q_1));
-     augQ.dd_0 = map(0*Q_0, N, 0*id_(Q_0));
-     for i from 2 to max Q do (
-	  augQ.dd_i = Q.dd_i
-	  );
+--from a module, build and augment a resolution of the module
+augmentChainComplex = 
+     method(TypicalValue => ChainComplex, Options => {LengthLimit =>2}
+	  )
+augmentChainComplex (Module) := opts -> M -> (
+     Q := resolution(M, LengthLimit => opts.LengthLimit);
+     augQ := Q;
+     augQ.dd_(0) = map(M, Q_0,id_(Q_0));
      augQ
 )
+
+-- this example is making no sense
+-- The map created by hand composes just fine,
+-- but the map created using the resolution won't compose
+R = QQ[x]/ideal(x^3)
+M = coker matrix {{x^2}}
+C_1 = map(M,R^1,id_(R^1)) -- check this against the resolution map
+-- at least once the resolution gave that this should be -id_(R^1)
+A = map(M,M,matrix{{x}})
+D = resolution M
+D' = augmentChainComplex(D)
+A*C_1 -- this composes
+A*(D'.dd_0) -- this doesn't compose
+C_1 == D'.dd_0 -- this returns true
+C_1 === D'.dd_0 --this returns false
+
+-- an alternate test, slightly different order
+R = QQ[x]/ideal(x^3)
+M = coker matrix {{x^2}}
+D = resolution M
+f = map(M, D_0, id_(D_0))
+A = map(M,M,matrix{{x}})
+--E = augmentChainComplex(D)
+E = augmentChainComplex(M)
+f == E.dd_0 -- this returns true
+--f === E.dd_0 --this returns false
+A*f -- this composes
+A*(E.dd_0) -- this doesn't compose
+
 
 
 R = QQ[x,y,z]
@@ -57,7 +82,6 @@ M = coker matrix {{x*y*z}}
 C = resolution(M, LengthLimit => 5)
 --Q = resolution(M, LengthLimit => 5)
 D = augmentChainComplex C     
-
 
 -- given a map between modules, lift the map to a chain map between
 -- the resolutions
@@ -74,6 +98,8 @@ R = QQ[x]/ideal(x^3)
 M = coker matrix {{x^2}}
 C = resolution M
 A = map(M,M,matrix{{x}})
+C' = augmentChainComplex(C)[-1]
+target A == C'_0 and source A == C'_0
 liftModuleMap(C,C,A)
 P = C
 Q = C
