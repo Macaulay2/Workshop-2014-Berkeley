@@ -241,8 +241,16 @@ restart
 loadPackage"Graphs"
 loadPackage"Visualize"
 
+-- Old Graphs
+G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
+
+-- New Graphs
 G = graph(toList(x_0..x_5),{{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5},EntryMode => "edges")
 visGraph G
+S = G.vertexSet
+toString S
+
+
 
 R = QQ[x,y,z]
 I = ideal"x4,xyz3,yz,xz,z6,y5"
