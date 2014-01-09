@@ -104,10 +104,35 @@ constructionV3 (ZZ,Module):=
 --here are the significant changes to version 3;
 
 --build the source of the chain complex map
-
+    S = new ChainComplex;
+    S.ring = M.ring;
+    for i from (g-1-max(g+2,n)) to g-1 do (
+	S_i = Ld_(g-1-i);
+	)
+    for i from g+1 to max(g+2,n) do (
+	S_i = P_i;
+	)
+    S_g = P_g;
+    for i from (g-1-max(g+2,n)) to g-1 do (
+	S.dd_i = Ld.dd_(g-1-i);
+	)
+    for i from g+2 to max(g+2,n) do (
+    	S.dd_i = P.dd_i;	
+    	)
+    
 --build the target of the chain complex map
+--actually this is already built as it is P    
 
 --build the maps between the source and target;
+    for i from (g-1-max(g+2,n)) to g-1 do(
+	f_i = Ld.dd_(g-1-i);
+	)
+    for i from g+1 to max(g+2,n) do (
+	f_i = P.dd_i;
+	)
+    f_g = lambdaDual*d*w;
+    cRes := map (P,S,i-> f_i) 
+
 --check that everything is ===
 
 --====== \begin{old stuff}
