@@ -12,7 +12,8 @@ newPackage(
 	   Email=> "dswinarski@fordham.edu",
 	   HomePage=>"http://faculty.fordham.edu/dswinarski"}, 
           {Name=> "Elina Robeva", 
-	   Email=> "erobeva@gmail.com"}
+	   Email=> "erobeva@gmail.com",
+	   HomePage=>"http://math.berkeley.edu/~erobeva"}
 	  },
      Headline => "MLE estimates for structural equation models",
      DebuggingMode => true
@@ -90,7 +91,7 @@ scoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
     R := gaussianRing(G); 
     use R;   
     -- Lambda
-    L := directedEdgesMatrix R;   
+    L := directedEdgesMatrix R;
     -- d is equal to the number of vertices in G
     d := numRows L;
     -- Omega
@@ -118,6 +119,44 @@ scoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
     return J
 );
 
+scoreEquationsCovariance1 = method();
+scoreEquationsCovariance1(MixedGraph, List) := (G, U) -> (
+    R := gaussianRing G;
+    V := sampleCovarianceMatrix(U);
+    use R;
+    L := directedEdgesMatrix R;
+    -- d is equal to the number of vertices in G
+    d := numRows L;
+    -- Omega
+    W := bidirectedEdgesMatrix R;
+    K := inverse (id_(R^d)-L);
+    -- the matrix Sigma expressed in terms of the l and p-variables.
+    S := (transpose K) * W * K;
+    -- Get the ideal in l's and p's.
+    J := scoreEquationsFromCovarianceMatrix(G, U);
+    -- same ideal in the ring R.
+    J1 := substitute(J, R);
+    Sigma := mutableMatrix(R, d, d); 
+    for i to d-1 do (
+	for j from i to d-1 do (
+	    use R;
+	    Sigma_(i,j) = s_(i+1,j+1);
+	    use R;
+ 	    Sigma_(j,i) = s_(i+1,j+1);
+	);
+    );
+    J2 := ideal(matrix(Sigma) - S);
+    J3 := J1 + J2;
+    numSvars := lift(d*(d+1)/2,ZZ);
+    -- the l and p-variables
+    lpRvarlist := apply(numgens(R)-numSvars,i->(gens(R))_i);
+    -- the s-variables
+    sRvarlist := apply(numSvars, i->(gens(R))_(i + numgens(R) - numSvars));
+    J4 := eliminate(lpRvarlist, J3);
+    sR := coefficientRing(R)[sRvarlist];
+    J5 := substitute(J4, sR);
+    return J5;
+);
 
 
 --******************************************--
@@ -140,9 +179,11 @@ doc ///
         Example
 	    needsPackage("Graphs");
 	    needsPackage("GraphicalModels");
+	    needsPackage("GraphicalModelsMLE");
 	    G = mixedGraph(digraph {{1,{2,3}},{2,{3}},{3,{4}}},bigraph {{3,4}})
 	    U = {matrix{{1,2,1,-1}}, matrix{{2,1,3,0}}, matrix{{-1, 0, 1, 1}}, matrix{{-5, 3, 4, -6}}}
             scoreEquationsFromCovarianceMatrix(G,U)
+	    scoreEquationsCovariance1(G, U)
     Caveat
         GraphicalModelsMLE requires Graphs.m2 and GraphicalModels.m2. 
 ///;
@@ -228,6 +269,35 @@ doc ///
 ///
 
 
+doc /// 
+    Key
+        scoreEquationsCovariance1
+        (scoreEquationsCovariance1,MixedGraph,List) 
+    Headline
+        computes the score equations that arise from the log likelihood formula in terms of the covariance matrix Sigma
+    Usage
+        scoreEquationsCovariance1(G,U)
+    Inputs
+        G:MixedGraph
+	U:List
+    Outputs
+         :Ideal
+    Description 
+        Text
+	    This function computes the score equations that arise from the log likelihood formula in terms of the covariance matrix $\Sigma$.  
+	    Suppose we are given a list of data vectors, each a row matrix.  
+	    The log likelihood function we want to maximize is given in Prop. 2.1.12 of Sturmfels's lecture notes (to do: update this reference to the printed version).  
+	    
+        Example
+	    needsPackage("Graphs");
+	    needsPackage("GraphicalModels");
+	    needsPackage("GraphicalModelsMLE");
+	    G = mixedGraph(digraph {{1,{2,3}},{2,{3}},{3,{4}}},bigraph {{3,4}})
+	    U = {matrix{{1,2,1,-1}}, matrix{{2,1,3,0}}, matrix{{-1, 0, 1, 1}}, matrix{{-5, 3, 4, -6}}}
+            scoreEquationsCovariance1(G,U)
+///
+
+
 --******************************************--
 -- TESTS     	       	    	      	    --
 --******************************************--
@@ -270,6 +340,16 @@ G = mixedGraph(digraph {{1,{2,3}},{2,{3}},{3,{4}}},bigraph {{3,4}})
 U = {matrix{{1,2,1,-1}}, matrix{{2,1,3,0}}, matrix{{-1, 0, 1, 1}}, matrix{{-5, 3, 4, -6}}}
 J=scoreEquationsFromCovarianceMatrix(G,U);
 I=ideal(80*p_(3,4)+39,200*p_(4,4)-271,1760416*p_(3,3)-742363,920*p_(2,2)-203,64*p_(1,1)-115,5*l_(3,4)+2,110026*l_(2,3)-2575,55013*l_(1,3)-600,115*l_(1,2)+26);
+assert(J===I)
+///     
+
+TEST ///
+needsPackage("Graphs");
+needsPackage("GraphicalModels");
+G = mixedGraph(digraph {{1,{2,3}},{2,{3}},{3,{4}}},bigraph {{3,4}})
+U = {matrix{{1,2,1,-1}}, matrix{{2,1,3,0}}, matrix{{-1, 0, 1, 1}}, matrix{{-5, 3, 4, -6}}}
+J=scoreEquationsCovariance1(G,U);
+I=ideal(16*s_(4,4)-29,32*s_(3,4)+21,64*s_(3,3)-27,4336*s_(2,4)+5,8672*s_(2,3)-25,16*s_(2,2)-5,8672*s_(1,4)+35,17344*s_(1,3)-175,32*s_(1,2)+13,64*s_(1,1)-115);
 assert(J===I)
 ///     
 --------------------------------------
