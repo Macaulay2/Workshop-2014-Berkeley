@@ -141,6 +141,12 @@ pAdicField ZZ:=(p)->(
 	  a === b
 	  );
      ZZ == A := (n,a) -> a==n;
+     A << ZZ := (a,n) -> (
+	  newPrecision := a#"precision"+n;
+	  newKeys := for i in a#"expansion"_0 list i+n;
+	  new A from {"precision"=>newPrecision,
+	       "expansion"=>{newKeys,a#"expansion"_1}}
+	  );
      PAdicFields#p=A;
      A
 )
@@ -182,6 +188,9 @@ Q3 = pAdicField(3)
 x = toPAdicFieldElement({1,2,0,1,0},Q3);
 y = toPAdicFieldElement(0,3,Q3);
 z = toPAdicFieldElement(10,10,Q3);
+print(x<<3);
+print(y<<15);
+print(x<<(-5));
 print(x+x)
 print(x*x)
 print(x+y)
