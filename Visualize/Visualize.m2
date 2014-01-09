@@ -32,7 +32,6 @@ newPackage(
 	Configuration => {} 
     	)
 
-viewHelp newPackage
 export {
     
     -- Options
@@ -115,7 +114,7 @@ visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
 --input: A monomial ideal of a polynomial ring in 2 or 3 variables.
 --output: The newton polytope of the of the ideal.
 --
-visIdeal = method(Options => {Path => currentDirectory()|"temp-files/", visTemplate => currentDirectory() |"templates/visIdeal/visIdeal"})
+visIdeal = method(Options => {Path => currentDirectory()|"temp-files/", visTemplate => currentDirectory() |"Visualize/templates/visIdeal/visIdeal"})
 visIdeal(Ideal) := opts -> J -> (
     local R; local arrayList; local arrayString; local numVar; local visTemp;
     local A;
@@ -237,7 +236,7 @@ end
 -- Stable Tests
 -----------------------------
 -----------------------------
-
+-- branden
 restart
 loadPackage"Graphs"
 loadPackage"Visualize"
