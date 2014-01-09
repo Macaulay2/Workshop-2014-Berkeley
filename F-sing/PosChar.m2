@@ -1374,6 +1374,8 @@ tauAOverPEMinus1QGorAmb = (Sk, Jk, hk, ek, fm, a1, e1) -> (
                                                
 	a2 := a3 % (pp^et - 1);
      k2 := a3 // (pp^et - 1); --it seems faster to use the fact that we can do simple Skoda for tau
+     
+     Jl := ascendIdealSafe(Jk, hk, 1, ek);
                       
         --          assert false;                             
      Iasc := ascendIdealSafeList(Jk*ideal(fm)^(ceiling(a3/(pp^et - 1))), (fm, hk), (a2, numerator ((pp^et - 1)/(pp^ek - 1))), et);
@@ -1433,28 +1435,6 @@ tauQGor = (Rk, ek, fk, t1) -> (
 	  	else I2 = I1
      );
 
-     --now we compute the test ideal using a generalization of the fact that 
-     --tau(fm^t)^{[1/p^b]} = tau(fm^(t/p^b))
-     --this follows from Schwede-Tucker or other places
-          --we do a check to see if the indexes match well enough...
-          --the problem is we can only take ek'th roots, but my t1 might be something like
-          --1/p.  I fix that by acting as if t1 is p^(ek-1)/p^ek.  
-          --We can take an ekth root of that.  Often, t1 = 1, so that will keep things easy.
---          if (remain != 0) then (
---               I1 = I1*ideal(fm^(pp^dualRemain) );
---     	       pPow = pPow + dualRemain;
---          ); --note in the end here, ek divides pPow.
- 
-          --I also need to adjust hk if it is different from pPow.
---	    	if (ek != pPow) then (
---			hk = hk^(numerator ((pp^pPow - 1)/(pp^ek - 1)))	       
---	  	); --the division above makes sense because ek divides the modified pPow
-assert false; 
---          I2 = ethRoot(I1*ideal(hk), pPow) 
---		I2 = ethRootSafe(hk, I1, numerator((pp^pPow - 1)/(pp^ek - 1)), pPow)
---     )
---     else --unless we don't have any p's in the denominator
---        I2 = I1;
 	  
      sub(I2, Rk)*ideal(fk^k2)
 )
