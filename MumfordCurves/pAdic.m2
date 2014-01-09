@@ -50,6 +50,9 @@ pAdicField ZZ:=(p)->(
 	     "expansion"=>{toList deepSplice newKeys,
 		  toList deepSplice newValues}}
 	);
+   new A from Sequence := (A',a) -> (
+	computeCarryingOver(a#0,a#1,a#2)
+	);
    A + A := (a,b) -> (
 	newPrecision := min(a#"precision",b#"precision");
         aKeys := a#"expansion"_0;
@@ -84,8 +87,36 @@ pAdicField ZZ:=(p)->(
 	computeCarryingOver(newKeys,newValues,newPrecision)
 	);
      A - A:= (a,b)->(a+(-b));
-   - A:= a->(toPAdicFieldElement(toList((precision a):(p-1)),A)*a);
-	A
+     +A := a->a;
+     -A := a->(
+	  newValues := for i in a#"expansion"_1 list -i;
+	  computeCarryingOver(a#"expansion"_0,newValues,a#"precision")
+	  );
+     A + ZZ := (a,n)->(
+	  b := toPAdicFieldElement(n,precision a,A);
+	  a+b
+	  );
+     ZZ + A := (n,a)->a+n;
+     A - ZZ := (a,n)->a+(-n);
+     ZZ - A := (n,a)->(-a)+n;
+     pValuation := n->(
+	  b := n;
+	  v := 0;
+          while b%p==0 do (
+	       b = b//p;
+	       v = v+1;
+	       );
+	  v
+	  );
+     A * ZZ := (a,n)->(
+	  if n==0 then 0 else (
+	       v := pValuation(n);
+	       b := toPAdicFieldElement(n,v+relativePrecision a,A);
+	       a*b
+	       )
+	  );
+     ZZ * A := (n,a)->a*n;
+     A
 )
 
 
@@ -111,6 +142,9 @@ toPAdicFieldElement (List,PAdicField) := (L,S) -> (
    else expans=entries transpose matrix select(apply(n,i->{i,L_i}),j->not j_1==0);
    new S from {"precision"=>n,"expansion"=>expans}
    )
+toPAdicFieldElement(ZZ,ZZ,PAdicField) := (n,prec,S) -> (
+     new S from ({0},{n},prec)
+     );
 
 end
 ----------------------------
@@ -120,12 +154,16 @@ restart
 load "/Users/qingchun/Desktop/M2Berkeley/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
 Q3 = pAdicField(3)
 x = toPAdicFieldElement({1,2,0,1,0},Q3);
-y = new Q3 from {"precision"=>3,"expansion"=>{{},{}}};
+y = toPAdicFieldElement(0,3,Q3);
+z = toPAdicFieldElement(10,10,Q3);
 print(x+x)
 print(x*x)
 print(x+y)
 print(x*y)
 print(y*y)
+print(x+1)
+print((1-x)+x)
+print(82*x)
 end
 
 ----------------------------
