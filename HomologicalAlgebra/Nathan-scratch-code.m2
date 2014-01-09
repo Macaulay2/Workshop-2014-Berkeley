@@ -226,3 +226,13 @@ prune Ext^0(L#0,L#1)
 C
 
 help Ext
+
+help genericMatrix
+M = coker(matrix(R,x^3))
+N = coker(matrix(R,x^4))
+FM = complete res M
+FN = complet res N
+coker
+C_(-1)
+
+

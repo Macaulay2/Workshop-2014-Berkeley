@@ -43,8 +43,8 @@ newPackage(
       HomePage => "http://math.berkeley.edu/~thanh"}},
   Headline => "spectral sequences",
   DebuggingMode => true,
-  PackageImports => {"SimplicialComplexes", "ChainComplexExtras"},
-  PackageExports => {"SimplicialComplexes", "ChainComplexExtras"}
+  PackageImports => {"SimplicialComplexes", "ChainComplexExtras", "PushForward"},
+  PackageExports => {"SimplicialComplexes", "ChainComplexExtras", "PushForward"}
   )
 
 export {
@@ -78,7 +78,7 @@ export {
    "page" ,
   -- "InfiniteSequence",
   "prunningMaps", "edgeComplex",
-  "filteredHomologyObject", "associatedGradedHomologyObject"  --, "xHom", "yHom" --, "xTensor", "yTensor"
+  "filteredHomologyObject", "associatedGradedHomologyObject", "changeOfRingsTor", "pushFwdChainComplex"  --, "xHom", "yHom" --, "xTensor", "yTensor"
   }
 
 
@@ -971,6 +971,26 @@ associatedGradedHomologyObject(ZZ,ZZ,FilteredComplex) := (p,n,K) -> (
 
 -----------------------------------------------------------
 -----------------------------------------------------------
+-- change of rings scratch code --
+
+pushFwdChainComplex = method()
+pushFwdChainComplex(ChainComplex,RingMap) := (C,f) -> (
+    D := new ChainComplex;
+    D.ring = source f;
+    for i from min C to max C do
+    D.dd _i = pushFwd(C.dd_i,f);    
+    D
+    )
+
+changeOfRingsTor = method()
+changeOfRingsTor(Module,Module,RingMap) := (M,N,f) -> (
+    -- f : R --> S, N an S module, M an R module
+    F := complete res N;
+    FR := pushFwdChainComplex(F,f);
+    G := complete res M;
+    spectralSequence((G) ** (filteredComplex FR) )
+    )
+
 -----------------------------------------------------------
 -----------------------------------------------------------
 
@@ -3733,6 +3753,46 @@ uninstallPackage"SpectralSequences"
 installPackage"SpectralSequences"
 installPackage("SpectralSequences", RemakeAllDocumentation => true)
 check "SpectralSequences";
+
+-- scratch examples related to change of rings for Tor
+-- the changeOfRingsTor method is suppose to return
+-- ss for f: R --> S  with E^2_{p,q} = Tor^S_p(Tor^R_q(M,S), N)
+
+-- the code is on line 975
+restart;
+needsPackage"SpectralSequences"
+kk = QQ
+R = kk[a,b,c]
+S = kk[z,t,w]
+f = map(S,R,{z^1, t^2, w^3})
+N = S^1 / ideal(z^3,t^4,w^5)
+M = R^1 / ideal(a^2,b^2,c^2)
+g = map(N,N,matrix{{z*t*w}})
+pushFwd(g,f)
+E = prune changeOfRingsTor(M,N,f)
+E^0
+E^1
+E^2
+E^3
+-- the above seems to be taking too long.
+-- try easier example now
+restart;
+needsPackage"SpectralSequences"
+kk = QQ
+R = kk[a,b]
+S = kk[z,t]
+f = map(S,R,{z^1, t^2})
+N = S^1 / ideal(z^3,t^4)
+M = R^1 / ideal(a^2,b^2)
+g = map(N,N,matrix{{z*t}})
+pushFwd(g,f)
+E = prune changeOfRingsTor(M,N,f)
+E^0
+E^1
+E^2
+E^3
+
+
 
 
 restart
