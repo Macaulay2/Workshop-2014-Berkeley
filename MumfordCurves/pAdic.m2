@@ -10,85 +10,85 @@ relativePrecision = method()
 
 pAdicField = method()
 pAdicField ZZ:=(p)->(
-   if PAdicFields#?p then return PAdicFields#p;
-   R := ZZ;
-   A := new PAdicField from {(symbol prime) => p};
-   precision A := a->a#"precision";
-   valuation A := a->(if #a#"expansion">0 then return min a#"expansion"_0;
-	infinity);
-   relativePrecision A:= a -> (precision a)-(valuation a);
-   net A := a->(expans:=a#"expansion";
-	keylist:=expans_0;
-       	((concatenate apply(#keylist,i->
+     if PAdicFields#?p then return PAdicFields#p;
+     R := ZZ;
+     A := new PAdicField from {(symbol prime) => p};
+     precision A := a->a#"precision";
+     valuation A := a->(if #a#"expansion">0 then return min a#"expansion"_0;
+	  infinity);
+     relativePrecision A:= a -> (precision a)-(valuation a);
+     net A := a->(expans:=a#"expansion";
+	  keylist:=expans_0;
+       	  ((concatenate apply(#keylist,i->
 		  toString(expans_1_i)|"*"|toString p|"^"
 		  |toString keylist_i|"+"))
 		|"O("|toString p|"^"|toString(precision a)|")"));
-   computeCarryingOver := (aKeys,aValues,prec) -> (
-	newKeys := ();
-	newValues := ();
-	carryingOver := 0_R;
-	aPointer := 0;
-	while (aPointer<#aKeys and aKeys#aPointer<=prec) do (
-	     currentKey := aKeys#aPointer;
-	     currentValue := aValues#aPointer+carryingOver;
-	     carryingOver = 0_R;
-	     while currentValue!=0 do (
-	     	  q := currentValue%p;
-		  currentValue = (currentValue-q)//p;
-		  if q!=0 then (
-		       newKeys = (newKeys,currentKey);
-		       newValues = (newValues,q);
-		       );
-		  currentKey = currentKey+1;
-		  if (currentKey>=prec or 
-		       ((aPointer+1<#aKeys) and 
-			    (currentKey>=aKeys#(aPointer+1)))) then (
-		       carryingOver = currentValue;
-		       break;
-		       );
-	     	  );
-	     aPointer = aPointer+1;
-	     );
-	new A from {"precision"=>prec,
-	     "expansion"=>{toList deepSplice newKeys,
-		  toList deepSplice newValues}}
-	);
-   new A from Sequence := (A',a) -> (
-	computeCarryingOver(a#0,a#1,a#2)
-	);
-   A + A := (a,b) -> (
-	newPrecision := min(a#"precision",b#"precision");
-        aKeys := a#"expansion"_0;
-	aValues := a#"expansion"_1;
-	aTable := new HashTable from for i in 0..#aKeys-1 list (
-	     if aKeys#i<newPrecision then {aKeys#i,aValues#i} else continue);
-	bKeys := b#"expansion"_0;
-	bValues := b#"expansion"_1;
-	bTable := new HashTable from for i in 0..#bKeys-1 list (
-	     if bKeys#i<newPrecision then {bKeys#i,bValues#i} else continue);
-	s := merge(aTable,bTable,plus);
-	newKeys := sort keys s;
-	newValues := for i in newKeys list s#i;
-	computeCarryingOver(newKeys,newValues,newPrecision)
-	);
-   A * A := (a,b)->(
-	newPrecision := min(precision a+min(precision b,valuation b),
-	     precision b+min(precision a,valuation a));
-	aKeys := a#"expansion"_0;
-	aValues := a#"expansion"_1;
-	aTable := new HashTable from for i in 0..#aKeys-1 list {aKeys#i,aValues#i};
-	bKeys := b#"expansion"_0;
-	bValues := b#"expansion"_1;
-	bTable := new HashTable from for i in 0..#bKeys-1 list {bKeys#i,bValues#i};
-	combineFunction := (aKey,bKey)-> (
-	     s := aKey+bKey;
-	     if (s<newPrecision) then s else continue
-	     );
-	prod := combine(aTable,bTable,combineFunction,times,plus);
-	newKeys := sort keys prod;
-	newValues := for i in newKeys list prod#i;
-	computeCarryingOver(newKeys,newValues,newPrecision)
-	);
+     computeCarryingOver := (aKeys,aValues,prec) -> (
+	  newKeys := ();
+	  newValues := ();
+	  carryingOver := 0_R;
+	  aPointer := 0;
+	  while (aPointer<#aKeys and aKeys#aPointer<=prec) do (
+	       currentKey := aKeys#aPointer;
+	       currentValue := aValues#aPointer+carryingOver;
+	       carryingOver = 0_R;
+	       while currentValue!=0 do (
+	     	    q := currentValue%p;
+		    currentValue = (currentValue-q)//p;
+		    if q!=0 then (
+		         newKeys = (newKeys,currentKey);
+		         newValues = (newValues,q);
+		         );
+		    currentKey = currentKey+1;
+		    if (currentKey>=prec or 
+		         ((aPointer+1<#aKeys) and 
+                              (currentKey>=aKeys#(aPointer+1)))) then (
+		         carryingOver = currentValue;
+		         break;
+		         );
+	     	    );
+	       aPointer = aPointer+1;
+	       );
+	  new A from {"precision"=>prec,
+	       "expansion"=>{toList deepSplice newKeys,
+		    toList deepSplice newValues}}
+	  );
+     new A from Sequence := (A',a) -> (
+	  computeCarryingOver(a#0,a#1,a#2)
+	  );
+     A + A := (a,b) -> (
+	  newPrecision := min(a#"precision",b#"precision");
+          aKeys := a#"expansion"_0;
+          aValues := a#"expansion"_1;
+	  aTable := new HashTable from for i in 0..#aKeys-1 list (
+	       if aKeys#i<newPrecision then {aKeys#i,aValues#i} else continue);
+	  bKeys := b#"expansion"_0;
+	  bValues := b#"expansion"_1;
+	  bTable := new HashTable from for i in 0..#bKeys-1 list (
+	       if bKeys#i<newPrecision then {bKeys#i,bValues#i} else continue);
+	  s := merge(aTable,bTable,plus);
+	  newKeys := sort keys s;
+	  newValues := for i in newKeys list s#i;
+	  computeCarryingOver(newKeys,newValues,newPrecision)
+	  );
+     A * A := (a,b)->(
+          newPrecision := min(precision a+min(precision b,valuation b),
+	       precision b+min(precision a,valuation a));
+	  aKeys := a#"expansion"_0;
+  	  aValues := a#"expansion"_1;
+	  aTable := new HashTable from for i in 0..#aKeys-1 list {aKeys#i,aValues#i};
+	  bKeys := b#"expansion"_0;
+	  bValues := b#"expansion"_1;
+	  bTable := new HashTable from for i in 0..#bKeys-1 list {bKeys#i,bValues#i};
+	  combineFunction := (aKey,bKey)-> (
+	       s := aKey+bKey;
+	       if (s<newPrecision) then s else continue
+	       );
+	  prod := combine(aTable,bTable,combineFunction,times,plus);
+	  newKeys := sort keys prod;
+	  newValues := for i in newKeys list prod#i;
+	  computeCarryingOver(newKeys,newValues,newPrecision)
+	  );
      +A := a->a;
      -A := a->(
 	  newValues := for i in a#"expansion"_1 list -i;
