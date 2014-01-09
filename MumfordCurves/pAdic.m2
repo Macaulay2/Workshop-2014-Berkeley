@@ -5,6 +5,8 @@ PAdicFieldElement = new Type of HashTable
 
 new PAdicField from List := (PAdicField, inits) -> new PAdicField of PAdicFieldElement from new HashTable from inits
 
+net PAdicField := A->"QQQ_"|toString(A#prime)
+
 valuation = method()
 relativePrecision = method()
 
@@ -204,11 +206,19 @@ end
 ----------------------------
 restart
 load "~/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
-
+QQQ_3
 
 Q3=QQQ_3
+x=toPAdicFieldElement({1,2,2,2},QQQ_3)
+class x
+QQQ_3
 
-x=toPAdicFieldElement({1,0,0,0,0,0},Q3)
+
+x=toPAdicFieldElement({1,0,0,0,0,0},QQQ_3)
+inverse x
+
+Q3
+QQQ_3===Q3
 x-x
 
 x=toPAdicFieldElement({0,0,0,0,0,0},Q3)

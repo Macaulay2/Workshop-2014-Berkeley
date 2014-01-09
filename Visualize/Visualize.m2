@@ -29,7 +29,7 @@ newPackage(
     	Headline => "Visualize",
     	DebuggingMode => true,
 	AuxiliaryFiles => true,
-	Configuration => {} 
+	Configuration => {"DefaultPath" => currentDirectory() |"temp-files/" } 
     	)
 
 export {
@@ -49,6 +49,9 @@ export {
 }
 
 needsPackage"Graphs"
+
+
+defaultPath = (options Visualize).Configuration#"DefaultPath"
 
 
 ------------------------------------------------------------
@@ -114,7 +117,7 @@ visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
 --input: A monomial ideal of a polynomial ring in 2 or 3 variables.
 --output: The newton polytope of the of the ideal.
 --
-visIdeal = method(Options => {VisPath => currentDirectory()|"temp-files/", VisTemplate => currentDirectory() |"Visualize/templates/visIdeal/visIdeal"})
+visIdeal = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() |"Visualize/templates/visIdeal/visIdeal"})
 visIdeal(Ideal) := opts -> J -> (
     local R; local arrayList; local arrayString; local numVar; local visTemp;
     local A;
@@ -139,6 +142,8 @@ visIdeal(Ideal) := opts -> J -> (
     );
     
     A = visOutput( "visArray", arrayString, visTemp, VisPath => opts.VisPath );
+    
+    print defaultPath;
     
     return currentDirectory()|A_1;
     )
