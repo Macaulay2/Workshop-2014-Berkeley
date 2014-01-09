@@ -10,7 +10,7 @@ NewScoreEquationsFromCovarianceMatrix = (R, U) -> (
     use R;   --This shouldn't be necessary once we fix a bug in GraphicalModels 
     Lambda := directedEdgesMatrix R;   
     -- d is equal to the number of vertices in G
-    d := numRows L;
+    d := numRows Lambda;
     Omega := bidirectedEdgesMatrix R;
     -- move to a new ring, lpR, which does not have the s variables
     numSvars:=lift(d*(d+1)/2,ZZ);
