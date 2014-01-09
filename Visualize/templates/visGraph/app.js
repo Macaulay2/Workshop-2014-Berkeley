@@ -146,14 +146,14 @@ var svg = d3.select('body')
 //  - reflexive edges are indicated on the node (as a bold black circle).
 //  - links are always source < target; edge directions are set by 'left' and 'right'.
 var nodes = [
-    {id: 0, reflexive: false},
-    {id: 1, reflexive: true },
-    {id: 2, reflexive: false}
+    {id: 0},
+    {id: 1},
+    {id: 2}
   ],
   lastNodeId = 2,
   links = [
-    {source: nodes[0], target: nodes[1], left: false, right: false },
-    {source: nodes[1], target: nodes[2], left: false, right: false }
+    {source: nodes[0], target: nodes[1] },
+    {source: nodes[1], target: nodes[2] }
   ];
 
 var constrString = graph2M2Constructor(nodes,links);
@@ -422,6 +422,12 @@ function spliceLinksForNode(node) {
   });
 }
 
+function dragstart(d) {
+	console.log("getting here?\n");
+    	d.fixed = true;
+	d3.select(this).classed("fixed", true);
+    }
+
 // only respond once per keydown
 var lastKeyDown = -1;
 
@@ -433,7 +439,8 @@ function keydown() {
 
   // ctrl
   if(d3.event.keyCode === 17) {
-    circle.call(force.drag);
+    var drag = force.drag()
+    .on("dragstart", dragstart);
     svg.classed('ctrl', true);
   }
 
