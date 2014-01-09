@@ -16,9 +16,65 @@ newPackage("NCAlgebraV2",
      DebuggingMode => true
      )
 
-export {subQuotientAsCokernel,homologyAsCokernel,identityMap,NCChainComplex}
+export {subQuotientAsCokernel,homologyAsCokernel,identityMap,NCChainComplex,e}
 
 debug needsPackage "NCAlgebra"
+
+NCRing ** NCRing := (A,B) -> (
+   -- this is the usual (commuting) tensor product of rings
+   R := coefficientRing A;
+   if R =!= (coefficientRing B) then error "Input rings must have same coefficient ring.";
+   gensA := gens A;
+   gensB := gens B;
+   newgens := gensA | gensB;     
+   if #unique(newgens) != (#gensA + #gensB) then error "Input rings have a common generator.";
+
+   I := gens ideal A;
+   J := gens ideal B;
+   
+   A' := if class A === NCPolynomialRing then A else ambient A;
+   B' := if class B === NCPolynomialRing then B else ambient B;
+    
+   C := R newgens;
+   gensAinC := take(gens C, #gensA);
+   gensBinC := drop(gens C, #gensA);
+   incA := ncMap(C,A',gensAinC);
+   incB := ncMap(C,B',gensBinC);
+   IinC := I / incA;
+   JinC := J / incB;
+   -- create the commutation relations among generators of A and B
+   K := flatten apply( gensAinC, g-> apply( gensBinC, h-> h*g-g*h));
+   
+   newI := ncIdeal select( (IinC | JinC | K), x-> x!=0);
+   
+   C/newI
+)
+
+e = method()
+e (NCRing, Symbol) := (A,x) -> (
+   R := coefficientRing A;
+   Aop := oppositeRing A;
+   B := R apply(#gens A, g-> x_g); 
+   A' := if class A === NCPolynomialRing then Aop else ambient Aop;
+   f := ncMap(B,A',gens B);
+   J := ncIdeal (gens ideal Aop / f);
+   (B/J) ** A
+)
+
+TEST ///
+restart
+needsPackage "NCAlgebraV2"
+debug needsPackage "NCAlgebra"
+A = QQ{a,b,c}
+I = ncIdeal{a*b-c^2}
+Igb = ncGroebnerBasis(I,InstallGB=>true)
+C=A/I
+B = QQ{x,y,z}
+D = C ** B
+e(A,t)
+e(C,t)
+///
+
 
 subQuotientAsCokernel = method()
 subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
