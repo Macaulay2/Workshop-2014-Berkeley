@@ -5,6 +5,8 @@ PAdicFieldElement = new Type of HashTable
 
 new PAdicField from List := (PAdicField, inits) -> new PAdicField of PAdicFieldElement from new HashTable from inits
 
+net PAdicField := A->"QQQ_"|toString(A#prime)
+
 valuation = method()
 relativePrecision = method()
 
@@ -89,12 +91,41 @@ pAdicField ZZ:=(p)->(
 	  newValues := for i in newKeys list prod#i;
 	  computeCarryingOver(newKeys,newValues,newPrecision)
 	  );
+     toPAdicInverse := method ();
+     toPAdicInverse List := L -> (
+	       n=#L;
+	       i=1; b_0=(sub(1/sub(L_0,ZZ/p),ZZ)+p)%p; s_0=-1; S={b_0};
+	       while i<n do(
+			s_i=s_(i-1)+sum(0..i-1, j-> L_j*b_(i-1-j))*p^(i-1); 
+	       		b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->L_j*b_(i-j)),ZZ/p)/sub(L_0,ZZ/p),ZZ)+p)%p;
+			S=append(S,b_i);
+			i=i+1);
+	       S
+	       );
+     inverse A := a->(
+	  if valuation(a)==infinity then (
+	       error "You cannot divide by 0!";
+	       );
+	  v := valuation(a);
+	  a = a<<(-v);
+           i:=0;
+           L:={};
+           local c;
+           while i<precision(a)
+	     do(if member(i,a#"expansion"_0) 
+                   then c=a#"expansion"_1#(position(a#"expansion"_0,j->j==i)) 
+                   else c=0;
+	        L=append(L,c);
+	        i=i+1);
+         toPAdicFieldElement(toPAdicInverse(L),A)<<(-v)
+	  );
      +A := a->a;
      -A := a->(
 	  newValues := for i in a#"expansion"_1 list -i;
 	  computeCarryingOver(a#"expansion"_0,newValues,a#"precision")
 	  );
      A - A:= (a,b)->(a+(-b));
+     A / A:= (a,b)->(a*inverse(b));
      A + ZZ := (a,n)->(
 	  b := toPAdicFieldElement(n,precision a,A);
 	  a+b
@@ -119,28 +150,6 @@ pAdicField ZZ:=(p)->(
 	       )
 	  );
      ZZ * A := (n,a)->a*n;
-     coarse := method();
-     coarse(A,ZZ) := (a,prec) -> (
-	  newPrecision := min(prec,precision a);
-	  newKeys := select(a#"expansion"_0,i->(i<newPrecision));
-	  newValues := for i in 0..#newKeys-1 list a#"expansion"_1#i;
-	  new A from {"precision"=>newPrecision,
-	       "expansion"=>{newKeys,newValues}}
-	  );
-     A == A := (a,b) -> (
-	  if precision a < precision b then (
-	       a === coarse(b,precision a)
-	       ) else if precision a > precision b then (
-	       b === coarse(a,precision b)
-	       ) else (
-	       a === b
-	       )
-	  );
-     A == ZZ := (a,n) -> (
-	  b := toPAdicFieldElement(n,precision a,A);
-	  a === b
-	  );
-     ZZ == A := (n,a) -> a==n;
      PAdicFields#p=A;
      A
 )
@@ -197,11 +206,19 @@ end
 ----------------------------
 restart
 load "~/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
-
+QQQ_3
 
 Q3=QQQ_3
+x=toPAdicFieldElement({1,2,2,2},QQQ_3)
+class x
+QQQ_3
 
-x=toPAdicFieldElement({1,0,0,0,0,0},Q3)
+
+x=toPAdicFieldElement({1,0,0,0,0,0},QQQ_3)
+inverse x
+
+Q3
+QQQ_3===Q3
 x-x
 
 x=toPAdicFieldElement({0,0,0,0,0,0},Q3)
@@ -233,3 +250,16 @@ while i<7 do(s_i=s_(i-1)+sum(0..i-1, j-> a_j*b_(i-1-j))*p^(i-1);
 b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->a_j*b_(i-j)),S)/sub(a_0,S),R)+p)%p;i=i+1)
 
 --Running the code computes b_0, b_1,..., which gives a^-1=b=b_0+b_1*p+b_2*p^2+...
+--This is finding inverses from just lists:
+ toPAdicInverse = method ()
+ 
+ toPAdicInverse List := L -> (
+	       n=#L;
+	       i=1; b_0=(sub(1/sub(L_0,ZZ/p),ZZ)+p)%p; s_0=-1; S={b_0};
+	       while i<n do(
+			s_i=s_(i-1)+sum(0..i-1, j-> L_j*b_(i-1-j))*p^(i-1); 
+	       		b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->L_j*b_(i-j)),ZZ/p)/sub(L_0,ZZ/p),ZZ)+p)%p;
+			S=append(S,b_i);
+			i=i+1);
+	       S
+	       )

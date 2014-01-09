@@ -3,6 +3,7 @@ polynomialInterpolation = method ()
 polynomialInterpolation (List,PolynomialRing) := RingElement => (L,R) -> (
 	if #gens R != 1 then error "must be a single variable polynomial ring";
 	n := #L;
+	t := first gens R;
 	p := for j from 0 to n-1 list (
 		L_j * product(0..(j-1) | (j+1) .. (n-1), k -> (t - (k+1)) / ((j+1) - (k+1)))
 		);
@@ -14,12 +15,31 @@ polynomialInterpolation (List) := RingElements => L -> polynomialInterpolation(L
 rationalInterpolation = method ()
 rationalInterpolation (List, PolynomialRing) := RingElement => (L,R) -> (
 	if #gens R != 1 then error "must be a single variable polynomial ring";
-	QQ[t];
+	t := first gens R;
 	n := #L;
 	(sum(1..(n-2), j -> ((-1)^j * L_j)/(t-(j+1))) + 1/2 * (L_0)/(t-1) + 1/2 * ((-1)^(n-1) * L_(n-1))/(t-n)) / 
 		(sum(1..(n-2), j -> ((-1)^j)/(t-(j+1))) + 1/2 * ((-1)^0)/(t-1) + 1/2 * ((-1)^(n-1))/(t-n))
 )
 rationalInterpolation (List) := RingElement => L -> rationalInterpolation(L, QQ[t])
+
+--interpolates a rational function using the floater hormann algorithm
+--user can choose a d st 0 <= d <= n-1 (where n is the size of list
+--to compute a family of interpolations
+floaterHormann = method ()
+floaterHormann (List,PolynomialRing,ZZ) := RingElement => (L,R,d) -> (
+	n := #L;
+	t := first gens R;
+	if d > n-1 or d < 0 then error "d must be <= n-1 and >= 0";
+	p := for i from 0 to n-1-d list (
+		polynomialInterpolation(drop(L,i),R)
+	);
+	lambda := for i from 0 to n-1-d list (
+		(-1)^i/product(toList (0..d), j -> t - L_(j+i))
+	);
+	sum(toList(0..(n-1-d)), j -> product({lambda_j , p_j}))/sum(toList(0..(n-1-d)), j -> lambda_j)
+)
+
+floaterHormann(List,ZZ) := RingElement => (L,R,d) -> floaterHormann(L,QQ[t],d)
 
 --finds a rational function that fits the sequence via polynomialInterpolation of the numerator and the denominator
 guessRational = method ()

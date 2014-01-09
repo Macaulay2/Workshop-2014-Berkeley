@@ -28,8 +28,19 @@ var width  = null,
       mousedown_link = null,
       mousedown_node = null,
       mouseup_node = null;
+  
+  var drag = null;
 
+function resetGraph() {
+  for( var i = 0; i < nodes.length; i++ ){
+    nodes[i].fixed = false;
+  }
+  force.start();
+}
 
+function dragstart(d) {
+  d3.select(this).classed(d.fixed = true);
+}
 
 function graph2M2Constructor( nodeSet, edgeSet ){
 	var strEdges = "";
@@ -179,9 +190,9 @@ function initializeBuilder() {
   //  - reflexive edges are indicated on the node (as a bold black circle).
   //  - links are always source < target; edge directions are set by 'left' and 'right'.
   nodes = [
-      {id: 0, reflexive: false},
-      {id: 1, reflexive: true },
-      {id: 2, reflexive: false}
+      {id: 0, reflexive: false, call: drag},
+      {id: 1, reflexive: true, call: drag},
+      {id: 2, reflexive: false, call: drag}
     ];
     lastNodeId = 2;
     links = [
@@ -215,6 +226,9 @@ function initializeBuilder() {
       .linkDistance(150)
       .charge(-500)
       .on('tick', tick);
+
+  drag = force.drag()
+    .on("dragstart", dragstart);
 
   // line displayed when dragging new nodes
   drag_line = svg.append('svg:path')
@@ -346,6 +360,7 @@ function restart() {
 
       restart();
     })
+
     .on('mouseup', function(d) {
       if(!mousedown_node) return;
 
@@ -474,7 +489,7 @@ function keydown() {
 
   // shift
   if(d3.event.keyCode === 16) {
-    circle.call(force.drag);
+    circle.call(drag);
     svg.classed('shift', true);
   }
 
@@ -535,7 +550,7 @@ function keyup() {
 }
 
 function disableEditing() {
-  circle.call(force.drag);
+  circle.call(drag);
   svg.classed('shift', true);
 }
 function enableEditing() {
