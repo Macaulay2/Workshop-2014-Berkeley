@@ -89,10 +89,8 @@ pAdicField ZZ:=(p)->(
 	  newValues := for i in newKeys list prod#i;
 	  computeCarryingOver(newKeys,newValues,newPrecision)
 	  );
-     toPAdicInverse = method ();
-     
- 
- toPAdicInverse List := L -> (
+     toPAdicInverse := method ();
+     toPAdicInverse List := L -> (
 	       n=#L;
 	       i=1; b_0=(sub(1/sub(L_0,ZZ/p),ZZ)+p)%p; s_0=-1; S={b_0};
 	       while i<n do(
@@ -103,6 +101,11 @@ pAdicField ZZ:=(p)->(
 	       S
 	       );
      inverse A := a->(
+	  if valuation(a)==infinity then (
+	       error "You cannot divide by 0!";
+	       );
+	  v := valuation(a);
+	  a = a<<(-v);
            i:=0;
            L:={};
            local c;
@@ -112,7 +115,7 @@ pAdicField ZZ:=(p)->(
                    else c=0;
 	        L=append(L,c);
 	        i=i+1);
-         toPAdicFieldElement(toPAdicInverse(L),A)
+         toPAdicFieldElement(toPAdicInverse(L),A)<<(-v)
 	  );
      +A := a->a;
      -A := a->(
