@@ -120,6 +120,7 @@ pAdicField ZZ:=(p)->(
 	  computeCarryingOver(a#"expansion"_0,newValues,a#"precision")
 	  );
      A - A:= (a,b)->(a+(-b));
+     A / A:= (a,b)->(a*inverse(b));
      A + ZZ := (a,n)->(
 	  b := toPAdicFieldElement(n,precision a,A);
 	  a+b
@@ -144,34 +145,6 @@ pAdicField ZZ:=(p)->(
 	       )
 	  );
      ZZ * A := (n,a)->a*n;
-     coarse := method();
-     coarse(A,ZZ) := (a,prec) -> (
-	  newPrecision := min(prec,precision a);
-	  newKeys := select(a#"expansion"_0,i->(i<newPrecision));
-	  newValues := for i in 0..#newKeys-1 list a#"expansion"_1#i;
-	  new A from {"precision"=>newPrecision,
-	       "expansion"=>{newKeys,newValues}}
-	  );
-     A == A := (a,b) -> (
-	  if precision a < precision b then (
-	       a === coarse(b,precision a)
-	       ) else if precision a > precision b then (
-	       b === coarse(a,precision b)
-	       ) else (
-	       a === b
-	       )
-	  );
-     A == ZZ := (a,n) -> (
-	  b := toPAdicFieldElement(n,precision a,A);
-	  a === b
-	  );
-     ZZ == A := (n,a) -> a==n;
-     A << ZZ := (a,n) -> (
-	  newPrecision := a#"precision"+n;
-	  newKeys := for i in a#"expansion"_0 list i+n;
-	  new A from {"precision"=>newPrecision,
-	       "expansion"=>{newKeys,a#"expansion"_1}}
-	  );
      PAdicFields#p=A;
      A
 )
@@ -213,9 +186,6 @@ Q3 = pAdicField(3)
 x = toPAdicFieldElement({1,2,0,1,0},Q3);
 y = toPAdicFieldElement(0,3,Q3);
 z = toPAdicFieldElement(10,10,Q3);
-print(x<<3);
-print(y<<15);
-print(x<<(-5));
 print(x+x)
 print(x*x)
 print(x+y)
