@@ -89,3 +89,7 @@ needsPackage"SpectralSequences"
     	       prune associatedGradedHomologyObject(-3,0,K)
     	       E^infinity _{-3,3}
     	       --etc
+	       
+--- scratch related to change of rings for Tor
+
+	       

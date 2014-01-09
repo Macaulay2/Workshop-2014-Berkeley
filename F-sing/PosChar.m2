@@ -1017,7 +1017,7 @@ findAllCompatibleIdealsInnards = (u,L,P) ->(
 	});
 ---
 	C2:=(P1+ideal(u)):(P1:P);
-	JB:=C1*C2; 
+---	JB:=C1*C2; ---MK
 ---print(mingens P, mingens JB);
 ---tau=ideal mingens star(C2,u,1) ;  --- OLD VERSION
 	tau=ideal mingens ascendIdeal  (C2, u, 1);
