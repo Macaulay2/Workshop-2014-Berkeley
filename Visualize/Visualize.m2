@@ -27,9 +27,12 @@ newPackage(
 	     {Name => "Jim Vallandingham", Email => "vlandham@gmail.com", HomePage => "http://vallandingham.me/"}
 	     },
     	Headline => "Visualize",
-    	DebuggingMode => true
+    	DebuggingMode => true,
+	AuxiliaryFiles => false,
+	Configuration => {} 
     	)
 
+viewHelp newPackage
 export {
     
     -- Options
