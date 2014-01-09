@@ -1,4 +1,36 @@
-// creates the string that can be used to construct this graph in M2
+
+var width  = null,
+      height = null,
+      colors = null;
+
+  var svg = null;
+  var nodes = null,
+    lastNodeId = null,
+    links = null;
+
+  var constrString = null;
+  var incMatrix = null;
+  var adjMatrix = null;
+  var incMatrixString = null;
+  var adjMatrixString = null;
+
+  var force = null;
+
+  var drag_line = null;
+
+  // handles to link and node element groups
+  var path = null,
+      circle = null;
+
+  // mouse event vars
+  var selected_node = null,
+      selected_link = null,
+      mousedown_link = null,
+      mousedown_node = null,
+      mouseup_node = null;
+
+
+
 function graph2M2Constructor( nodeSet, edgeSet ){
 	var strEdges = "";
 	var e = edgeSet.length;
@@ -130,75 +162,84 @@ function arraytoM2Matrix (arr){
 	return str;
 }
 
+function initializeBuilder() {
+  // set up SVG for D3
+  width  = window.innerWidth;
+  height = window.innerHeight-150;
+  colors = d3.scale.category10();
 
-// set up SVG for D3
-var width  = 960,
-    height = 500,
-    colors = d3.scale.category10();
+  svg = d3.select('body')
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height)
+    .attr('id', 'canvasElement');
 
-var svg = d3.select('body')
-  .append('svg')
-  .attr('width', width)
-  .attr('height', height);
+  // set up initial nodes and links
+  //  - nodes are known by 'id', not by index in array.
+  //  - reflexive edges are indicated on the node (as a bold black circle).
+  //  - links are always source < target; edge directions are set by 'left' and 'right'.
+  nodes = [
+      {id: 0, reflexive: false},
+      {id: 1, reflexive: true },
+      {id: 2, reflexive: false}
+    ];
+    lastNodeId = 2;
+    links = [
+      {source: nodes[0], target: nodes[1], left: false, right: false },
+      {source: nodes[1], target: nodes[2], left: false, right: false }
+    ];
 
-// set up initial nodes and links
-//  - nodes are known by 'id', not by index in array.
-//  - reflexive edges are indicated on the node (as a bold black circle).
-//  - links are always source < target; edge directions are set by 'left' and 'right'.
-var nodes = [
-    {id: 0, reflexive: false},
-    {id: 1, reflexive: true },
-    {id: 2, reflexive: false}
-  ],
-  lastNodeId = 2,
-  links = [
-    {source: nodes[0], target: nodes[1], left: false, right: false },
-    {source: nodes[1], target: nodes[2], left: false, right: false }
-  ];
+  constrString = graph2M2Constructor(nodes,links);
+  incMatrix = getIncidenceMatrix(nodes,links);
+  adjMatrix = getAdjacencyMatrix(nodes,links);
+  incMatrixString = arraytoM2Matrix(incMatrix);
+  adjMatrixString = arraytoM2Matrix(adjMatrix);
 
-var constrString = graph2M2Constructor(nodes,links);
-var incMatrix = getIncidenceMatrix(nodes,links);
-var adjMatrix = getAdjacencyMatrix(nodes,links);
-var incMatrixString = arraytoM2Matrix(incMatrix);
-var adjMatrixString = arraytoM2Matrix(adjMatrix);
+  d3.select("body").append("p")
+  	.text("Macaulay2 Constructor: " + constrString)
+  	.attr("id","constructorString");
 
-d3.select("body").append("p")
-	.text("Macaulay2 Constructor: " + constrString)
-	.attr("id","constructorString");
+  d3.select("body").append("p")
+  	.text("Incidence Matrix: " + incMatrixString)
+  	.attr("id","incString");
 
-d3.select("body").append("p")
-	.text("Incidence Matrix: " + incMatrixString)
-	.attr("id","incString");
+  d3.select("body").append("p")
+  	.text("Adjacency Matrix: " + adjMatrixString)
+  	.attr("id","adjString");
 
-d3.select("body").append("p")
-	.text("Adjacency Matrix: " + adjMatrixString)
-	.attr("id","adjString");
+  // init D3 force layout
+  force = d3.layout.force()
+      .nodes(nodes)
+      .links(links)
+      .size([width, height])
+      .linkDistance(150)
+      .charge(-500)
+      .on('tick', tick);
 
-// init D3 force layout
-var force = d3.layout.force()
-    .nodes(nodes)
-    .links(links)
-    .size([width, height])
-    .linkDistance(150)
-    .charge(-500)
-    .on('tick', tick)
+  // line displayed when dragging new nodes
+  drag_line = svg.append('svg:path')
+    .attr('class', 'link dragline hidden')
+    .attr('d', 'M0,0L0,0');
 
-// line displayed when dragging new nodes
-var drag_line = svg.append('svg:path')
-  .attr('class', 'link dragline hidden')
-  .attr('d', 'M0,0L0,0');
+  // handles to link and node element groups
+  path = svg.append('svg:g').selectAll('path');
+  circle = svg.append('svg:g').selectAll('g');
 
-// handles to link and node element groups
-var path = svg.append('svg:g').selectAll('path'),
-    circle = svg.append('svg:g').selectAll('g');
-
-// mouse event vars
-var selected_node = null,
-    selected_link = null,
-    mousedown_link = null,
-    mousedown_node = null,
-    mouseup_node = null;
-
+  // mouse event vars
+  selected_node = null;
+  selected_link = null;
+  mousedown_link = null;
+  mousedown_node = null;
+  mouseup_node = null;
+      // app starts here
+  svg.on('mousedown', mousedown)
+    .on('mousemove', mousemove)
+    .on('mouseup', mouseup);
+  d3.select(window)
+    .on('keydown', keydown)
+    .on('keyup', keyup);
+  restart();
+}
 function resetMouseVars() {
   mousedown_node = null;
   mouseup_node = null;
@@ -246,7 +287,7 @@ function restart() {
     .style('marker-start', function(d) { return d.left ? 'url(#start-arrow)' : ''; })
     .style('marker-end', function(d) { return d.right ? 'url(#end-arrow)' : ''; })
     .on('mousedown', function(d) {
-      if(d3.event.ctrlKey) return;
+      if(d3.event.shiftKey) return;
 
       // select link
       mousedown_link = d;
@@ -289,7 +330,7 @@ function restart() {
       d3.select(this).attr('transform', '');
     })
     .on('mousedown', function(d) {
-      if(d3.event.ctrlKey) return;
+      if(d3.event.shiftKey) return;
 
       // select node
       mousedown_node = d;
@@ -305,6 +346,7 @@ function restart() {
 
       restart();
     })
+
     .on('mouseup', function(d) {
       if(!mousedown_node) return;
 
@@ -346,6 +388,9 @@ function restart() {
         links.push(link);
       }
 
+      // testing fixed vertices
+      selected_node.fixed = true;
+
       // select new link
       selected_link = link;
       selected_node = null;
@@ -377,7 +422,7 @@ function mousedown() {
   // because :active only works in WebKit?
   svg.classed('active', true);
 
-  if(d3.event.ctrlKey || mousedown_node || mousedown_link) return;
+  if(d3.event.shiftKey || mousedown_node || mousedown_link) return;
 
   // insert new node at point
   var point = d3.mouse(this),
@@ -431,10 +476,10 @@ function keydown() {
   if(lastKeyDown !== -1) return;
   lastKeyDown = d3.event.keyCode;
 
-  // ctrl
-  if(d3.event.keyCode === 17) {
+  // shift
+  if(d3.event.keyCode === 16) {
     circle.call(force.drag);
-    svg.classed('ctrl', true);
+    svg.classed('shift', true);
   }
 
   if(!selected_node && !selected_link) return;
@@ -484,20 +529,35 @@ function keydown() {
 function keyup() {
   lastKeyDown = -1;
 
-  // ctrl
-  if(d3.event.keyCode === 17) {
+  // shift
+  if(d3.event.keyCode === 16) {
     circle
       .on('mousedown.drag', null)
       .on('touchstart.drag', null);
-    svg.classed('ctrl', false);
+    svg.classed('shift', false);
   }
 }
 
-// app starts here
-svg.on('mousedown', mousedown)
-  .on('mousemove', mousemove)
-  .on('mouseup', mouseup);
-d3.select(window)
-  .on('keydown', keydown)
-  .on('keyup', keyup);
-restart();
+function disableEditing() {
+  circle.call(force.drag);
+  svg.classed('shift', true);
+}
+function enableEditing() {
+  circle
+      .on('mousedown.drag', null)
+      .on('touchstart.drag', null);
+  svg.classed('shift', false);
+}
+
+function updateWindowSize2d() {
+
+        var svg = document.getElementById("canvasElement");
+        svg.style.width = window.innerWidth;
+        svg.style.height = window.innerHeight - 150;
+        svg.width = window.innerWidth;
+        svg.height = window.innerHeight - 150;
+    
+
+}
+
+
