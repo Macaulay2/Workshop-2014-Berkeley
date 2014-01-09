@@ -58,6 +58,12 @@ liftModuleMap (Module, Module, Matrix) := (N,M,A) -> (
      tempLift
      )
 
+-- example for testing constructionV2
+R = QQ[x,y,z]/ideal(x*y*z)
+M = coker map(R^1,,{gens R})
+g=3
+n=5
+
 --version 0.2 of the construction, taking into account the new version of
 --lift module map, and the sticky issue involved in lifting (and even
 --composing module maps, namely that the source/target of the maps to
@@ -139,6 +145,7 @@ constructionV2 (ZZ,Module):=
      cRes
      )
      
+
 
 -- example for testing constructionV2
 R = QQ[x,y,z]/ideal(x*y*z)

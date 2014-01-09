@@ -4,12 +4,54 @@
     <meta charset="utf-8">
     <title>Macaulay2: editGraph</title>
     <link rel="stylesheet" href="app.css">
+    <script type="text/javascript">
+      curEdit = true;
+  	  curView = "2d";
+    </script>
   </head>
   
   <body>
+  	    <a id= "tdToggle"> switch to 3d</a>
+        <a id= "editToggle"> disable editing</a>
+        <a id= "exportToggle"> export</a>
 
   </body>
 
   <script src="d3/d3.v3.js"></script>
   <script src="app.js"></script>
+  <script type="text/javascript">
+
+  window.onload = function() {
+                var a = document.getElementById("tdToggle");
+                a.onclick = function() {
+
+                }
+                var b = document.getElementById("editToggle");
+                b.onclick = function() {
+                	console.log(curEdit);
+
+                	if (curEdit) {
+                		b.innerHTML = "enable editing";
+                		curEdit = !curEdit;
+                		disableEditing();
+                	}
+                	else {
+                		b.innerHTML = "disable editing";
+                		curEdit = !curEdit;
+                		enableEditing();
+                	}
+                    
+                }
+                var c = document.getElementById("exportToggle");
+                c.onclick = function() {
+                    console.log("3d3d3d");
+                }
+
+                //start with 2d
+                initializeBuilder();
+            }
+
+  	
+  	window.addEventListener('resize', updateWindowSize2d, false);
+  </script>
 </html>
