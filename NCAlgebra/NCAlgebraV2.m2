@@ -16,7 +16,7 @@ newPackage("NCAlgebraV2",
      DebuggingMode => true
      )
 
-export {subQuotientAsCokernel,homologyAsCokernel,identityMap,NCChainComplex,e,qTensorProduct}
+export {subQuotientAsCokernel,homologyAsCokernel,identityMap,NCChainComplex,e,qTensorProduct,freeProduct}
 
 debug needsPackage "NCAlgebra"
 
