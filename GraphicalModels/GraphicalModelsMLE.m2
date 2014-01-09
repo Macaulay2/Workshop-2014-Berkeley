@@ -119,6 +119,7 @@ scoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
     return J
 );
 
+{*
 scoreEquationsCovariance1 = method();
 scoreEquationsCovariance1(MixedGraph, List) := (G, U) -> (
     R := gaussianRing G;
@@ -157,7 +158,53 @@ scoreEquationsCovariance1(MixedGraph, List) := (G, U) -> (
     J5 := substitute(J4, sR);
     return J5;
 );
+*}
 
+{*
+scoreEquationsConcentration1 = method();
+scoreEquationsConcentration1(MixedGraph, List) := (G, U) -> (
+    R := gaussianRing G;
+    V := sampleCovarianceMatrix(U);
+    use R;
+    L := directedEdgesMatrix R;
+    -- d is equal to the number of vertices in G
+    d := numRows L;
+    -- Omega
+    W := bidirectedEdgesMatrix R;
+    K := inverse (id_(R^d)-L);
+    -- the matrix Sigma expressed in terms of the l and p-variables.
+    S := (transpose K) * W * K;
+    kVarsExtended := toList(k_(1,1)..k_(d,d));
+    kVars := {};
+    for i from 1 to d do (
+        for j from i to d do (
+	    kVars = append(kVars, k_(i,j));
+	);
+    );
+    numSvars := lift(d*(d+1)/2,ZZ);
+    lpRvarlist := apply(numgens(R)-numSvars,i->(gens(R))_i);
+    Q := coefficientRing(R)[lpRvarlist | kVars];
+    J := scoreEquationsFromCovarianceMatrix(G, U);
+    J1 := substitute(J, Q);
+    ConcentrationMatrix := mutableMatrix(Q, d, d); 
+    for i to d-1 do (
+	for j from i to d-1 do (
+    	    use Q;
+	    ConcentrationMatrix_(i,j) = k_(i+1,j+1);
+	    use Q;
+	    ConcentrationMatrix_(j,i) = k_(i+1,j+1);
+	);
+    );
+    J2 := ideal((matrix(ConcentrationMatrix)) * substitute(S, Q) - id_(Q^d));
+    J3 := J1 + J2;
+    lpRvarlist = apply(numgens(Q)-numSvars,i->(gens(Q))_i);
+    J4 := eliminate(lpRvarlist, J3);
+    kQ := coefficientRing(Q)[kVars];
+    J5 := substitute(J4, kQ);
+    return J5;
+);
+
+*}
 
 --******************************************--
 -- DOCUMENTATION     	       	    	    -- 
@@ -183,7 +230,7 @@ doc ///
 	    G = mixedGraph(digraph {{1,{2,3}},{2,{3}},{3,{4}}},bigraph {{3,4}})
 	    U = {matrix{{1,2,1,-1}}, matrix{{2,1,3,0}}, matrix{{-1, 0, 1, 1}}, matrix{{-5, 3, 4, -6}}}
             scoreEquationsFromCovarianceMatrix(G,U)
-	    scoreEquationsCovariance1(G, U)
+--	    scoreEquationsCovariance1(G, U)
     Caveat
         GraphicalModelsMLE requires Graphs.m2 and GraphicalModels.m2. 
 ///;
@@ -268,7 +315,7 @@ doc ///
             scoreEquationsFromCovarianceMatrix(G,U)
 ///
 
-
+{*
 doc /// 
     Key
         scoreEquationsCovariance1
@@ -296,7 +343,7 @@ doc ///
 	    U = {matrix{{1,2,1,-1}}, matrix{{2,1,3,0}}, matrix{{-1, 0, 1, 1}}, matrix{{-5, 3, 4, -6}}}
             scoreEquationsCovariance1(G,U)
 ///
-
+*}
 
 --******************************************--
 -- TESTS     	       	    	      	    --
@@ -343,6 +390,7 @@ I=ideal(80*p_(3,4)+39,200*p_(4,4)-271,1760416*p_(3,3)-742363,920*p_(2,2)-203,64*
 assert(J===I)
 ///     
 
+{*
 TEST ///
 needsPackage("Graphs");
 needsPackage("GraphicalModels");
@@ -351,7 +399,8 @@ U = {matrix{{1,2,1,-1}}, matrix{{2,1,3,0}}, matrix{{-1, 0, 1, 1}}, matrix{{-5, 3
 J=scoreEquationsCovariance1(G,U);
 I=ideal(16*s_(4,4)-29,32*s_(3,4)+21,64*s_(3,3)-27,4336*s_(2,4)+5,8672*s_(2,3)-25,16*s_(2,2)-5,8672*s_(1,4)+35,17344*s_(1,3)-175,32*s_(1,2)+13,64*s_(1,1)-115);
 assert(J===I)
-///     
+///
+*}     
 --------------------------------------
 --------------------------------------
 end
