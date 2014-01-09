@@ -16,12 +16,12 @@ newPackage("NCAlgebraV2",
      DebuggingMode => true
      )
 
-export {subQuotientAsCokernel,homologyAsCokernel,identityMap,NCChainComplex,e}
+export {subQuotientAsCokernel,homologyAsCokernel,identityMap,NCChainComplex,e,qTensorProduct,freeProduct}
 
 debug needsPackage "NCAlgebra"
 
-NCRing ** NCRing := (A,B) -> (
-   -- this is the usual (commuting) tensor product of rings
+freeProduct = method()
+freeProduct (NCRing,NCRing) := (A,B) -> (
    R := coefficientRing A;
    if R =!= (coefficientRing B) then error "Input rings must have same coefficient ring.";
    gensA := gens A;
@@ -42,26 +42,54 @@ NCRing ** NCRing := (A,B) -> (
    incB := ncMap(C,B',gensBinC);
    IinC := I / incA;
    JinC := J / incB;
+   newIdealGens := select( (IinC | JinC), x -> x!=0);       
+   if newIdealGens == {} then C 
+   else C/(ncIdeal newIdealGens)
+)
+
+qTensorProduct = method()
+qTensorProduct (NCRing, NCRing, QQ) :=
+qTensorProduct (NCRing, NCRing, RingElement) := (A,B,q) -> (
+   -- this is the q-commuting tensor product of rings
+   R := coefficientRing A;
+   if class q =!= QQ and q.ring =!= R then error "Twisting parameter must belong to coefficient ring.";
+   F := freeProduct(A,B);
+   gensAinF := take(gens F, #gens A);
+   gensBinF := drop(gens F, #gens A);   
    -- create the commutation relations among generators of A and B
-   K := flatten apply( gensAinC, g-> apply( gensBinC, h-> h*g-g*h));
-   
-   newI := ncIdeal select( (IinC | JinC | K), x-> x!=0);
-   
-   C/newI
+   K := flatten apply( gensAinF, g-> apply( gensBinF, h-> h*g-q*g*h));
+
+   if class F === NCPolynomialRing then F/(ncIdeal K)
+   else (
+      I := gens ideal F;
+      C := ambient F;
+      newI := ncIdeal select( (I | K), g -> g!=0);
+      C/newI
+   )
+     
+)
+
+NCRing ** NCRing := (A,B) -> (
+   qTensorProduct(A,B,promote(1,coefficientRing A))
 )
 
 e = method()
 e (NCRing, Symbol) := (A,x) -> (
+   --  want to add an option to index op variables by number rather than a ring element?
    R := coefficientRing A;
    Aop := oppositeRing A;
-   B := R apply(#gens A, g-> x_g); 
-   A' := if class A === NCPolynomialRing then Aop else ambient Aop;
-   f := ncMap(B,A',gens B);
-   J := ncIdeal (gens ideal Aop / f);
-   (B/J) ** A
+   B := R apply(#gens A, g-> x_g);  -- remove # once indexing works without printing ( ) 
+   if class A === NCPolynomialRing then (B ** A) 
+   else (
+      A' := ambient Aop;   
+      f := ncMap(B,A',gens B);
+      J := ncIdeal (gens ideal Aop / f);
+      (B/J) ** A
+   )
 )
 
 TEST ///
+quit
 restart
 needsPackage "NCAlgebraV2"
 debug needsPackage "NCAlgebra"
@@ -71,7 +99,7 @@ Igb = ncGroebnerBasis(I,InstallGB=>true)
 C=A/I
 B = QQ{x,y,z}
 D = C ** B
-e(A,t)
+e(A,s)
 e(C,t)
 ///
 
