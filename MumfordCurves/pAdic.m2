@@ -119,6 +119,28 @@ pAdicField ZZ:=(p)->(
 	       )
 	  );
      ZZ * A := (n,a)->a*n;
+     coarse := method();
+     coarse(A,ZZ) := (a,prec) -> (
+	  newPrecision := min(prec,precision a);
+	  newKeys := select(a#"expansion"_0,i->(i<newPrecision));
+	  newValues := for i in 0..#newKeys-1 list a#"expansion"_1#i;
+	  new A from {"precision"=>newPrecision,
+	       "expansion"=>{newKeys,newValues}}
+	  );
+     A == A := (a,b) -> (
+	  if precision a < precision b then (
+	       a === coarse(b,precision a)
+	       ) else if precision a > precision b then (
+	       b === coarse(a,precision b)
+	       ) else (
+	       a === b
+	       )
+	  );
+     A == ZZ := (a,n) -> (
+	  b := toPAdicFieldElement(n,precision a,A);
+	  a === b
+	  );
+     ZZ == A := (n,a) -> a==n;
      PAdicFields#p=A;
      A
 )
