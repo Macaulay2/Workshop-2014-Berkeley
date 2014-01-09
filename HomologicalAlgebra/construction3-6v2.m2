@@ -57,72 +57,6 @@ liftModuleMap (Module, Module, Matrix) := (N,M,A) -> (
 --     tempLift_0 = 0*tempLift_0;
      tempLift
      )
--- example to test liftModuleMap
-R = QQ[x]/ideal (x^3)
-M = coker matrix {{x^2}}
-N = coker matrix{{x}}
-A = map(M,M,matrix{{x}})
-P = augmentChainComplex M
-P' = P[-1]
-f = extend(P',P',A)
-g =f[1]
-t = liftModuleMap(M,M,A)
-assert (g == t) -- it works!
-
-
--- what follow is version 0.1 of construction 3.6 from Avramov & Martsinkovsky
--- later versions will turn the construction into an object of the type
--- CompleteResolution
-construction = 
-method(TypicalValue => ChainComplexMap, Options => {LengthLimit => "2"})
-construction (ZZ, Module) := opts -> (g, M) -> (
-     n := opts.LengthLimit;
-     P := resolution(M, LengthLimit => max(n,g+2));
-     Pd := dual P;
-     G := omega(g, P);
-     Gd := dual G;
-     L := resolution(Gd, LengthLimit => max(g+2, n));
-     Ld := dual L;
-     toLiftFirstFactor := map(image(Pd.dd_(-g+1)), omega(1-g, Pd), id_(Pd_(1-g)));  
-     K := kernel(Pd.dd_(-g));
-     I := image(Pd.dd_(-g+1));
-     h := gens K;
-     phi := Pd.dd_(-g+1)//h;
-     toLiftSecondFactor := map (K, I, phi);
-     kappa := toLiftSecondFactor * toLiftFirstFactor;
-     Pt := truncateComplex(g, P);
-     Ptd := dual Pt;
-     Q := Ptd[-(g-1)];
---     psi = (kappa * gens source kappa ) // gens Gd 
-     kappaLifted := liftModuleMap(L, Q, kappa); -- BROKEN !!!
-     w := map(G, P_g, id_(P_g));
-     d := bidualitymap(G);
-     lambda := map(HH_0(L), L_0, id_(L_0));
-     lambdaDual := dual lambda;
-     
-     cRes := id_(resolution (ring M)^0);
-     
-     --Jason's portion
-     for j from (g-1-max(g+2, n)) to g-1 do (
-	  cRes.target_j = P_j;
-	  cRes.target.dd_j = P.dd_j;
-	  cRes.source_j = Ld_(g-1-j);
-	  cRes.source.dd_j = Ld_(g-1-j);
-	  cRes_j = kappaLifted_(g-1-j);
-	  );     
-     --Kat's portion
-     for i from g+1 to max(g+2,n) do (
-	  cRes.source.dd_i=P.dd_i;
-	  cRes.target.dd_i=P.dd_i;
-	  cRes_i=id_(P_i);
-	  );
-     
-     --for portion in middle (i.e. the degree g part)
-     cRes.target.dd_g=P.dd_i;
-     cRes.source.dd_g=lambdaDaul*d*w;
-     cRes_g=id_(P_g);
-     cRes
-     )
 
 --version 0.2 of the construction, taking into account the new version of
 --lift module map, and the sticky issue involved in lifting (and even
@@ -133,16 +67,16 @@ construction (ZZ, Module) := opts -> (g, M) -> (
 --practice
 constructionV2 = 
 method(TypicalValue => ChainComplex
---     , Options => {LengthLimit => "2"}
+     , Options => {LengthLimit => "2"}
      )
 constructionV2 (ZZ,Module):= 
---     opts -> 
+     opts -> 
      (g,M) -> (
      if g <= 0
      then error "expected g>0 for a syzygy of positive degree";
---     n:= opts.LengthLimit;
---     P := resolution(M, LengthLimit=>max(n,g+2));
-     P := resolution(M, LengthLimit=>g+2);
+     n:= opts.LengthLimit;
+     P := resolution(M, LengthLimit=>max(n,g+2));
+--     P := resolution(M, LengthLimit=>g+2);
      G := omega(g,P);
      Pd := dual P;
      toLiftFirstFactor := map(image(Pd.dd_(-g+1)), omega(1-g, Pd), id_(Pd_(1-g)));
@@ -158,23 +92,24 @@ constructionV2 (ZZ,Module):=
      kappaLifted = liftModuleMap(kappa.target,kappa.source,kappa);
      w := map(G, P_g, id_(P_g));
      d := bidualityMap(G);
---     L := resolution(Gd, LengthLimit => max(g+2, n));
      Gd := dual G;
-     L := resolution(Gd, LengthLimit => g+2);
+     L := resolution(Gd, LengthLimit => max(g+2, n));
+--     L := resolution(Gd, LengthLimit => g+2);
 --     lambda := map(HH_0(L), L_0, id_(L_0));
 -- L is a resolution of Gd, so that Gd (up to a prune) == the homology
 -- in degree 0, but Gd =!== HH_0(L); this could cause problems for the
 -- compositions necessary in the j=g case below. Hence lambda as defined above
 -- needs to be adjusted
 -- is it appropriate to prune Gd first?
-     lambdaDual := dual lambda; --not yet implemented in M2 Core !
+    lambda := map(Gd, L_0, id_(L_0));
+    lambdaDual := dual lambda; --not yet implemented in M2 Core !
 --nothing below here has been tested using the example below  
      
      cRes := id_(resolution (ring M)^0);
      
      --Jason's portion
---     for j from (g-1-max(g+2, n)) to g-1 do (
-     for j from (g-1-max(g+2)) to g-1 do (
+     for j from (g-1-max(g+2, n)) to g-1 do (
+--     for j from (g-1-max(g+2)) to g-1 do (
 	  cRes.target_j = P_j;
 	  cRes.target.dd_j = P.dd_j;
 	  cRes.source_j = Ld_(g-1-j);
@@ -182,8 +117,8 @@ constructionV2 (ZZ,Module):=
 	  cRes_j = kappaLifted_(g-1-j);
 	  );     
      --Kat's portion
---     for i from g+1 to max(g+2,n) do (
-     for i from g+1 to max(g+n) do (
+     for i from g+1 to max(g+2,n) do (
+--     for i from g+1 to max(g+n) do (
 	  cRes.source.dd_i=P.dd_i;
 	  cRes.target.dd_i=P.dd_i;
 	  cRes_i=id_(P_i);
@@ -191,7 +126,7 @@ constructionV2 (ZZ,Module):=
      
      --for portion in middle (i.e. the degree g part)
      cRes.target.dd_g=P.dd_i;
-     cRes.source.dd_g=lambdaDaul*d*w;
+     cRes.source.dd_g=lambdaDual*d*w;
      cRes_g=id_(P_g);
      cRes
      )
@@ -201,3 +136,4 @@ constructionV2 (ZZ,Module):=
 R = QQ[x,y,z]/ideal(x*y*z)
 M = coker map(R^1,,{gens R})
 g=3
+n=5
