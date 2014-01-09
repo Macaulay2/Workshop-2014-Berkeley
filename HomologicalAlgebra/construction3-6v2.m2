@@ -65,9 +65,16 @@ liftModuleMap (Module, Module, Matrix) := (N,M,A) -> (
 --there is a way around this issue in the case that (at least one of?)
 --the modules (is/)are free, but we can't count on that to occur in
 --practice
+
+-- example for testing constructionV2
+R = QQ[x,y,z]/ideal(x*y*z)
+M = coker map(R^1,,{gens R})
+g=3
+n=5
+
 constructionV2 = 
 method(TypicalValue => ChainComplex
-     , Options => {LengthLimit => "2"}
+     , Options => {LengthLimit => 2}
      )
 constructionV2 (ZZ,Module):= 
      opts -> 
@@ -94,6 +101,7 @@ constructionV2 (ZZ,Module):=
      d := bidualityMap(G);
      Gd := dual G;
      L := resolution(Gd, LengthLimit => max(g+2, n));
+     Ld := dual L;
 --     L := resolution(Gd, LengthLimit => g+2);
 --     lambda := map(HH_0(L), L_0, id_(L_0));
 -- L is a resolution of Gd, so that Gd (up to a prune) == the homology
@@ -102,7 +110,7 @@ constructionV2 (ZZ,Module):=
 -- needs to be adjusted
 -- is it appropriate to prune Gd first?
     lambda := map(Gd, L_0, id_(L_0));
-    lambdaDual := dual lambda; --not yet implemented in M2 Core !
+    lambdaDual := dual lambda; -- now implement in M2 1.6
 --nothing below here has been tested using the example below  
      
      cRes := id_(resolution (ring M)^0);
@@ -110,10 +118,10 @@ constructionV2 (ZZ,Module):=
      --Jason's portion
      for j from (g-1-max(g+2, n)) to g-1 do (
 --     for j from (g-1-max(g+2)) to g-1 do (
-	  cRes.target_j = P_j;
+--	  cRes.target_j = P_j;
 	  cRes.target.dd_j = P.dd_j;
-	  cRes.source_j = Ld_(g-1-j);
-	  cRes.source.dd_j = Ld.dd_(g-1-j);
+--	  cRes.source_j = Ld_(g-1-j);
+	  cRes.source.dd_j = Ld.dd_(g-1-j); 
 	  cRes_j = kappaLifted_(g-1-j);
 	  );     
      --Kat's portion
@@ -125,7 +133,7 @@ constructionV2 (ZZ,Module):=
 	  );
      
      --for portion in middle (i.e. the degree g part)
-     cRes.target.dd_g=P.dd_i;
+     cRes.target.dd_g=P.dd_g;
      cRes.source.dd_g=lambdaDual*d*w;
      cRes_g=id_(P_g);
      cRes
@@ -136,4 +144,5 @@ constructionV2 (ZZ,Module):=
 R = QQ[x,y,z]/ideal(x*y*z)
 M = coker map(R^1,,{gens R})
 g=3
+constructionV2(g,M)
 n=5
