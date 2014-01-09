@@ -11,13 +11,15 @@ newPackage(
 	  },
      -- DebuggingMode should be true while developing a package, 
      --   but false after it is done
-     DebuggingMode => true 
+     DebuggingMode => true,
+     PackageExports => {"FourTiTwo"}
      )
 
 export {
      egb,
      buildERing,
      buildEMonomialMap,
+     egbToric,
      Symmetrize,
      Completely,
      Diagonal,
@@ -132,7 +134,7 @@ reduce (RingElement,List) := o -> (f,F) -> (
 --    n, an integer
 --Out: a polynomial ring over K with variable indices determined by s.
 --     All "infinite" indices are included up to n-1. 
-buildERing = method(Options=>{MonomialOrder=>Lex})
+buildERing = method(Options=>{MonomialOrder=>Lex,Diagonal=>false})
 buildERing (Ring,ZZ) := o -> (R,n) -> buildERing(R.symbols, R.semigroup, coefficientRing R, n, MonomialOrder=>R.MonomialOrder)
 buildERing (List,List,Ring,ZZ) := o -> (X,s,K,n) -> (
      variableIndices := s / (b->(toList ((b:0)..(b:n-1))));
@@ -143,8 +145,12 @@ buildERing (List,List,Ring,ZZ) := o -> (X,s,K,n) -> (
 		    (dPartition#false)|(dPartition#true)));
 	  mo = Lex;
 	  );
+     if not o.Diagonal then (
+	  variableIndices = apply(variableIndices, B->select(B, i->(#i == #(unique i))));
+	  );
+     blockSizes := apply(variableIndices, B->#B);
      variableIndices = flatten apply(#s, b->(reverse apply(variableIndices#b, i->((1:b)|i))));
-     moList := apply(s, b->(mo=>(n^b)));
+     moList := apply(blockSizes, b->(mo=>b));
      R := K[apply(variableIndices, i->(
 		    if #i == 1 then X#(i#0)            --if block has only one variable, use no index
 		    else if #i == 2 then X#(i#0)_(i#1) --if block has only one index, index by integers
@@ -152,7 +158,6 @@ buildERing (List,List,Ring,ZZ) := o -> (X,s,K,n) -> (
 		    )), MonomialOrder => moList];
      R.symbols = X;
      R.varIndices = variableIndices;
-     print variableIndices;
      R.varTable = new HashTable from apply(#(R.varIndices), n->(R.varIndices#n => (gens R)#n));
      R.varPosTable = new HashTable from apply(#(R.varIndices), n->(R.varIndices#n => n));
      R.semigroup = s;
@@ -228,7 +233,7 @@ shiftPairs = (n0,n1,k) -> (
 --Out: a map from R to R where index i is mapped to shift#i.
 --     If shift#i == -1 then all variables with index i go to 0_R.
 shiftMap = (R,shift) -> (
-     mapList := apply(R#varIndices, ind->(
+     mapList := apply(R.varIndices, ind->(
 	       indnew := new MutableList from ind;
 	       for j from 1 to #ind-1 do (
 		    if ind#j >= #shift or shift#(ind#j) < 0 or shift#(ind#j) >= R.indexBound then return 0_R
@@ -419,6 +424,51 @@ buildEMonomialMap = (S,R,F) -> (
 	       sub(F#(I#0), subs)
 	       ));
      map(S,R,mapList)
+     )
+
+--returns the exponent matrix associated to a monomial map
+matrixFromMap = m -> (
+     A := flatten entries m(vars source m);
+     A = A / exponents / flatten;
+     transpose matrix A
+     )
+
+egbToric = M -> (
+     R := source M;
+     S := target M;
+     r := R.semigroup;
+     F := apply(#r, p -> M(R.varTable#((1:p)|0..(r#p-1))));
+     k := R.indexBound;
+     lastNew := k;
+     T := buildEMonomialMap(S,R,F);
+     G := transpose toricGroebner matrixFromMap T;
+     while 2*lastNew > k+1 do (
+	  collectGarbage();
+	  k = k+1;
+	  print k;
+	  Rnew := buildERing(R,k);
+	  Tnew := buildEMonomialMap(S,Rnew,F);
+	  Gnew := transpose toricGroebner matrixFromMap Tnew;
+	  shifts := subsets(k,k-1);
+	  sList := apply(shifts, s -> (
+		    m := shiftMap(Rnew,s)*ringMap(Rnew,R);
+		    matrixFromMap m
+		    ));
+	  L1 := (sList#0)*G;
+	  time for i from 1 to #sList-1 do L1 = L1|((sList#i)*G);
+	  L1 = time sort L1;
+	  uniqueCols := time select(numgens source L1, i->(i == 0 or L1_{i} != L1_{i-1}));
+	  L1 = L1_uniqueCols;
+	  print numgens target Gnew;
+	  print numgens source Gnew;
+	  L2 := time sort Gnew;
+	  bool := time(L1 != L2);
+	  if bool then (print "new stuff found"; lastNew = k);
+	  R = Rnew;
+	  T = Tnew;
+	  G = Gnew;
+	  );
+     gens toBinomial(transpose G, R)
      )
 
 beginDocumentation()
