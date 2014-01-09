@@ -33,3 +33,37 @@ guessRational (List,PolynomialRing) := RingElement => (L,R) -> (
 	p/q
 )
 guessRational (List) := RingElement => L -> guessRational(L, QQ[t])
+
+--guesses linear recurrence for a sequence
+guessLinearRecurrence = method()
+guessLinearRecurrence List := List => L -> (
+    -- Prepare the matrix of terms
+    m := #L//2;
+    M := matrix apply(m, i -> L_(toList(i..i+m-1)));
+    -- Determine the order of the sequence
+    r := rank M;
+    N := M_{0..r-1}^{0..r-1};
+    -- M2 inverts matrices in the ring they live in, so we may need to change it.
+    if all(L, l -> instance(l, ZZ)) then N = sub(N, QQ);
+    -- Solve for the coefficients
+    first entries(matrix {L_(toList(r..2*r-1))} * inverse N)
+    )
+
+applyLinearRecurrence = method()
+applyLinearRecurrence (List, List, ZZ) := List => (C, L, n) -> (
+    if #C > #L then error "Not enough initial data is known.";
+    for i to n do L = append(L, sum(#C, i -> C_i * L_(#L-#C+i)));
+    L
+    )
+
+-- Examples
+-- a_n = a_(n-3) + a_(n-1)
+guessLinearRecurrence {1, 2, 3, 4, 6, 9, 13, 19, 28, 41, 60, 88, 129}
+-- Fibonacci Sequence
+guessLinearRecurrence {1, 1, 2, 3, 5, 8, 13, 21}
+-- Perrin Sequence
+guessLinearRecurrence {3, 0, 2, 3, 2, 5, 5, 7, 10, 12, 17}
+-- Pell numbers
+guessLinearRecurrence {0, 1, 2, 5, 12, 29, 70, 169, 408, 985}
+-- Padovan Sequence
+guessLinearRecurrence {1, 0, 0, 1, 0, 1, 1, 1, 2, 2, 3, 4, 5}
