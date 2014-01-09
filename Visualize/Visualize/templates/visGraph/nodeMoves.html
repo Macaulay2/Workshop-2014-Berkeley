@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>D3 Test</title>
+        <script type="text/javascript" src="d3/d3.v3.js"></script>
+        <!-- <link type="text/css"; rel="stylesheet"; href="stylesheet.css"> -->
+    </head>
+    <body>
+        <script type="text/javascript">
+
+            var w = 900;
+            var h = 600;
+            var color = d3.scale.category10();
+
+            
+            //generate random adjacency matrix, store into data"
+            var nodeNum = 10;
+            var edgeProb = .5;
+            var data = [];
+            for (var i = 0; i<nodeNum; i++) {
+                data.push([]);
+                for (var j = 0; j<=i ; j++) {
+                    data[i].push(0);
+                }
+                for (var j=i+1 ;j<nodeNum; j++) {
+                    
+                    if (Math.random() < edgeProb) {
+                        data[i].push(1);
+                    }
+                    else {
+                        data[i].push(0);
+                    }
+                }
+                console.log(data[i].toLocaleString());
+            }
+            
+            
+            //data = [[0,1,1,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+            
+            //convert adjacency matrix into edge pairs for d3 to process
+            var nodeList = [];
+            var edgeList = [];
+            for (var i = 0; i<data.length; i++) {
+
+                nodeList.push( {name: i } );
+                //console.log("I " + i);
+                          
+            }
+            for (var i = 0; i<data.length; i++) {
+                for (var j = 0; j< data[i].length; j++) {
+                    if (data[i][j] == 1) {
+                        edgeList.push( { source: i, target: j} );
+                        //console.log("I " + i + "  J " + j);
+                    }    
+                }
+            }
+            
+            //begin d3
+            
+            var svg = d3.select("body")
+                        .append("svg")
+                        .attr("height", h)
+                        .attr("width", w);
+
+            var dataset = {
+                nodes: nodeList,
+                edges: edgeList
+                };
+
+            var force = d3.layout.force()
+                        .nodes(dataset.nodes)
+                        .links(dataset.edges)
+                        .size([w, h])
+                        .gravity(.1)
+                        .linkDistance([150])
+                        .charge([-1000])
+                        .start();
+
+            // https://github.com/mbostock/d3/wiki/Force-Layout#wiki-drag
+            // implement 'dragstart' function that fixes nodes so they are
+            // not repositioned by force layout.
+            var drag = force.drag()
+              .on("dragstart", dragstart);
+
+            function dragstart(d) {
+              d.fixed = true;
+              d3.select(this).classed("fixed", true);
+            }
+  
+    
+            var edges = svg.selectAll("line")
+                        .data(dataset.edges)
+                        .enter()
+                        .append("line")
+                        .style("stroke", "#ccc")
+                        .style("stroke-width", 2);
+                        
+                        
+            var nodes = svg.append("g")
+                        .attr("class", "nodes")
+                        .selectAll("circle")
+                        .data(dataset.nodes)
+                        .enter().append("circle")
+                        .attr("r", 10)
+                        .style("fill", function(d, i) {
+                                    return color(i);
+                                    })
+                        .call(drag);
+                        // .call(force.drag().on("drag.force", function() {
+                        // d3.select(this).attr("transform", "translate(" + d3.event.x + "," + d3.event.y + ")");
+                        // }));
+            // nodes.call(force.drag().origin(function() {
+                // var t = d3.transform(d3.select(this).attr("transform")).translate;
+                // return {x: t[0], y: t[1]};
+            // }));
+
+            nodes.append("text")
+                        /*.attr("class", "labels")
+                        .selectAll("text")
+                        .data(dataset.nodes)
+                        .enter().append("text")
+                        .style("fill","#fff") */
+                        .attr("dx", 12)
+                        .attr("dy", ".35em")
+                        .attr("text-anchor", "middle")
+                        .text(function(d) { return d.name });
+            
+            /*
+            var nodes = svg.selectAll("circle")
+                        .data(dataset.nodes)
+                        .enter()
+                        .append("circle")
+                        .attr("r", 10)
+                        .style("fill", function(d, i) {
+                                    return color(i);
+                        })
+                        .call(force.drag);
+                        
+            nodes.append("text")
+                .attr("dx", 12)
+                .attr("dy", ".35em")
+                .style("fill","#fff")
+                .text(function(d) { return d.name });
+            */
+                        
+            force.on("tick", function() {
+
+            edges.attr("x1", function(d) { return d.source.x; })
+                    .attr("y1", function(d) { return d.source.y; })
+                    .attr("x2", function(d) { return d.target.x; })
+                    .attr("y2", function(d) { return d.target.y; });
+
+            nodes.attr("cx", function(d) { return d.x; })
+                    .attr("cy", function(d) { return d.y; });
+                    
+            nodes.append("text").attr("dx",12)
+            .attr("dy",".35em").text(function(d) { return d.name });
+            
+
+            });
+            setTimeout(function() {
+                force.stop();
+            }, (2000));
+
+
+        </script>
+    </body>
+</html> 
