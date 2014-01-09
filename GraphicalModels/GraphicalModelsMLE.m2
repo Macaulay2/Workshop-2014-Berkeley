@@ -116,7 +116,7 @@ scoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
     LL=flatten entries(LL);
     J:=ideal apply(#LL, i -> lift(numerator(LL_i),lpR));
     J = saturate(J, det(S));
-    return J
+    return J;
 );
 
 {*
@@ -233,16 +233,14 @@ scoreEquationsCovariance2(MixedGraph,List) := (G, U) -> (
 	    S_(i,j) = s_(i+1,j+1);
 	    use sR;
 	    S_(j,i) = s_(i+1,j+1);
-	)
-    )
-    S
+	);
+    );
     Sinv := inverse substitute((matrix(S)), FsR);    
     C1 := trace(Sinv * V)/2;
     C1derivative := JacobianMatrixOfRationalFunction(trace(Sinv * V)/2);
-    C1derivative
     LL := (substitute((jacobian(matrix{{det(matrix(S))}})), FsR))*matrix{{(-(#U)/(2*det(matrix(S))))}} - (transpose C1derivative);
     m := numColumns(mingens J);
-    sxR = coefficientRing(sR)[(flatten entries(vars(sR))) | toList(x_1..x_m)]
+    sxR = coefficientRing(sR)[(flatten entries(vars(sR))) | toList(x_1..x_m)];
     LL = substitute(LL, frac(sxR));
     LL=flatten entries(LL);
     gensDerivatives := {};
@@ -254,8 +252,8 @@ scoreEquationsCovariance2(MixedGraph,List) := (G, U) -> (
     J1:=ideal apply(#LL, i -> (numerator(LL_i) - gensDerivativesSum_(i,0)));
     J2 := saturate(J1, substitute(det(matrix(S)), sxR));
     J3 := substitute(J, sxR) + J2;
-    dim J3;
-    degree J3;
+--    dim J3;
+--    degree J3;
     return J3;
 );
 *}
