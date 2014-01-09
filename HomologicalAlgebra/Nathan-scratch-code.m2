@@ -235,4 +235,69 @@ FN = complet res N
 coker
 C_(-1)
 
+---
+---
+-- Trying to constuct extensions --
+
+
+-- try to understand constructing extensions
+restart
+R = QQ[x]
+A = coker matrix({{x^4}})
+B = coker matrix({{x^3}})
+
+FA = complete res A
+MA = ker FA.dd_0
+Hom(MA,B)
+myMatrix = cover Hom(MA,B)
+
+cover MA
+cover B
+R
+random(R^1,R^{1:-4})
+
+-- we want:
+f = (- random(R^1,R^{1:-2}))
+E = coker inducedMap(FA_0 ++ B, MA, inducedMap(FA_0,MA,id_(FA_0)) || f)
+
+-- this is push out
+
+map(E, B, 0*id_(R^1) || id_B)
+map(A,E, inducedMap(A, FA_0,id_(FA_0)) | 0*id_(R^1))
+
+chainComplex{map(A,E, inducedMap(A, FA_0,id_(FA_0)) | 0*id_(R^1)), map(E, B, 0*id_(R^1) || id_B)
+ }
+prune HH oo
+-- so above seems to be an extension.
+
+
+
+restart
+R = QQ[x]
+constructRandomExtensions = method()
+constructRandomExtensions(ZZ,ZZ,ZZ) := (a,b,d) -> (
+    A := coker matrix({{x^a}});
+    B := coker matrix({{x^b}});
+    f := (- random(R^1,R^{1:-d}));
+    FA := complete res A;
+    MA := ker FA.dd_0;
+    E := coker inducedMap(FA_0 ++ B, MA, inducedMap(FA_0,MA,id_(FA_0)) || f);
+    chainComplex{map(A,E, inducedMap(A, FA_0,id_(FA_0)) | 0*id_(R^1)), map(E, B, 0*id_(R^1) || id_B)
+    })
+
+Extension = constructRandomExtensions(6,5,3)
+
+prune HH Extension
+
+
+-- try to generalize the above...
+--constructExtensions = method()
+--constructExtensions(Module,Module, Module, Matrix) := (A,B, MA, Zeta) -> (
+--    F := complete res A;
+--    MA := ker (inducedMap(A,F_0, id_(F_0)));
+--    j := inducedMap(F_0,MA,id_(F_0));
+--    coker( map(F_0 ++ B, j || (- homomorphism Zeta)   )
+--    )
+--)
+
 
