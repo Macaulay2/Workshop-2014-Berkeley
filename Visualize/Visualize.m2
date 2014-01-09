@@ -80,6 +80,14 @@ runServer(String) := opts -> (visPath) -> (
     return run visPath;
     )
 
+--- add methods for output here:
+--
+
+
+
+
+
+
 
 --input: Three Stings. The first is a key word to look for.  The second
 --    	 is what to replace the key word with. The third is the path 
@@ -248,6 +256,16 @@ visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
 copyJS "/Users/bstone/Desktop/Test/"
 
 
+
+-----------------------------
+-- Julio's tests
+-----------------------------
+
+
+
+-----------------------------
+-- end Julio's Test
+-----------------------------
 
 
 
