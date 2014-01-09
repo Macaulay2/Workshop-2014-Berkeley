@@ -161,7 +161,12 @@ constructionV2 (ZZ,Module):=
 --     L := resolution(Gd, LengthLimit => max(g+2, n));
      Gd := dual G;
      L := resolution(Gd, LengthLimit => g+2);
-     lambda := map(HH_0(L), L_0, id_(L_0));
+--     lambda := map(HH_0(L), L_0, id_(L_0));
+-- L is a resolution of Gd, so that Gd (up to a prune) == the homology
+-- in degree 0, but Gd =!== HH_0(L); this could cause problems for the
+-- compositions necessary in the j=g case below. Hence lambda as defined above
+-- needs to be adjusted
+-- is it appropriate to prune Gd first?
      lambdaDual := dual lambda; --not yet implemented in M2 Core !
 --nothing below here has been tested using the example below  
      
