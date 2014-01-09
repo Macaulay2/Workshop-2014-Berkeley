@@ -28,15 +28,15 @@ newPackage(
 	     },
     	Headline => "Visualize",
     	DebuggingMode => true,
-	AuxiliaryFiles => false,
+	AuxiliaryFiles => true,
 	Configuration => {} 
     	)
 
 export {
     
     -- Options
-     "Path",
-     "visTemplate",
+     "VisPath",
+     "VisTemplate",
     
     -- Methods
      "visIntegralClosure",
@@ -77,7 +77,7 @@ toArray(List) := L -> (
 --input: A path
 --output: runs a server for displaying objects
 --
-runServer = method(Options => {Path => currentDirectory()})
+runServer = method(Options => {VisPath => currentDirectory()})
 runServer(String) := opts -> (visPath) -> (
     return run visPath;
     )
@@ -96,12 +96,12 @@ runServer(String) := opts -> (visPath) -> (
 --    	 where template file is located.
 --output: A file with visKey replaced with visString.
 --
-visOutput = method(Options => {Path => currentDirectory()})
+visOutput = method(Options => {VisPath => currentDirectory()})
 visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
     local fileName; local openFile; local PATH;
     
     fileName = (toString currentTime() )|".html";
-    PATH = opts.Path|fileName;
+    PATH = opts.VisPath|fileName;
     openOut PATH << 
     	replace(visKey, visString , get visTemplate) << 
 	close;
@@ -114,7 +114,7 @@ visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
 --input: A monomial ideal of a polynomial ring in 2 or 3 variables.
 --output: The newton polytope of the of the ideal.
 --
-visIdeal = method(Options => {Path => currentDirectory()|"temp-files/", visTemplate => currentDirectory() |"Visualize/templates/visIdeal/visIdeal"})
+visIdeal = method(Options => {VisPath => currentDirectory()|"temp-files/", VisTemplate => currentDirectory() |"Visualize/templates/visIdeal/visIdeal"})
 visIdeal(Ideal) := opts -> J -> (
     local R; local arrayList; local arrayString; local numVar; local visTemp;
     local A;
@@ -126,19 +126,19 @@ visIdeal(Ideal) := opts -> J -> (
     
     if numVar == 2 
     then (
-    	visTemp = opts.visTemplate|"2D.html";
+    	visTemp = opts.VisTemplate|"2D.html";
 	arrayList = apply( flatten entries gens J, m -> flatten exponents m);	
 	arrayList = toArray arrayList;
 	arrayString = toString arrayList;
     )
     else (
-	visTemp = opts.visTemplate|"3D.html";
+	visTemp = opts.VisTemplate|"3D.html";
     	arrayList = apply(flatten entries basis(0,infinity, R/J), m -> flatten exponents m );
     	arrayList = toArray arrayList;
     	arrayString = toString arrayList;
     );
     
-    A = visOutput( "visArray", arrayString, visTemp, Path => opts.Path );
+    A = visOutput( "visArray", arrayString, visTemp, VisPath => opts.VisPath );
     
     return currentDirectory()|A_1;
     )
@@ -146,7 +146,7 @@ visIdeal(Ideal) := opts -> J -> (
 --input: A graph
 --output: the graph in the browswer
 --
-visGraph = method(Options => {Path => currentDirectory()|"temp-files/", visTemplate => currentDirectory() | "templates/visGraph/visGraph-template.html"})
+visGraph = method(Options => {VisPath => currentDirectory()|"temp-files/", VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
     local A; local arrayList; local arrayString; local B;
     
@@ -154,7 +154,7 @@ visGraph(Graph) := opts -> G -> (
     arrayList = toArray entries A;
     arrayString = toString arrayList;
     
-    B = visOutput( "visArray", arrayString, opts.visTemplate, Path => opts.Path );    
+    B = visOutput( "visArray", arrayString, opts.VisTemplate, VisPath => opts.VisPath );    
     
     return currentDirectory()|B_1;
     )
@@ -237,7 +237,7 @@ end
 -----------------------------
 -----------------------------
 -- branden
-restart
+restart 
 loadPackage"Graphs"
 loadPackage"Visualize"
 
@@ -247,16 +247,16 @@ visGraph G
 R = QQ[x,y,z]
 I = ideal"x4,xyz3,yz,xz,z6,y5"
 visIdeal I
-visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
+visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
 S = QQ[x,y]
 I = ideal"x4,xy3,y50"
 visIdeal I
-visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
+visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
 
 copyJS "/Users/bstone/Desktop/Test/"
-
+yes
 
 
 -----------------------------
@@ -288,13 +288,13 @@ I = ideal"x4,xy3,y5"
 visIdeal I
 
 -- User can choose where to place files
-visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
+visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
 -- 3 variables
 R = QQ[x,y,z]
 J = ideal"x4,xyz3,yz2,xz3,z6,y5"
 visIdeal J
-visIdeal( J, Path => "/Users/bstone/Desktop/Test/")
+visIdeal( J, VisPath => "/Users/bstone/Desktop/Test/")
 
 restart
 needsPackage"Graphs"
