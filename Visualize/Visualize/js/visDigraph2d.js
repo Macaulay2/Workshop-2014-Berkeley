@@ -66,14 +66,9 @@ function initializeBuilder() {
       }
   }
 
-  // Brett: Need to fix this.
-
   var maxLength = d3.max(nodes, function(d) {
     return d.name.length;
-    console.log("name length: " + d.name.length + "\n");
   });
-
-  console.log("maxLength: " + maxLength + "\n");
 
   if(maxLength < 4){
     d3.selectAll("text").classed("fill", 0xfefcff);
