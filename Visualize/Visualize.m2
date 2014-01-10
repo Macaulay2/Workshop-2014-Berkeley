@@ -21,10 +21,10 @@ newPackage(
     	Version => "0.2", 
     	Date => "October 2, 2013",
     	Authors => {       
-     	     {Name => "Brett Barwick", Email => "Brett@barwick.edu", HomePage => "http://www.bard.edu/~bstone/"},	     
+     	     {Name => "Brett Barwick", Email => "Brett@barwick.edu", HomePage => "http://math.bard.edu/~bstone/"},	     
 	     {Name => "Elliot Korte", Email => "ek2872@bard.edu"},	     
 	     {Name => "Will Smith", Email => "smithw12321@gmail.com"},		
-	     {Name => "Branden Stone", Email => "bstone@bard.edu", HomePage => "http://www.bard.edu/~bstone/"},	     
+	     {Name => "Branden Stone", Email => "bstone@bard.edu", HomePage => "http://math.bard.edu/~bstone/"},	     
 	     {Name => "Jim Vallandingham", Email => "vlandham@gmail.com", HomePage => "http://vallandingham.me/"}
 	     },
     	Headline => "Visualize",
@@ -281,8 +281,7 @@ copyJS(String) := dst -> (
 
 beginDocumentation()
 needsPackage "SimpleDoc"
-debug SimpleDoc
-
+--debug SimpleDoc
 
 doc ///
      Key
@@ -293,22 +292,30 @@ doc ///
        Text
      	 We use really rediculusly cools things to do really cool things.
 ///
- 
- end
- 
 
+
+end
 
 doc ///
   Key
-    BigIdeal
+    (visIdeal, Ideal)
   Headline
-    Ideals with Large Projective Dimension and Regularity.
+    Creates staircase diagram for an ideal
+  Usage
+    visIdeal I
+  Inputs
+    I:Ideal
+      An ideal in a ring with 2 or 3 variables.
+  Outputs
+    An interactive html file that is opened in the user's default browser.
   Description
     Text
-       The goal of this package is to provide commands to generate the ideals
-       in "Ideals with Larger Projective Dimension and Regularity" by Beder,
-       McCullough, Nunez, Seceleanu, Snapp and Stone.
+      We are able to see the interactive staircase diagram. More stuff
+      should be here about the convext hull and other stuff. 
 ///
+
+end
+
 
 doc ///
   Key
@@ -343,7 +350,6 @@ doc ///
 
 doc ///
   Key
-    jasonIdeal
     (jasonIdeal,ZZ,ZZ,ZZ)
   Headline
     Constructs one of the family of ideals in "A Family of Ideals with Few Generators in Low Degree and Large Projective Dimension" by Jason McCullough.
@@ -410,9 +416,14 @@ end
 -----------------------------
 -----------------------------
 -- branden
-restart 
+restart
 loadPackage"Graphs"
-loadPackage"Visualize"
+uninstallPackage"Visualize"
+restart
+installPackage"Visualize"
+viewHelp Visualize
+
+
 (options Visualize).Configuration
 
 searchReplace("visArray","kickass string", testFile)
