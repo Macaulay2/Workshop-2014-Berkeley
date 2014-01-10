@@ -16,3 +16,13 @@ functionB = (f, a, e) -> (
 	
 	isSubset(root, m)
 )
+
+functionC = (f, a, e) -> (
+	R1 := ring f;
+	varList := first entries vars R1;
+	m := ideal(varList);
+	my1 := sub(1, R1);
+	root := ethRoot(ideal(f), a, e); 
+	
+	isSubset(root, m)
+)

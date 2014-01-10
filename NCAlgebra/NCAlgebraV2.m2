@@ -171,22 +171,6 @@ NCMatrix ++ NCMatrix := (M,N) -> (
    assignDegrees(ds,M.target | N.target, M.source | N.source)
 )
 
---- The method below is in a state of disrepair... I need to 
---- get acquainted with all the bergman stuff
-
--- digraph(NCGroebnerBasis) := G -> (
-    -- N := {normal forms};
-    -- F := {obstructions};
-    -- ringGens := {get the gens from the ring} 
-    ---- maybe this is why the method should take NCIdeal, to pull the ring gens?
-    --suffixes := apply(keys G, k -> flatten apply( degree k - 1, i -> ncMonomial drop(k#monslist,i)));
-    -- vertset := {1} | ringGens | suffixes;
-    -- secondEdges := flatten apply(vertset,v -> {v,{w | vw contains a unique elt of F as a suffix}})
-    ----  need to figure out how to write that function...
-    -- edgeset :=  {{1,ringGens}, secondEdges;
-    -- digraph(edgeset)   
---    )
-
 -------------------------------------------
 --- NCChainComplex Methods ----------------
 -------------------------------------------
@@ -346,6 +330,46 @@ M = ncMatrix {{x,y,0},{0,y,z}}
 N = ncMatrix {{x,y},{x,y}}
 Hom(M,N,2)
 ///
+
+-------------------------------------------
+--- Anick Resolution Methods --------------
+-------------------------------------------
+debug needsPackage "Graphs"
+
+digraph NCGroebnerBasis := G -> (
+    obstructions := (keys G.generators) / first ;
+    prevert1 := gens (ncIdeal gens G).ring / (i -> (first keys i.terms).monList);
+    premons := apply (keys G.generators / first, m -> m.monList);
+    suffixes := select( 
+    apply (premons, m -> elements set subsets drop(m,1)) // flatten // set // elements,
+    i -> i != {}
+    );
+    select(suffixes, i -> i != {});
+    prevert2 := suffixes;
+    vertset := unique (prevert1 | prevert2);
+    findSuffix := (t,O) -> (
+    select (O, o -> if #(o.monList) > #t then false else
+	 t_(
+	     toList(0..(#o.monList-1)) / (i -> i + #t -(#o.monList))) == o.monList
+	 )
+     );
+    childrens := (t,V,O) -> select(V, v -> #(findSuffix(t|v,O)) == 1);
+    edgeset :=  {{1,prevert1}} | apply(vertset, v -> {v,childrens(v,vertset,obstructions)});
+    digraph(edgeset)   
+)
+
+TEST ///
+restart
+needsPackage "NCAlgebraV2"
+needsPackage "NCAlgebra"
+needsPackage "Graphs"
+A = QQ{x,y}
+I = ncIdeal(x^2 - y^2)
+G = twoSidedNCGroebnerBasisBergman(I)
+
+digraph(G)
+///
+
 
 end
 

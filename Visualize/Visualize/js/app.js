@@ -55,14 +55,12 @@ function initializeBuilder() {
   for (var i = 0; i<data.length; i++) {
 
       nodes.push( {name: names[i], id: i, reflexive:false } );
-      //console.log("I " + i);
 
   }
   for (var i = 0; i<data.length; i++) {
       for (var j = 0; j < i ; j++) {
           if (data[i][j] != 0) {
               links.push( { source: nodes[i], target: nodes[j], left: false, right: false} );
-              //console.log("I " + i + "  J " + j);
           }    
       }
   }
@@ -545,6 +543,14 @@ function enableEditing() {
   svg.classed('shift', false);
 }
 
+function setAllNodesFixed() {
+  for (var i = 0; i<nodes.length; i++) {
+    //d3.select(this).classed(d.fixed = true);
+    nodes[i].fixed = true;
+  }
+
+}
+
 function updateWindowSize2d() {
 
         var svg = document.getElementById("canvasElement");
@@ -631,9 +637,8 @@ function singletons(nodeSet, edgeSet){
 
 // Constructs the incidence matrix for a graph as a multidimensional array.
 function getIncidenceMatrix (nodeSet, edgeSet){
+
   var incMatrix = [];
-  console.log("nodeSet length: " + nodeSet.length + "\n");
-  console.log("edgeSet length: " + edgeSet.length + "\n");
 
   // The next two loops create an initial (nodes.length) x (links.length) matrix of zeros.
   for(var i = 0;i < nodeSet.length; i++){
@@ -647,14 +652,9 @@ function getIncidenceMatrix (nodeSet, edgeSet){
   }
 
   for (var i = 0; i < edgeSet.length; i++) {
-    //console.log("i: " + i + "\n");
-    //console.log("Source id: " + edgeSet[i].source.id + "\n");
-    //console.log("Target id: " + edgeSet[i].target.id + "\n");
     incMatrix[(edgeSet[i].source.id)][i] = 1; // Set matrix entries corresponding to incidences to 1.
     incMatrix[(edgeSet[i].target.id)][i] = 1;
   }
-
-  console.log(incMatrix);
 
   return incMatrix;
 }

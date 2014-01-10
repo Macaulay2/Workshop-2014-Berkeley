@@ -285,9 +285,76 @@ fastExp = (f,N) ->
 --***********************************************************--
 ---------------------------------------------------------------
 
+isJToAInIToPe = (J1, a1, I1, e1) -> (--checks whether or not f1^a1 is in I1^(p^e1).  It seems to be much faster than raising f1 to a power
+	root := ethRoot(J1, a1, e1); 
+	
+	isSubset(root, I1)
+)
+
+nuListFast = (I1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
+	d1 := 0;
+	p1 := char ring I1;
+	local top;--for the binary search
+	local bottom;--for the binary search
+	local middle;--for the binary search
+	local answer; --a boolean for determining if we go up, or down
+	mIdeal := ideal(first entries vars ring I1); 
+	N := 0;
+	myList := new MutableList;
+	curPower := 0;
+	
+	for d1 from 1 to e1 do (
+--		if (curPower == 0) then curPower = 1 else curPower = p1^(d1-1)*curPower;
+		top = p1;
+		bottom = 0;
+		
+		while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
+			middle := floor((top + bottom)/2);
+			answer = isJToAInIToPe(I1, curPower + middle, mIdeal, d1);
+--			print "Here we are";
+--			print (bottom, top);
+			if (answer == false) then bottom = middle else top = middle
+			--print "Here we are"
+		);
+	--	print (bottom, top, curPower);
+		curPower = curPower + bottom;
+		myList#(d1-1) = curPower;
+		curPower = curPower*p1;
+	);
+	myList
+)
+
+nuFast = (I1, e1) -> ( --this does a fast nu computation
+	p1 := char ring I1;
+	local top;--for the binary search
+	local bottom1;--for the binary search
+	local middle;--for the binary search
+	local answer; --a boolean for determining if we go up, or down
+	mIdeal := ideal(first entries vars ring I1); 
+	N := 0;
+	myList := new MutableList;
+	curPower := 0;
+	
+	bottom1 = 0;
+	top = p1^e1;		
+	while (top - 1 > bottom1) do (--the bottom value is always not in m, the top is always in m
+		middle = floor((top + bottom1)/2);
+		answer = isJToAInIToPe(I1, middle, mIdeal, e1);
+		if (answer == false) then bottom1 = middle else top = middle;
+	);
+	bottom1
+)
+
+
+
 --Lists \nu_I(p^d) for d = 1,...,e 
 nuList = method();
-nuList (Ideal,ZZ) := (I,e) ->
+
+nuList (Ideal, ZZ) := (I, e) -> (nuListFast(I, e) )
+
+nuListOld = method();
+
+nuListOld (Ideal,ZZ) := (I,e) -> --an obsolete way to compute nu's
 (
      p := char ring I;
      m := ideal(first entries vars ring I); 
@@ -298,17 +365,19 @@ nuList (Ideal,ZZ) := (I,e) ->
      (	  
 	  J = ideal(apply(first entries gens I, g->fastExp(g, N)));
 	  N=N+1;
-	  while isSubset(I*J, frobeniusPower(m,d))==false do (N = N+1; J = I*J);
-     	  L#(d-1) = N-1;
+	  while isSubset(I*J, frobeniusPower(m,d))==false do (N = N+1; J = I*J); 
+     	  L#(d-1) = N-1; 
 	  N = p*(N-1)
      );
      L
 )
 nuList(RingElement,ZZ) := (f,e) -> nuList(ideal(f),e)
 
+
+
 --Gives \nu_I(p^e)
 nu = method();
-nu(Ideal,ZZ) := (I,e) -> (nuList(I,e))#(e-1)
+nu(Ideal,ZZ) := (I,e) -> nuFast(I,e)
 nu(RingElement, ZZ) := (f,e) -> nu(ideal(f),e)
 
 --Gives a list of \nu_I(p^d)/p^d for d=1,...,e
@@ -1873,6 +1942,9 @@ estFPT={FinalCheck=> true, Verbose=> false, MultiThread=>false, DiagonalCheck=>t
 
 --isFPTPoly, determines if a given rational number is the FPT of a pair in a polynomial ring. 
 --if Origin is specified, it only checks at the origin. 
+--********************************************
+--	--this needs to be changed to call ethRootSafe more frequently.  In particular, it shouldn't compute mySigma and myTau in general at least if the exponenets being considered are as big as they are...
+--********************************************
 isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
 	pp := char ring f1;
 	if (o.Origin == true) then org := ideal(vars (ring f1));
