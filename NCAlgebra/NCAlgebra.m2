@@ -81,7 +81,10 @@ MAXDEG = 40
 MAXSIZE = 1000
 
 -- Andy's bergman path
---bergmanPath = "/usr/local/bergman1.001"
+-- bergmanPath = "/usr/local/bergman1.001"
+-- Andy's other bergman path
+-- bergmanPath = "/cygdrive/d/userdata/Desktop/bergman1.001"
+-- bergmanPath = "/usr/local/bergman1.001"
 -- Frank's bergman path
 bergmanPath = "~/bergman"
 -- Courtney's bergman path
@@ -98,6 +101,8 @@ NCIdeal = new Type of HashTable
 NCLeftIdeal = new Type of HashTable
 NCRightIdeal = new Type of HashTable
 NCRingMap = new Type of HashTable
+
+globalAssignment NCRing
 
 ---------------------------------------------------------------
 --- Helpful general-purpose functions
@@ -250,19 +255,35 @@ Ring List := (R, varList) -> (
 
    promote (A,A) := (f,A) -> f;
    
+   addVals := (c,d) -> (
+      e := c+d;
+      if e == 0 then continue else e
+   );
+
+   multVals := (c,d) -> c*d;
+      
+   multKeys := (m,n) -> m | n;
+
    A + A := (f,g) -> (
+      -- new way
+      --newHash := merge(f.terms,g.terms,addVals);
+      -- old way
       newHash := new MutableHashTable from pairs f.terms;
-   
       for s in pairs g.terms do (
          newMon := s#0;
          if newHash#?newMon then newHash#newMon = newHash#newMon + s#1 else newHash#newMon = s#1;
       );
+      newHash = removeZeroes hashTable pairs newHash;
       new A from hashTable {(symbol ring, f.ring),
 	                    (symbol isReduced, false),
                             (symbol cache, new CacheTable from {}),
-                            (symbol terms, removeZeroes hashTable pairs newHash)}   
+                            (symbol terms, newHash)}   
    );
+
    A * A := (f,g) -> (
+      -- new way
+      --newHash := removeZeroes combine(f.terms,g.terms,multKeys,multVals,addVals);
+      -- old way
       newHash := new MutableHashTable;
       for t in pairs f.terms do (
          for s in pairs g.terms do (
@@ -271,10 +292,11 @@ Ring List := (R, varList) -> (
             if newHash#?newMon then newHash#newMon = newHash#newMon + newCoeff else newHash#newMon = newCoeff;
          );
       );
+      newHash = removeZeroes hashTable pairs newHash;
       new A from hashTable {(symbol ring, f.ring),
   	                    (symbol isReduced, false),
                             (symbol cache, new CacheTable from {}),
-                            (symbol terms, removeZeroes hashTable pairs newHash)}
+                            (symbol terms, newHash)}
    );
 
    A ^ ZZ := (f,n) -> product toList (n:f);
@@ -308,7 +330,13 @@ Ring List := (R, varList) -> (
    A
 )
 
-net NCRing := A -> net A.CoefficientRing | net A.generators
+net NCRing := A -> (
+    hasAttribute := value Core#"private dictionary"#"hasAttribute";
+    getAttribute := value Core#"private dictionary"#"getAttribute";
+    ReverseDictionary := value Core#"private dictionary"#"ReverseDictionary";
+    if hasAttribute(A,ReverseDictionary) then toString getAttribute(A,ReverseDictionary)
+    else net A.CoefficientRing | net A.generators
+)
 
 ideal NCPolynomialRing := NCIdeal => A ->
    new NCIdeal from new HashTable from {(symbol ring) => A,
@@ -421,10 +449,18 @@ NCPolynomialRing / NCIdeal := (A, I) -> (
    B
 )
 
-net NCQuotientRing := B -> net (B.ambient) |
-                           net " / " |
-			   net take(B.ideal.generators,10) |
-			   net if (#(B.ideal.generators) > 10) then " + More..." else ""
+net NCQuotientRing := B -> (
+    hasAttribute := value Core#"private dictionary"#"hasAttribute";
+    getAttribute := value Core#"private dictionary"#"getAttribute";
+    ReverseDictionary := value Core#"private dictionary"#"ReverseDictionary";
+    if hasAttribute(B,ReverseDictionary) then toString getAttribute(B,ReverseDictionary)
+    else (
+       net (B.ambient) |
+       net " / " |
+       net take(B.ideal.generators,10) |
+       net if (#(B.ideal.generators) > 10) then " + More..." else ""
+    )
+)
 
 ideal NCQuotientRing := NCIdeal => B -> B.ideal;
 ambient NCQuotientRing := B -> B.ambient;
@@ -674,17 +710,13 @@ newBasis (ZZ,NCIdeal) := NCMatrix => opts -> (n,I) -> (
 	activeGensList = select(activeGensList, g-> degree g <= n - doneToDeg);
    );
 
--- now we need to minimize the spanning set
+   -- now we need to minimize the spanning set
    terms := flatten entries newBasis(n,R,CumulativeBasis=>opts#CumulativeBasis);
    asCoeffs := sparseCoeffs(doneBasis, Monomials=>terms);  
    minGens := mingens image asCoeffs;
+   error "err";
    ncMatrix{terms}*minGens
 )
-
-
-
-
-
 
 ------------------------------------------------
 
@@ -1064,8 +1096,8 @@ sparseCoeffs NCRingElement := opts -> f -> (
 )
 
 sparseCoeffs List := opts -> L -> (
-  d:=L#(position(L,m->m!=0));
-  if not all(L, m-> (isHomogeneous(m) and ((degree m)==(degree d) or m==0))) then 
+  d := if all(L, m -> m == 0) then 0 else L#(position(L,m->m!=0));
+  if not all(L, m-> (isHomogeneous(m) and (m == 0 or (degree m)==(degree d)))) then 
 	error "Expected homogeneous elements of the same degree.";
   B := (L#0).ring;
   R := coefficientRing B;
@@ -1835,6 +1867,7 @@ cumulativeBasis(ZZ,NCRing) := NCMatrix => (n,B) ->
    newBasis(n,B,CumulativeBasis=>true)
 
 newBasis(ZZ,NCRing) := NCMatrix => opts -> (n,B) -> (
+   if n == 0 then return ncMatrix {{promote(1,B)}};
    ncgbGens := if class B === NCQuotientRing then pairs (ncGroebnerBasis B.ideal).generators else {};
    basisList := {ncMonomial({},B)};
    doneList := if opts#CumulativeBasis then basisList else {};
@@ -1879,24 +1912,72 @@ leftMultiplicationMap = method()
 leftMultiplicationMap(NCRingElement,ZZ) := (f,n) -> (
    B := f.ring;
    m := degree f;
+   if m === -infinity then m = 0;
    nBasis := flatten entries basis(n,B);
    nmBasis := flatten entries basis(n+m,B);
    leftMultiplicationMap(f,nBasis,nmBasis)
 )
 
-leftMultiplicationMap(NCRingElement,List,List) := (f,fromBasis,toBasis) -> (
-   if not isHomogeneous f then error "Expected a homogeneous element.";
-   sparseCoeffs(f*fromBasis, Monomials=>toBasis)
-
+leftMultiplicationMap(NCRingElement,ZZ,ZZ) := (f,n,m) -> (
+   B := f.ring;
+   nBasis := flatten entries basis(n,B);
+   mBasis := flatten entries basis(m,B);
+   leftMultiplicationMap(f,nBasis,mBasis)
 )
+
+leftMultiplicationMap(NCRingElement,List,List) := (f,fromBasis,toBasis) -> (
+   local retVal;
+   if not isHomogeneous f then error "Expected a homogeneous element.";
+   if fromBasis == {} and toBasis == {} then (
+      retVal = ncMatrix {};
+      retVal
+   )
+   else if fromBasis == {} then (
+      retVal = ncMatrix {{}:(#toBasis)};
+      assignDegrees(retVal,apply(toBasis, b -> degree b), {});
+      retVal
+   )
+   else if toBasis == {} then (
+      retVal = ncMatrix {};
+      assignDegrees(retVal,{},apply(fromBasis, b -> degree b));
+      retVal
+   )
+   else sparseCoeffs(f*fromBasis, Monomials=>toBasis)
+)
+
+{*
+TEST ///
+restart
+needsPackage "NCAlgebra"
+A = QQ{a,b}
+I = ncIdeal {a*a*a,a*a*b,a*b*a,a*b*b,b*a*a,b*a*b,b*b*a,b*b*b}
+B = A/I
+basis(0,B)
+basis(1,B)
+basis(2,B)
+basis(3,B)
+leftMultiplicationMap(a,-1,0)
+leftMultiplicationMap(a,-1,0)
+leftMultiplicationMap(a,-1,0)
+///
+*}
 
 rightMultiplicationMap = method()
 rightMultiplicationMap(NCRingElement,ZZ) := (f,n) -> (
    B := f.ring;
    m := degree f;
+   if m === -infinity then m = 0;
    nBasis := flatten entries basis(n,B);
    nmBasis := flatten entries basis(n+m,B);
    rightMultiplicationMap(f,nBasis,nmBasis)
+)
+
+rightMultiplicationMap(NCRingElement,ZZ,ZZ) := (f,n,m) -> (   
+   if f != 0 and degree f != m-n then error "Expected third argument to be the degree of f, if nonzero.";
+   B := f.ring;
+   nBasis := flatten entries basis(n,B);
+   mBasis := flatten entries basis(m,B);
+   rightMultiplicationMap(f,nBasis,mBasis)
 )
 
 rightMultiplicationMap(NCRingElement,List,List) := (f,fromBasis,toBasis) -> (
@@ -2081,6 +2162,7 @@ List ** List := (xs,ys) -> flatten for y in ys list apply(xs, x -> {x,y})
 remainderFunction = method(Options => {DontUse => 0})
 remainderFunction (NCRingElement,NCGroebnerBasis) := opts -> (f,ncgb) -> (
    if #(gens ncgb) == 0 then return f;
+   if f == 0 then return f;
    if ((gens ncgb)#0).ring =!= f.ring then error "Expected GB over the same ring.";
    dontUse := opts#DontUse;
    ncgbHash := ncgb.generators;
@@ -2157,7 +2239,6 @@ ncMap (NCRing,NCRing,List) := opts -> (B,C,imageList) -> (
 				 (symbol Derivation) => opts#Derivation}
 )
 
-
 source NCRingMap := f -> f.source
 target NCRingMap := f -> f.target
 matrix NCRingMap := opts -> f -> (
@@ -2167,7 +2248,6 @@ matrix NCRingMap := opts -> f -> (
         matrix {(gens source f) / f}
 )
 --id _ NCRing := B -> ncMap(B,B,gens B)
-
 
 NCRingMap NCRingElement := (f,x) -> (
    if x == 0 then return promote(0, target f);
@@ -2558,11 +2638,19 @@ NCMatrix || NCMatrix := (M,N) -> (
    pipe
 )
 
-NCMatrix * ZZ := (M,r) -> ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)))
-ZZ * NCMatrix := (r,M) -> M*r
-NCMatrix * QQ := (M,r) -> ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)))
+NCMatrix * ZZ := (M,r) -> (
+   newM := ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)));
+   if isHomogeneous M then assignDegrees(newM,M.target,M.source);
+   newM
+)
+ZZ * NCMatrix := (r,M) -> M*r;
+NCMatrix * QQ := (M,r) -> (
+   newM := ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)));
+   if isHomogeneous M then assignDegrees(newM,M.target,M.source);
+   newM
+)
 QQ * NCMatrix := (r,M) -> M*r
-- NCMatrix := M -> (-1)*M
+- NCMatrix := M -> (-1)*M;
 NCMatrix * RingElement := (M,r) -> M*(promote(r,M.ring))
 RingElement * NCMatrix := (r,M) -> (promote(r,M.ring)*M)
 
@@ -2606,7 +2694,11 @@ NCRingElement * NCMatrix := (r,M) -> (
 )
 
 entries NCMatrix := M -> M.matrix
-transpose NCMatrix := M -> ncMatrix transpose M.matrix
+transpose NCMatrix := M -> (
+    Mtrans := ncMatrix transpose M.matrix;
+    assignDegrees(Mtrans,-M.source,-M.target);
+    Mtrans
+)
 
 --- flag an entire matrix as having reduced entries
 --- internal routine
@@ -2645,6 +2737,8 @@ assignDegrees NCMatrix := M -> (
 
 assignDegrees (NCMatrix, List, List) := (M,targetDeg,sourceDeg) -> (
    -- this function is for manual assignment of degrees
+   if (#(targetDeg) != #(entries M)) then error "Target degree list does not match number of rows of matrix";
+   if (#(sourceDeg) != #(first entries M)) then error "Source degree list does not match number of columns of matriix";
    M#(symbol source) = sourceDeg;
    M#(symbol target) = targetDeg;
    -- set the isHomogeneous flag.
@@ -2687,7 +2781,7 @@ NCMatrix // NCMatrix := (N,M) -> (
    -- handle trivial cases now:
    
    -------------------------------
-   gbDegree := max N.source;   -- is this high enough of a degree to factor?
+   gbDegree := max N.source + 1;   -- what is the right degree here?
    matrixRelsM := buildMatrixRelations M;
    CM := ring first matrixRelsM;
    matrixRelsN := buildMatrixRelations N;
@@ -2760,4 +2854,12 @@ uninstallPackage "NCAlgebra"
 installPackage "NCAlgebra"
 needsPackage "NCAlgebra"
 viewHelp "NCAlgebra"
+
+--- arithmetic benchmark
+restart
+needsPackage "NCAlgebra"
+A = QQ{x,y,z}
+f = x+y+z
+time(f^12);
+time(f^6*f^6);
 

@@ -55,7 +55,8 @@ cokerDD(Module) := M -> (
 doubleDualMap = method()
 doubleDualMap(Module):= M -> (
 --     map(dual (dual M), M, id_(ambient M))
-     map(dual (dual M), M, id_(cover M))
+--     map(dual (dual M), M, id_(cover M))
+inducedMap(dual dual M, M)
      )
 
 kk = ZZ/ ideal (101)
@@ -77,3 +78,17 @@ C = cokerDD(M)
 C = prune cokerDD(M)
 prune ker A == K
 prune coker A == C
+
+
+-- recusrively add {{0}}; via ++ {{0}} a few times, precisely
+-- rank (cover M) - rank (cover dual dual M) times.
+
+
+--
+-- testing of Frank's contribution of bidualitymap.m2
+--
+kk = ZZ/ ideal (101)
+R = kk[x]/ideal (x^2)
+M = coker matrix {{x}}
+C = completeRes(M,3)
+C.dd

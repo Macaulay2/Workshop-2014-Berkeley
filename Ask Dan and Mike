@@ -1,0 +1,1128 @@
+Macaulay2, version 1.6.0.1
+with packages: ConwayPolynomials, Elimination, IntegralClosure, LLLBases,
+               PrimaryDecomposition, ReesAlgebra, TangentCone
+
+    i1 : R = QQ[x]
+
+    o1 = R
+
+    o1 : PolynomialRing
+
+    i2 : C = betti res coker vars R
+
+                0 1
+    o2 = total: 1 1
+             0: 1 1
+
+    o2 : BettiTally
+
+i3 : res C
+stdio:3:1:(3): error: no method found for applying resolution to:
+                          0 1
+     argument   :  total: 1 1 (of class BettiTally)
+                       0: 1 1
+
+i4 : options res
+
+o4 = OptionTable{DegreeLimit => null           }
+                 HardDegreeLimit => {}
+                 LengthLimit => infinity
+                 PairLimit => infinity
+                 SortStrategy => 0
+                 StopBeforeComputation => false
+                 Strategy => null
+                 SyzygyLimit => infinity
+
+o4 : OptionTable
+
+i5 : help method
+
+o5 = method -- make a new method function
+     ************************************
+
+     Synopsis
+     ========
+
+       * Usage:f = method()
+       * Optional inputs:
+           * TypicalValue => a type, default value Thing, the type of the value
+             returned by f, typically.  This information is used only to build
+             documentation automatically, and is stored in the hash table
+             "typicalValues".
+           * Options => a list, default value null, a list of options J => v, where J
+             is the name of an optional argument for f, and v is its default value.
+             The list of options could be also replaced by the corresponding
+             "OptionTable".  Specifying true here indicates that option handling is
+             done by the individual methods, while still allowing dispatching to
+             methods based on types of arguments to be done.  The individual methods
+             may have various sets of acceptable option names, possibly empty.  See
+             "making new functions with optional arguments".
+           * Binary => a Boolean value, default value false, whether the method is to
+             be binary: for three arguments or more the result will be computed by
+             calling binary methods installed for f with two arguments at a time.
+           * Dispatch => default value {Thing, Thing, Thing, Thing}, the method for
+             getting a list of types from the parameters; the value of this option
+             should be "Thing" or "Type" to indicate that a sequence should be
+             regarded as a single argument, or, if the elements of a sequence are to
+             be regarded as separate parameters, a list whose elements are "Thing" or
+             "Type".  Parameters corresponding to "Thing" or to a position beyond the
+             end of the list are dispatched according to their "class", whereas
+             parameters corresponding to "Type" are expected to be types (actually,
+             hash tables) and are used directly in the search for methods; see
+             "inheritance".
+       * Outputs:
+           * f, an object of class "MethodFunction", a new method function
+
+     Description
+     ===========
+
+     The code above creates a method function that takes up to four arguments, looking
+     up the appropriate method according to the classes of the arguments, with
+     inheritance.  To install a method for two arguments, (x,y), of classes X and Y,
+     use code like this:
+
+          f(X,Y) := (x,y) -> ...
+
+     where '...' represents the body of the function you wish to install.  The syntax
+     for one or three arguments is analogous.  See ":=" for details.
+
+     +-------------------------------------------------------------------------------+
+     |i1 : f = method()                                                              |
+     |                                                                               |
+     |o1 = f                                                                         |
+     |                                                                               |
+     |o1 : MethodFunction                                                            |
+     +-------------------------------------------------------------------------------+
+     |i2 : f ZZ := x -> -x;                                                          |
+     +-------------------------------------------------------------------------------+
+     |i3 : f(ZZ,String) := (n,s) -> concatenate(n:s);                                |
+     +-------------------------------------------------------------------------------+
+     |i4 : f(String,ZZ,String) := (s,n,t) -> concatenate(s," : ",toString n," : ",t);|
+     +-------------------------------------------------------------------------------+
+     |i5 : f 44                                                                      |
+     |                                                                               |
+     |o5 = -44                                                                       |
+     +-------------------------------------------------------------------------------+
+     |i6 : f(5,"abcd ")                                                              |
+     |                                                                               |
+     |o6 = abcd abcd abcd abcd abcd                                                  |
+     +-------------------------------------------------------------------------------+
+     |i7 : f("foo",88,"bar")                                                         |
+     |                                                                               |
+     |o7 = foo : 88 : bar                                                            |
+     +-------------------------------------------------------------------------------+
+
+     In the following example we install a asymmetric method to illustrate the
+     left-associative order of evaluation for a binary method function.
+
+     +-----------------------------------------------------+
+     |i8 : p = method(Binary => true, TypicalValue => List)|
+     |                                                     |
+     |o8 = p                                               |
+     |                                                     |
+     |o8 : CompiledFunctionClosure                         |
+     +-----------------------------------------------------+
+     |i9 : p(ZZ,ZZ) := p(List,ZZ) := (i,j) -> {i,j}        |
+     |                                                     |
+     |o9 = {*Function[stdio:9:33-9:39]*}                   |
+     |                                                     |
+     |o9 : FunctionClosure                                 |
+     +-----------------------------------------------------+
+     |i10 : p(1,2)                                         |
+     |                                                     |
+     |o10 = {1, 2}                                         |
+     |                                                     |
+     |o10 : List                                           |
+     +-----------------------------------------------------+
+     |i11 : p(1,2,3,4,5,6)                                 |
+     |                                                     |
+     |o11 = {{{{{1, 2}, 3}, 4}, 5}, 6}                     |
+     |                                                     |
+     |o11 : List                                           |
+     +-----------------------------------------------------+
+
+     By default, at most four arguments (in a sequence) can be handled by a method
+     function, and the types have to be considered separately when installing methods.
+     In this example, we define a method function that treats a sequence as a single
+     argument, and we install a method for handling such arguments.
+
+     +------------------------------------+
+     |i12 : g = method(Dispatch => Thing);|
+     +------------------------------------+
+     |i13 : g ZZ := i -> -i;              |
+     +------------------------------------+
+     |i14 : g Sequence := S -> reverse S; |
+     +------------------------------------+
+     |i15 : g 44                          |
+     |                                    |
+     |o15 = -44                           |
+     +------------------------------------+
+     |i16 : g(3,4,5,6)                    |
+     |                                    |
+     |o16 = (6, 5, 4, 3)                  |
+     |                                    |
+     |o16 : Sequence                      |
+     +------------------------------------+
+
+     Here we define a method whose first argument is to be a type.  It will convert
+     its second argument to that type.
+
+     +------------------------------------+
+     |i17 : h = method(Dispatch => {Type})|
+     |                                    |
+     |o17 = h                             |
+     |                                    |
+     |o17 : MethodFunction                |
+     +------------------------------------+
+     |i18 : h(QQ,ZZ) := (QQ,n) -> n/1;    |
+     +------------------------------------+
+     |i19 : h(RR,ZZ) := (RR,n) -> n + 0.; |
+     +------------------------------------+
+     |i20 : h(ZZ,ZZ) := (ZZ,n) -> n;      |
+     +------------------------------------+
+     |i21 : h(ZZ,14)                      |
+     |                                    |
+     |o21 = 14                            |
+     +------------------------------------+
+     |i22 : h(QQ,14)                      |
+     |                                    |
+     |o22 = 14                            |
+     |                                    |
+     |o22 : QQ                            |
+     +------------------------------------+
+     |i23 : h(RR,14)                      |
+     |                                    |
+     |o23 = 14                            |
+     |                                    |
+     |o23 : RR (of precision 53)          |
+     +------------------------------------+
+
+     In the next example we make a linear function of a single real variable whose
+     coefficients are provided as optional arguments named Slope and Intercept, with
+     default value 1.
+
+     +---------------------------------------------------------+
+     |i24 : r = method(Options => {Slope => 1, Intercept => 1})|
+     |                                                         |
+     |o24 = r                                                  |
+     |                                                         |
+     |o24 : MethodFunctionWithOptions                          |
+     +---------------------------------------------------------+
+
+     The methods installed for this method function should be written in the form opts
+     -> args -> (...).  The argument opts will be assigned a hash table of type
+     "OptionTable" containing the optional argument names and their current values.
+     For example, in the body of the function, the current value for the argument
+     named b can be recovered with opts#b, or with opts.b, in case b is known to be a
+     global symbol.  Be careful not to change the value of b, or the code will stop
+     working; it would be a good idea to protect it.
+
+     +-------------------------------------------------+
+     |i25 : r RR := o -> x -> o.Slope * x + o.Intercept|
+     |                                                 |
+     |o25 = {*Function[stdio:25:11-25:35]*}            |
+     |                                                 |
+     |o25 : FunctionClosure                            |
+     +-------------------------------------------------+
+     |i26 : r(5.)                                      |
+     |                                                 |
+     |o26 = 6                                          |
+     |                                                 |
+     |o26 : RR (of precision 53)                       |
+     +-------------------------------------------------+
+     |i27 : r(5.,Slope=>100)                           |
+     |                                                 |
+     |o27 = 501                                        |
+     |                                                 |
+     |o27 : RR (of precision 53)                       |
+     +-------------------------------------------------+
+
+     The default option table for r can be recovered with the function "options".  The
+     options given to "method" can be recovered with "methodOptions".
+
+     +-----------------------------------------------------------+
+     |i28 : options r                                            |
+     |                                                           |
+     |o28 = OptionTable{Intercept => 1}                          |
+     |                  Slope => 1                               |
+     |                                                           |
+     |o28 : OptionTable                                          |
+     +-----------------------------------------------------------+
+     |i29 : methodOptions r                                      |
+     |                                                           |
+     |o29 = OptionTable{Binary => false                         }|
+     |                  Dispatch => {Thing, Thing, Thing, Thing} |
+     |                  Options => {Slope => 1, Intercept => 1}  |
+     |                  TypicalValue => Thing                    |
+     |                                                           |
+     |o29 : OptionTable                                          |
+     +-----------------------------------------------------------+
+
+     In the next example we define a method function that leaves option processing to
+     the individual methods.
+
+     +--------------------------------------------------------------------------------+
+     |i30 : s = method(Options => true)                                               |
+     |                                                                                |
+     |o30 = s                                                                         |
+     |                                                                                |
+     |o30 : MethodFunctionWithOptions                                                 |
+     +--------------------------------------------------------------------------------+
+     |i31 : s ZZ := { Slope => 17 } >> o -> x -> o.Slope * x                          |
+     |                                                                                |
+     |o31 = {*Function[/Users/dan/src/M2/master/M2/Macaulay2/m2/option.m2:6:20-8:34]*}|
+     |                                                                                |
+     |o31 : FunctionClosure                                                           |
+     +--------------------------------------------------------------------------------+
+     |i32 : s RR := { Intercept => 11 } >> o -> x -> x + o.Intercept                  |
+     |                                                                                |
+     |o32 = {*Function[/Users/dan/src/M2/master/M2/Macaulay2/m2/option.m2:6:20-8:34]*}|
+     |                                                                                |
+     |o32 : FunctionClosure                                                           |
+     +--------------------------------------------------------------------------------+
+     |i33 : s 100                                                                     |
+     |                                                                                |
+     |o33 = 1700                                                                      |
+     +--------------------------------------------------------------------------------+
+     |i34 : s 1000.                                                                   |
+     |                                                                                |
+     |o34 = 1011                                                                      |
+     |                                                                                |
+     |o34 : RR (of precision 53)                                                      |
+     +--------------------------------------------------------------------------------+
+     |i35 : options s                                                                 |
+     +--------------------------------------------------------------------------------+
+     |i36 : options(s,ZZ)                                                             |
+     |                                                                                |
+     |o36 = OptionTable{Slope => 17}                                                  |
+     |                                                                                |
+     |o36 : OptionTable                                                               |
+     +--------------------------------------------------------------------------------+
+     |i37 : options(s,RR)                                                             |
+     |                                                                                |
+     |o37 = OptionTable{Intercept => 11}                                              |
+     |                                                                                |
+     |o37 : OptionTable                                                               |
+     +--------------------------------------------------------------------------------+
+
+     For now, one installs a method function for s with no non-optional arguments
+     using "installMethod":
+
+     +--------------------------------------------------------------------------------+
+     |i38 : installMethod(s,{ Slope => 1234 } >> o -> () -> o.Slope)                  |
+     |                                                                                |
+     |o38 = {*Function[/Users/dan/src/M2/master/M2/Macaulay2/m2/option.m2:6:20-8:34]*}|
+     |                                                                                |
+     |o38 : FunctionClosure                                                           |
+     +--------------------------------------------------------------------------------+
+     |i39 : s()                                                                       |
+     |                                                                                |
+     |o39 = 1234                                                                      |
+     +--------------------------------------------------------------------------------+
+     |i40 : s(Slope => 4)                                                             |
+     |                                                                                |
+     |o40 = 4                                                                         |
+     +--------------------------------------------------------------------------------+
+
+     See also
+     ========
+
+       * "methods" -- list methods
+       * "specifying typical values"
+
+o5 : DIV
+
+i6 : options decompose
+
+i7 : decompose
+
+o7 = decompose
+
+o7 : MethodFunction
+
+i8 : methods decompose
+
+o8 = {(decompose, Ideal)        }
+     {(decompose, MonomialIdeal)}
+
+o8 : VerticalList
+
+i9 : minimalPrimes 
+
+o9 = minimalPrimes
+
+o9 : MethodFunction
+
+i10 : code methods decompose
+
+o10 = -- code for method: decompose(Ideal)
+      ../m2/methods.m2:521:52-530:26: --source code:
+      cacheValue = key -> f -> new CacheFunction from (x -> (
+                c := try x.cache else x.cache = new CacheTable;
+                if c#?key then (
+                     val := c#key;
+                     if class val === CacheFunction then (
+                          remove(c,key);
+                          c#key = val x)
+                     else val
+                     )
+                else c#key = f x))
+      | symbol   class              value                                       location of symbol
+      | ------   -----              -----                                       ------------------            
+      | f      : FunctionClosure -- {*Function[../m2/factor.m2:104:10-152:11]*} ../m2/methods.m2:521:21-521:22
+      | key    : Symbol          -- minimalPrimes                               ../m2/methods.m2:521:14-521:17
+      | -- function f:
+      | ../m2/factor.m2:104:10-153:11: --source code:
+      |      (I) -> (
+      |           R := ring I;
+      |           (I',F) := flattenRing I; -- F is not needed
+      |           A := ring I';
+      |           G := map(R, A, generators(R, CoefficientRing => coefficientRing A));
+      |           --I = trim I';          
+      |           I = I';
+      |           if not isPolynomialRing A then error "expected ideal in a polynomial ring or a quotient of one";
+      |           if not isCommutative A then
+      |             error "expected commutative polynomial ring";
+      |           kk := coefficientRing A;
+      |           if kk =!= QQ and not instance(kk,QuotientRing) then
+      |             error "expected base field to be QQ or ZZ/p";
+      |           if I == 0 then return {if A === R then I else ideal map(R^1,R^0,0)};
+      |           if debugLevel > 0 then homog := isHomogeneous I;
+      |           ics := irreducibleCharacteristicSeries I;
+      |           if debugLevel > 0 and homog then (
+      |                if not all(ics#0, isHomogeneous) then error "minimalPrimes: irreducibleCharacteristicSeries destroyed homogeneity";
+      |                );
+      |           -- remove any elements which have numgens > numgens I (Krull's Hauptidealsatz)
+      |           ngens := numgens I;
+      |           ics0 := select(ics#0, CS -> numgens source CS <= ngens);
+      |           Psi := apply(ics0, CS -> (
+      |                     chk := topCoefficients CS;
+      |                     chk = chk#1;  -- just keep the coefficients
+      |                     chk = first entries chk;
+      |                     iniCS := select(chk, i -> degree i =!= {0});
+      |                     if gbTrace >= 1 then << "saturating with " << iniCS << endl;
+      |                     CS = ideal CS;
+      |                     --<< "saturating " << CS << " with respect to " << iniCS << endl;
+      |                     -- warning: over ZZ saturate does unexpected things.
+      |                     scan(iniCS, a -> CS = saturate(CS, a, Strategy=>Eliminate));
+      |      --        scan(iniCS, a -> CS = saturate(CS, a));
+      |                     --<< "result is " << CS << endl;
+      |                     CS));
+      |           Psi = new MutableList from Psi;
+      |           p := #Psi;
+      |           scan(0 .. p-1, i -> if Psi#i =!= null then 
+      |                scan(i+1 .. p-1, j -> 
+      |                     if Psi#i =!= null and Psi#j =!= null then
+      |                     if isSubset(Psi#i, Psi#j) then Psi#j = null else
+      |                     if isSubset(Psi#j, Psi#i) then Psi#i = null));
+      |           Psi = toList select(Psi,i -> i =!= null);
+      |           components := apply(Psi, p -> ics#1 p);
+      |           if A =!= R then (
+      |                components = apply(components, P -> trim(G P));
+      |                );
+      |           --error "debug me";
+      |           components
+      |           ))
+      ---------------------------------
+      -- code for method: decompose(MonomialIdeal)
+      ../m2/methods.m2:521:52-530:26: --source code:
+      cacheValue = key -> f -> new CacheFunction from (x -> (
+                c := try x.cache else x.cache = new CacheTable;
+                if c#?key then (
+                     val := c#key;
+                     if class val === CacheFunction then (
+                          remove(c,key);
+                          c#key = val x)
+                     else val
+                     )
+                else c#key = f x))
+      | symbol   class              value                                                   location of symbol
+      | ------   -----              -----                                                   ------------------            
+      | f      : FunctionClosure -- {*Function[../packages/PrimaryDecomposition.m2:141:10-. ../m2/methods.m2:521:21-521:22
+      | key    : Symbol          -- minimalPrimes                                           ../m2/methods.m2:521:14-521:17
+      | -- function f:
+      | ../packages/PrimaryDecomposition.m2:141:10-143:67: --source code:
+      |      (I) -> (
+      |           minI := dual radical I;
+      |           apply(flatten entries generators minI, monomialIdeal @@ support)))
+
+i11 : decompose BettiTally := {a=>1, b=>2} >> opts -> args -> {args, opts}
+
+o11 = {*Function[../m2/option.m2:6:20-8:34]*}
+
+o11 : FunctionClosure
+
+i12 : C
+
+             0 1
+o12 = total: 1 1
+          0: 1 1
+
+o12 : BettiTally
+
+i13 : decompose C
+
+              0 1
+o13 = {total: 1 1, OptionTable{a => 1}}
+           0: 1 1              b => 2
+
+o13 : List
+
+i14 : decompose (C, a =>11)
+stdio:14:1:(3): error: no method found for applying decompose to:
+                          0 1
+     argument 1 :  total: 1 1 (of class BettiTally)
+                       0: 1 1
+     argument 2 :  a => 11 (of class Option)
+
+i15 : methods decompose
+
+o15 = {(decompose, BettiTally)   }
+      {(decompose, Ideal)        }
+      {(decompose, MonomialIdeal)}
+
+o15 : VerticalList
+
+i16 : loadPackage "BoijSoederberg"
+
+o16 = BoijSoederberg
+
+o16 : Package
+
+i17 : methods decompose
+
+o17 = {(decompose, BettiTally)   }
+      {(decompose, Ideal)        }
+      {(decompose, MonomialIdeal)}
+
+o17 : VerticalList
+
+i18 : restart
+Macaulay2, version 1.6.0.1
+with packages: ConwayPolynomials, Elimination, IntegralClosure, LLLBases,
+               PrimaryDecomposition, ReesAlgebra, TangentCone
+
+i1 : methods decompose
+
+o1 = {(decompose, Ideal)        }
+     {(decompose, MonomialIdeal)}
+
+o1 : VerticalList
+
+i2 : loadPackage "BoijSoederberg"
+
+o2 = BoijSoederberg
+
+o2 : Package
+
+i3 : methods decompose
+
+o3 = {(decompose, BettiTally)   }
+     {(decompose, Ideal)        }
+     {(decompose, MonomialIdeal)}
+
+o3 : VerticalList
+
+i4 : help "OptionTable >> Function"
+
+o4 = OptionTable >> Function -- attaching options to a function
+     **********************************************************
+
+     The new function g works as follows.  The value of g args, say, is obtained by
+     evaluation of (fun opts)(args'), where args' is obtained from args by removing
+     the options of the form X=>A (where X is a name of an optional argument), and
+     opts is a hash table of the same form as defs in which the default values have
+     been replaced by the user-supplied values, e.g., the value stored under the key X
+     has been replaced by A.
+
+     Remark: defs can also be simply a list of options.
+
+     In the following example we use a simple definition for fun so we can see
+     everything that fun receives.
+
+     +-----------------------------------------------------+
+     |i1 : g = {a=>1, b=>2} >> opts -> args -> {args, opts}|
+     |                                                     |
+     |o1 = g                                               |
+     |                                                     |
+     |o1 : FunctionClosure                                 |
+     +-----------------------------------------------------+
+     |i2 : g x                                             |
+     |                                                     |
+     |o2 = {x, OptionTable{a => 1}}                        |
+     |                     b => 2                          |
+     |                                                     |
+     |o2 : List                                            |
+     +-----------------------------------------------------+
+     |i3 : g(x,y,b=>66)                                    |
+     |                                                     |
+     |o3 = {(x, y), OptionTable{a => 1 }}                  |
+     |                          b => 66                    |
+     |                                                     |
+     |o3 : List                                            |
+     +-----------------------------------------------------+
+     |i4 : g(t,u,a=>44,b=>77)                              |
+     |                                                     |
+     |o4 = {(t, u), OptionTable{a => 44}}                  |
+     |                          b => 77                    |
+     |                                                     |
+     |o4 : List                                            |
+     +-----------------------------------------------------+
+     |i5 : h = true >> opts -> args -> {args, opts}        |
+     |                                                     |
+     |o5 = h                                               |
+     |                                                     |
+     |o5 : FunctionClosure                                 |
+     +-----------------------------------------------------+
+     |i6 : h(t,u,c=>55)                                    |
+     |                                                     |
+     |o6 = {(t, u), OptionTable{c => 55}}                  |
+     |                                                     |
+     |o6 : List                                            |
+     +-----------------------------------------------------+
+
+     See also
+     ========
+
+       * "making new functions with optional arguments"
+       * "OptionTable" -- the class of hash tables for optional arguments
+       * "Option" -- the class of all pairs x => y
+       * "=>" -- produce an Option
+
+o4 : DIV
+
+i5 : map ( ZZ^3, ZZ^4 , { (1,2) => 5 , (1,1) => 1111 } )
+
+o5 = | 0 0    0 0 |
+     | 0 1111 5 0 |
+     | 0 0    0 0 |
+
+              3        4
+o5 : Matrix ZZ  <--- ZZ
+
+i6 : mutableMatrix 
+
+o6 = mutableMatrix
+
+o6 : MethodFunctionWithOptions
+
+i7 : mutableMatrix (ZZ,10,10)
+
+o7 = 0
+
+o7 : MutableMatrix
+
+i8 : o7 _ (2,3) = 1234
+
+o8 = 1234
+
+i9 : o7
+
+o9 = | . . . .    . . . . . . |
+     | . . . .    . . . . . . |
+     | . . . 1234 . . . . . . |
+     | . . . .    . . . . . . |
+     | . . . .    . . . . . . |
+     | . . . .    . . . . . . |
+     | . . . .    . . . . . . |
+     | . . . .    . . . . . . |
+     | . . . .    . . . . . . |
+     | . . . .    . . . . . . |
+
+o9 : MutableMatrix
+
+i10 : matrix oo
+
+o10 = | 0 0 0 0    0 0 0 0 0 0 |
+      | 0 0 0 0    0 0 0 0 0 0 |
+      | 0 0 0 1234 0 0 0 0 0 0 |
+      | 0 0 0 0    0 0 0 0 0 0 |
+      | 0 0 0 0    0 0 0 0 0 0 |
+      | 0 0 0 0    0 0 0 0 0 0 |
+      | 0 0 0 0    0 0 0 0 0 0 |
+      | 0 0 0 0    0 0 0 0 0 0 |
+      | 0 0 0 0    0 0 0 0 0 0 |
+      | 0 0 0 0    0 0 0 0 0 0 |
+
+               10        10
+o10 : Matrix ZZ   <--- ZZ
+
+i11 : mutableMatrix (ZZ,10,10, Dense => false )
+
+o11 = 0
+
+o11 : MutableMatrix
+
+i12 : R = QQ[x,y] / (x*y)
+
+o12 = R
+
+o12 : QuotientRing
+
+i13 : ambient R
+
+o13 = QQ[x, y]
+
+o13 : PolynomialRing
+
+i14 : S := ambient R
+
+o14 = QQ[x, y]
+
+o14 : PolynomialRing
+
+i15 : S
+
+o15 = QQ[x, y]
+
+o15 : PolynomialRing
+
+i16 : -- don't do this:
+      use S
+
+o16 = QQ[x, y]
+
+o16 : PolynomialRing
+
+i17 : S_0, S_1
+
+o17 = (x, y)
+
+o17 : Sequence
+
+i18 : S_1
+
+o18 = y
+
+o18 : QQ[x, y]
+
+i19 : x = local x -- should have been :=
+
+o19 = x
+
+o19 : Symbol
+
+i20 : QQ[x]
+stdio:21:1:(3): error: encountered object not usable as variable at position 0 in list:
+        null (of class Nothing)
+
+i21 : x = local x
+
+o21 = x
+
+o21 : Symbol
+
+i22 : QQ[x]
+
+o22 = QQ[x]
+
+o22 : PolynomialRing
+
+i23 : use oo
+
+o23 = QQ[x]
+
+o23 : PolynomialRing
+
+i24 : x
+
+o24 = x
+
+o24 : QQ[x]
+
+i25 : index x
+
+o25 = 0
+
+i26 : QQ[t]
+
+o26 = QQ[t]  -- this will initialize t
+
+o26 : PolynomialRing
+
+i27 : t
+
+o27 = t
+
+o27 : QQ[t]
+
+i28 : QQ( monoid [t] ) -- to avoid initializing t
+
+o28 = QQ[t]
+
+o28 : PolynomialRing
+
+i30 : t === o27
+
+o30 = true
+
+i31 : QQ[t]
+
+o31 = QQ[t]
+
+o31 : PolynomialRing
+
+i32 : t === o27
+
+o32 = false
+
+i33 : t
+
+o33 = t
+
+o33 : QQ[t]
+
+i34 : temporaryFileName ()
+
+o34 = /var/folders/46/9b86vqxj4hjcngvy7kd7sb140000gn/T/M2-2153-0/0
+
+i35 : makeDirectory oo
+
+i36 : run "ls -ld /var/folders/46/9b86vqxj4hjcngvy7kd7sb140000gn/T/M2-2153-0/0"
+drwxr-xr-x 2 dan staff 68 Jan  9 09:39 /var/folders/46/9b86vqxj4hjcngvy7kd7sb140000gn/T/M2-2153-0/0
+
+o36 = 0
+
+i37 : help Configuration
+
+o37 = Configuration -- package item: start a new package
+      **************************************************
+
+      Synopsis
+      ========
+
+        * Usage:newPackage ( title )
+        * Inputs:
+            * title, a string, the name of the new package
+        * Optional inputs:
+            * Version => a string, default value 0.0, the version number of the
+              package.  A version number less than 1.0 indicates that the package is
+              under development, and the user interface may change.
+            * Date => a string, default value null, the date of this version of the
+              package
+            * InfoDirSection => a string, default value Macaulay2 and its packages,
+              the title of the section in the info page directory where the menu entry
+              for this package should be made
+            * Headline => a string, default value null, a brief (5-10 words)
+              description of the package
+            * Authors => a list, default value {}, a list of lists of options, one for
+              each author.  The suboptions are of the form Name => x, Email => x, or
+              HomePage => x, where x is a string.
+            * HomePage => a string, default value null, the URI pointing to the home
+              page of the package, if any
+            * DebuggingMode => a Boolean value, default value false, whether
+              "debuggingMode" should be true during package loading.  However, if
+              "debuggingMode" is already false, it will remain so.
+            * AuxiliaryFiles => a Boolean value, default value false, whether the
+              package source to be distributed includes a directory for auxiliary
+              files, with the same name as the package
+            * PackageExports => a list, default value {}, a list of names of other
+              packages to load, both for the user and for the code of the new package
+            * PackageImports => a list, default value {}, a list of names of other
+              packages to load, just for the code of the new package
+            * CacheExampleOutput => a Boolean value, default value null, whether
+              "installPackage" should cache (newer) example output in a subdirectory
+              of the auxiliary file directory named examples, for use in a future
+              installation.  This value can be overridden by a value explicitly
+              specified when "installPackage" is called.  After the directory is
+              created, it will necessary for the user also to specify
+              AuxiliaryFiles=>true.
+            * Certification => a list, default value null, the certification block
+              inserted by the maintainers of Macaulay2 after the package has been
+              accepted for publication by a journal, such as The Journal of Software
+              for Algebra and Geometry: Macaulay2.  Authors should not undertake to
+              create such a certification block themselves.
+            * Configuration => a list, default value {}, a list of configuration
+              options for the package.  The keys and values should be constant
+              expressions, such as strings and integers, not incorporating symbols to
+              be exported by the package (and not yet defined).  The first time the
+              package is loaded by the user, unless the -q option is specified on the
+              M2 command line, these options will be stored in a file in the user's
+              application directory (see "applicationDirectory").  The user can change
+              the configuration by editing the file.  The user can override the
+              configuration settings when loading the package; see "loadPackage(...,
+              Configuration => ...)" and "needsPackage(..., Configuration => ...)".
+              The file will be overwritten when a newer version of the package with
+              different configuration options is loaded, but a backup will be made and
+              the user's settings for the surviving options will be retained.
+            * Reload => a Boolean value, default value false, whether to reload the
+              package, if it has been loaded before
+        * Consequences:
+            * a package is created
+
+      Description
+      ===========
+
+      The dictionaries for the symbols in the packages loaded by the user are moved
+      out of the way to avoid conflicts, so just the standard pre-loaded packages are
+      visible to the source code of the package.  In addition, the package SimpleDoc
+      is made available.  If functions from additional packages are needed by the code
+      in the new package, then "needsPackage" can be used (after the use of
+      "newPackage") to provide them.  If functions from additional packages are needed
+      by the user who will load the new package, then "needsPackage" can be used
+      (before the use of "newPackage") to provide them.
+
+      +--------------------------------------------------------+
+      |i1 : newPackage("Foo",                                  |
+      |          Version => "1.1",                             |
+      |          Headline => "making Foo",                     |
+      |          Configuration => { "foo" => 42, "bar" => "x" }|
+      |          )                                             |
+      |                                                        |
+      |o1 = Foo                                                |
+      |                                                        |
+      |o1 : Package                                            |
+      +--------------------------------------------------------+
+      |i2 : endPackage "Foo"                                   |
+      |                                                        |
+      |o2 = Foo                                                |
+      |                                                        |
+      |o2 : Package                                            |
+      +--------------------------------------------------------+
+
+      The options can be recovered with "options" as follows.
+
+      +--------------------------------------------------------------+
+      |i3 : options Foo                                              |
+      |                                                              |
+      |o3 = OptionTable{Authors => {}                               }|
+      |                 AuxiliaryFiles => false                      |
+      |                 CacheExampleOutput => null                   |
+      |                 Certification => null                        |
+      |                 Configuration => {foo => 42, bar => x}       |
+      |                 Date => null                                 |
+      |                 DebuggingMode => false                       |
+      |                 Headline => making Foo                       |
+      |                 HomePage => null                             |
+      |                 InfoDirSection => Macaulay2 and its packages |
+      |                 PackageExports => {}                         |
+      |                 PackageImports => {}                         |
+      |                 Reload => false                              |
+      |                 Version => 1.1                               |
+      |                                                              |
+      |o3 : OptionTable                                              |
+      +--------------------------------------------------------------+
+      |i4 : oo.Headline                                              |
+      |                                                              |
+      |o4 = making Foo                                               |
+      +--------------------------------------------------------------+
+      |i5 : (options Core).Version                                   |
+      |                                                              |
+      |o5 = 1.6.0.1                                                  |
+      +--------------------------------------------------------------+
+
+      Here is a template for a typical newPackage entry in a package.
+
+      newPackage("PACKAGENAME",
+          Headline => "one line description",
+          Version => 0.1,
+          Date => "month XX, 20XX",
+          Authors => {
+               {Name => "author1", Email => "email1", HomePage => "url1"}
+               {Name => "author2", Email => "email2", HomePage => "url2"},
+               },
+          DebuggingMode => false,
+          HomePage => "http://univ.edu/~user/PACKAGENAME/",
+          Configuration => {}
+          )
+
+      Functions with optional argument named Configuration :
+      ======================================================
+
+        * getPackage(..., Configuration => ...), see "getPackage(String)" -- download
+          a package from the repository
+        * loadPackage(..., Configuration => ...), see "loadPackage" -- load a package
+        * needsPackage(..., Configuration => ...), see "needsPackage(String)" -- load
+          a package if not already loaded
+        * newPackage(..., Configuration => ...), see "newPackage(String)" -- package
+          item: start a new package
+
+      See also
+      ========
+
+        * "packages"
+
+      For the programmer
+      ==================
+
+      The object "Configuration" is a symbol.
+
+o37 : DIV
+
+i38 : R = QQ[x]
+
+o38 = R
+
+o38 : PolynomialRing
+
+i42 : M = R^1/x
+stdio:43:8:(3): error: expected maps with the same target  -- ??
+
+i43 : M = coker vars R
+
+o43 = cokernel | x |
+
+                             1
+o43 : R-module, quotient of R
+
+i44 : dual M
+
+o44 = image 0
+
+                              1
+o44 : R-module, submodule of R
+
+i45 : id_M
+
+o45 = | 1 |
+
+o45 : Matrix
+
+i46 : dual oo
+
+o46 = 0
+
+o46 : Matrix
+
+i47 : fileExists "/tmp"
+
+o47 = true
+
+i48 : assert fileExists "/etc/passwd"
+
+i49 : ?generateAssertions 
+
+  * Usage:generateAssertions x
+  * Inputs:
+      * x, a string whose non-comment non-blank lines are Macaulay2 expressions to be
+        evaluated
+  * Outputs:
+      * a net, a net whose lines are assert statements that assert that the
+        expressions evaluate to the expected value, just computed
+
+Ways to use generateAssertions
+==============================
+
+  * generateAssertions(String), see "generateAssertions" -- generate assert statements
+    from experimental input
+
+i50 : 1/0
+stdio:51:2:(3): error: division by zero
+
+i51 : generateAssertions "1/0"
+
+o51 = 
+      assert( (try 1/0 else oops) === oops );
+
+i52 : try 5 else oops
+
+o52 = 5
+
+i53 : try 1/0 else oops
+
+o53 = oops
+
+o53 : Symbol
+
+i55 : restart
+Macaulay2, version 1.6.0.1
+with packages: ConwayPolynomials, Elimination, IntegralClosure, LLLBases,
+               PrimaryDecomposition, ReesAlgebra, TangentCone
+
+i1 : QQ[x,y] ** QQ[r,s]
+
+o1 = QQ[x, y, r, s]
+
+o1 : PolynomialRing
+
+i2 : describe oo
+
+o2 = QQ[x..y, r..s, Degrees => {2:{1}, 2:{0}}, Heft => {2:1}, MonomialOrder => {MonomialSize => 32}, DegreeRank => 2]
+                                  {0}    {1}                                   {GRevLex => {2:1}  }
+                                                                               {Position => Up    }
+                                                                               {GRevLex => {2:1}  }
+
+i3 : options tensor
+
+o3 = OptionTable{Constants => false      }
+                 DegreeLift => null
+                 DegreeMap => null
+                 DegreeRank => null
+                 Degrees => null
+                 Global => true
+                 Heft => null
+                 Inverses => null
+                 Join => null
+                 Local => false
+                 MonomialOrder => null
+                 MonomialSize => 32
+                 SkewCommutative => {}
+                 VariableBaseName => null
+                 Variables => null
+                 Weights => {}
+                 WeylAlgebra => {}
+
+o3 : OptionTable
+
+i4 : tensor ( QQ[x,y], QQ[r,s], Join => true )
+
+o4 = QQ[x, y, r, s]
+
+o4 : PolynomialRing
+
+i5 : options oo
+
+o5 = OptionTable{Constants => false                                     }
+                 DegreeLift => {*Function[../m2/ofcm.m2:525:36-527:29]*}
+                 DegreeMap => {*Function[../m2/ofcm.m2:524:35-524:46]*}
+                 DegreeRank => 2
+                 Degrees => {{1, 0}, {1, 0}, {0, 1}, {0, 1}}
+                 Global => true
+                 Heft => {1, 1}
+                 Inverses => false
+                 Join => true
+                 Local => false
+                 MonomialOrder => {MonomialSize => 32}
+                                  {GRevLex => {1, 1} }
+                                  {Position => Up    }
+                                  {GRevLex => {1, 1} }
+                 SkewCommutative => {}
+                 Variables => {x, y, r, s}
+                 WeylAlgebra => {}
+
+o5 : OptionTable
+
+i6 : tensor ( QQ[x,y], QQ[r,s], Join => false )
+
+o6 = QQ[x, y, r, s]
+
+o6 : PolynomialRing
+
+i7 : options oo
+
+o7 = OptionTable{Constants => false                                     }
+                 DegreeLift => {*Function[../m2/ofcm.m2:537:33-539:48]*}
+                 DegreeMap => {*Function[../m2/ofcm.m2:532:35-532:67]*}
+                 DegreeRank => 1
+                 Degrees => {{1}, {1}, {1}, {1}}
+                 Global => true
+                 Heft => {1}
+                 Inverses => false
+                 Join => false
+                 Local => false
+                 MonomialOrder => {MonomialSize => 32}
+                                  {GRevLex => {1, 1} }
+                                  {Position => Up    }
+                                  {GRevLex => {1, 1} }
+                 SkewCommutative => {}
+                 Variables => {x, y, r, s}
+                 WeylAlgebra => {}
+
+o7 : OptionTable
+
+i9 : symbol ** ( QQ[x,y], QQ[r,s], Join => false ) -- make this work!?
+stdio:9:1:(3): error: no method for adjacent objects:
+--            ** (of class Keyword)
+--    SPACE   (QQ[x, y], QQ[r, s], Join => false) (of class Sequence)
+
+i10 : 
