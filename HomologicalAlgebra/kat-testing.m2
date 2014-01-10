@@ -1,6 +1,6 @@
 --natural map from a module to its double dual courtesy of Frank Moore
-bidualityMap = method()
-bidualityMap := M -> (
+restart
+bidualityMap = M -> (
    R := ring M;
    Md := Hom(M,R^1);
    Mdd := Hom(Md,R^1);
@@ -36,30 +36,16 @@ truncateComplex(ZZ,ChainComplex) := (g,P) -> (
 	  )
 )
 
---from a module, build and augment a resolution of the module
-augmentChainComplex = 
-     method(TypicalValue => ChainComplex, Options => {LengthLimit =>2}
-	  )
-augmentChainComplex (Module) := opts -> M -> (
-     Q := resolution(M, LengthLimit => opts.LengthLimit);
-     augQ := Q;
-     augQ.dd_(0) = map(M, Q_0,id_(Q_0));
-     augQ
-)
-
--- given a map between modules, lift the map to a chain map between
--- the resolutions
-liftModuleMap = method(TypicalValue => ChainComplexMap)
-liftModuleMap (Module, Module, Matrix) := (N,M,A) -> (
-     Q := (augmentChainComplex N)[-1];
-     P := (augmentChainComplex M)[-1];
-     tempLift := (extend(Q,P,A))[1]; 
---     tempLift_0 = 0*tempLift_0;
-     tempLift
-     )
 
 --version 3 is below, implementing a better way of constructing
 --the final chain complex map from the constructed pieces.
+
+-- example for testing constructionV2
+R = QQ[x,y,z]/ideal(x*y*z)
+M = coker map(R^1,,{gens R})
+g=3
+n=5
+
 constructionV3 = 
 method(TypicalValue => ChainComplex
      , Options => {LengthLimit => 2}
@@ -74,21 +60,31 @@ constructionV3 (ZZ,Module):=
 --     P := resolution(M, LengthLimit=>g+2);
      G := omega(g,P);
      Pd := dual P;
-     toLiftFirstFactor := map(image(Pd.dd_(-g+1)), omega(1-g, Pd), id_(Pd_(1-g)));
-     K := kernel(Pd.dd_(-g));
-     I := image(Pd.dd_(-g+1));
+     toLiftFirstFactor := map(image(Pd.dd_(-g)), omega(1-g, Pd), id_(Pd_(1-g)));
+     K := kernel(Pd.dd_(-g-1));
+     I := image(Pd.dd_(-g));
      h := gens K;
-     phi := Pd.dd_(-g+1)//h;
+     phi := Pd.dd_(-g)//h;
      toLiftSecondFactor := map (K, I, phi);
      kappa := toLiftSecondFactor * toLiftFirstFactor;
---     Pt := truncateComplex(g, P);
---     Ptd := dual Pt;
---     Q := Ptd[-(g-1)];
-     kappaLifted = liftModuleMap(kappa.target,kappa.source,kappa);
-     w := map(G, P_g, id_(P_g));
-     d := bidualityMap(G);
+     Pt := truncateComplex(g, P);
+     Ptd := dual Pt;
+     Q := Ptd[-(g-1)];
+     Qd = dual Q;
+--     augP := P;
+--    augP.dd_(0) := map(M, P_0,id_(P_0)); for some reason,
+--    this gives an error if there's a colon, but not if it isn't there
+--     augP.dd_(0) = map(M,P_0,id_(P_0));
+--     augPs = augP[-1];
      Gd := dual G;
      L := resolution(Gd, LengthLimit => max(g+2, n));
+     augL := L;
+     augL.dd_0 = map(Gd, L_0,id_(L_0));
+     augLs = augL[-1];
+     kappaLifted := (extend(augLs,Qd,kappa))[1]
+     --gives error maps not composable
+     w := map(G, P_g, id_(P_g));
+     d := bidualityMap(G);
      Ld := dual L;
 --     L := resolution(Gd, LengthLimit => g+2);
     lambda := map(Gd, L_0, id_(L_0));
@@ -109,7 +105,8 @@ constructionV3 (ZZ,Module):=
     --put in the differentials
     for i from (g-1-max(g+2,n)) to g-1 do (
 	S.dd_i = Ld.dd_(-g+1+i);
-	);   
+	);
+--yields:stdio:118:20:(3): error: expected argument 1 to be a hash table    
     for i from g+1 to max(g+2,n) do (
     	S.dd_i = P.dd_i;	
     	);
@@ -119,69 +116,24 @@ constructionV3 (ZZ,Module):=
 --build the maps between the source and target;
     --name the maps consistently
     for i from (g-1-max(g+2,n)) to g-1 do(
-	f_i = dual kappaLifted_(-g+1+i);
+	f_i = dual kappaLifted_(i-(g-1));
 	);
     for i from g to max(g+2,n) do (
 	f_i = id_(P_i);
 	);
-
---output P, S, and f_i as a hash table
-output := new MutableHashTable;
-output.ff = new MutableHashTable;
-output.source = S;
-output.target = P;
-for i from (g-1-max(g+2,n)) to max(g+2,n) do (
-    output.ff#i = f_i
-    );
-output
-    --make the chain complex map    
---    cRes := map (P,S,i-> f_i); 
---    cRes
+    --make the chain complex map
+    cRes := map (P,S,i-> f_i); 
+    cRes
     )
 
-buildMaps = method()
-buildMaps(ZZ) := j -> (
-    mapsList := ();
-    if (j > max(g+2,n) 	or j< (g-1)-max(g+2,n)) 
-    then error "integer out of bounds";
-    for i from (g-1-max(g+2,n)) to max(g+2,n) do (
-    if i == j then mapsList = append(mapsList, f_i)
-    else mapsList = append(mapsList, null);
-    );
-    mapsList
-    )
-buildComplex = method()
-buildComplex(ZZ) := t -> (
-    mapsList := buildMaps(t);
-    C = map(P,S,i -> mapsList_(i+(g-1+1)));
-    C
-    )
-sign = method()
-sign(ZZ) := j -> (
-    if j >= 0 then return 1 else return (-1))
-
-end
 --------Test Code----------
-restart
-load "construction3-6v3.m2"
-R = QQ[x,y,z]/ideal(x*y*z)
-M = coker map(R^1,,{gens R})
-g = 3
-n = 5
-M = coker vars R
-C = constructionV3(g,M)
 --This code here checks if the source and target of the f_i maps are what they should be
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
       print (i, source f_i === S_i, target f_i === P_i)
       )
---a less strict test;
-for i from (g-1-max(g+2,n)) to max(g+2,n) do (
-      print (i, source f_i == S_i, target f_i == P_i)
-      )  
 
-mapsList = ()
-for i from (g-1-max(g+2,n)) to max(g+2,n) do (
-    mapsList = append(mapsList,-(sign i)*(id_(R^1))))
---    mapsList = append(mapsList,id_(R^(1))))
-mapsList
-P = chainComplex(mapsList)[g]
+
+     
+
+
+

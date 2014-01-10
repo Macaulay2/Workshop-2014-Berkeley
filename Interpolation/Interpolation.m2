@@ -9,7 +9,10 @@ polynomialInterpolation (List,PolynomialRing) := RingElement => (L,R) -> (
 		);
 	sum(p)
 )
-polynomialInterpolation (List) := RingElements => L -> polynomialInterpolation(L, QQ[t])
+polynomialInterpolation (List) := RingElement => L -> (
+	t := symbol t;
+	polynomialInterpolation(L, QQ[t])
+)
 
 --finds a rational function fitting the sequence through Chebyshev interpolation
 rationalInterpolation = method ()
@@ -20,7 +23,10 @@ rationalInterpolation (List, PolynomialRing) := RingElement => (L,R) -> (
 	(sum(1..(n-2), j -> ((-1)^j * L_j)/(t-(j+1))) + 1/2 * (L_0)/(t-1) + 1/2 * ((-1)^(n-1) * L_(n-1))/(t-n)) / 
 		(sum(1..(n-2), j -> ((-1)^j)/(t-(j+1))) + 1/2 * ((-1)^0)/(t-1) + 1/2 * ((-1)^(n-1))/(t-n))
 )
-rationalInterpolation (List) := RingElement => L -> rationalInterpolation(L, QQ[t])
+rationalInterpolation (List) := RingElement => L -> (
+	t := symbol t;
+	rationalInterpolation(L, QQ[t])
+)
 
 --interpolates a rational function using the floater hormann algorithm
 --user can choose a d st 0 <= d <= n-1 (where n is the size of list
@@ -39,7 +45,10 @@ floaterHormann (List,PolynomialRing,ZZ) := RingElement => (L,R,d) -> (
 	sum(toList(0..(n-1-d)), j -> product({lambda_j , p_j}))/sum(toList(0..(n-1-d)), j -> lambda_j)
 )
 
-floaterHormann(List,ZZ) := RingElement => (L,R,d) -> floaterHormann(L,QQ[t],d)
+floaterHormann(List,ZZ) := RingElement => (L,d) -> (
+	t := symbol t;
+	floaterHormann(L,QQ[t],d)
+)
 
 --finds a rational function that fits the sequence via polynomialInterpolation of the numerator and the denominator
 guessRational = method ()
@@ -52,7 +61,10 @@ guessRational (List,PolynomialRing) := RingElement => (L,R) -> (
 	q := polynomialInterpolation(b,R);
 	p/q
 )
-guessRational (List) := RingElement => L -> guessRational(L, QQ[t])
+guessRational (List) := RingElement => L -> (
+	t := symbol t;
+	guessRational(L, QQ[t])
+)
 
 --guesses linear recurrence for a sequence
 guessLinearRecurrence = method()
@@ -76,14 +88,21 @@ applyLinearRecurrence (List, List, ZZ) := List => (C, L, n) -> (
     L
     )
 
--- Examples
--- a_n = a_(n-3) + a_(n-1)
-guessLinearRecurrence {1, 2, 3, 4, 6, 9, 13, 19, 28, 41, 60, 88, 129}
--- Fibonacci Sequence
-guessLinearRecurrence {1, 1, 2, 3, 5, 8, 13, 21}
--- Perrin Sequence
-guessLinearRecurrence {3, 0, 2, 3, 2, 5, 5, 7, 10, 12, 17}
--- Pell numbers
-guessLinearRecurrence {0, 1, 2, 5, 12, 29, 70, 169, 408, 985}
--- Padovan Sequence
-guessLinearRecurrence {1, 0, 0, 1, 0, 1, 1, 1, 2, 2, 3, 4, 5}
+cubicSplines = method ()
+cubicSplines (List,PolynomialRing) := RingElement => (L,R) -> (
+	t := first gens R;
+	n := #L;
+	P := for i from 1 to n-3 list (
+		(2*t^3 - 3*t^2 + 1)*(L_i) + (t^3 - 2*t^2 + t)*(1/2)*(L_(i+1) - L_(i-1)) + (-2*t^3 + 3*t^2)*(L_(i+1)) + (t^3 - t^2)*(1/2)*(L_(i+2) - L_i)
+	);
+	firstTerm := (2*t^3 - 3*t^2 + 1)*(L_0) + (t^3 - 2*t^2 + t)*(1/2)*(L_1 - L_0) + (-2*t^3 + 3*t^2)*(L_1) + (t^3 - t^2)*(1/2)*(L_2 - L_0);
+	finalTerm := (2*t^3 - 3*t^2 + 1)*(L_(n-2)) + (t^3 - 2*t^2 + t)*(1/2)*(L_(n-1) - L_(n-3)) + (-2*t^3 + 3*t^2)*(L_(n-1)) + (t^3 - t^2)*(1/2)*(L_(n-1) - L_(n-2));
+	{firstTerm} | P | {finalTerm}
+)
+
+--to evaluate at the point you want, say you have a1, a2, ... , an, and u want ai by typing in "i"
+--then u want to type in sub(P_(i-1), t => 0) or sub(P_(i-2), t => 1) where t is ur ring generator
+--if you want a value in between i and i + 1, say i + j with j in (0,1), then type:
+--sub(P_(i-1), t => j)
+--this is only a good estimation for values in between 1 and n, where n is the length of the sequence you
+--record.

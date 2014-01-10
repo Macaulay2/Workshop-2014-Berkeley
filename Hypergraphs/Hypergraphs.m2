@@ -90,6 +90,7 @@ hypergraph(List) := Hypergraph => opts -> E -> (
 	return hypergraph(V,E);
 )
 
+--Output: returns a Hypergraph given an incidence matrix.  The vertices are 0 .. numRows(incMatrix)-1.
 hypergraph(Matrix) := Hypergraph => opts -> (incMatrix) -> (
 	V := toList(0 .. numRows(incMatrix)-1);
 	E := for j from 0 to numColumns(incMatrix)-1 list (
@@ -112,7 +113,7 @@ inducedSubhypergraph(List,Hypergraph) := Hypergraph => (V,H) -> (
 )
 
 hypergraphDual = method(TypicalValue => Hypergraph);
-hypergraphDual(Hypergraph) := Hypergraph => opts -> (h) -> return hypergraph(transpose h.incidenceMatrix);
+hypergraphDual(Hypergraph) := Hypergraph => opts -> (h) -> return hypergraph(transpose h.incidenceMatrix, opts);
 
 isHypergraphSimple = method(TypicalValue => Boolean);
 isHypergraphSimple(Hypergraph) := Boolean => H -> (
