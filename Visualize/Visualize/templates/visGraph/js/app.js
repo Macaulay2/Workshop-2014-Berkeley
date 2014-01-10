@@ -384,6 +384,11 @@ function mouseup() {
 
   // clear mouse event vars
   resetMouseVars();
+
+  // Need to refresh these again since mouseup doesn't call restart().
+  document.getElementById("constructorString").innerHTML = "Macaulay2 Constructor: " + graph2M2Constructor(nodes,links);
+  document.getElementById("incString").innerHTML = "Incidence Matrix: " + arraytoM2Matrix(getIncidenceMatrix(nodes,links));
+  document.getElementById("adjString").innerHTML = "Adjacency Matrix: " + arraytoM2Matrix(getAdjacencyMatrix(nodes,links));
 }
 
 function spliceLinksForNode(node) {
@@ -575,6 +580,7 @@ function getIncidenceMatrix (nodeSet, edgeSet){
   }
 
   for (var i = 0; i < links.length; i++) {
+    print incMatrix;
     incMatrix[links[i].source.id][i] = 1; // Set matrix entries corresponding to incidences to 1.
     incMatrix[links[i].target.id][i] = 1;
   }

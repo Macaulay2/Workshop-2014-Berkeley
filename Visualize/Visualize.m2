@@ -211,6 +211,7 @@ visIdeal(Ideal) := opts -> J -> (
 visGraph = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
     local A; local arrayString; local vertexString; local visTemp;
+    local tempG; local vertexSet;
     
     A = adjacencyMatrix G;
     arrayString = toString toArray entries A; -- Turn the adjacency matrix into a nested array (as a string) to copy to the template html file.
@@ -218,12 +219,14 @@ visGraph(Graph) := opts -> G -> (
     -- Add this back in when we figure out how to deal with the old
     -- Graphs package not knowing what G.vertexSet means.
     
-    --if (options Graphs).Version != 0.1 then (
---	 vertexString = toString(toArray(apply(G.vertexSet, i -> toString i))); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
-  --  ) else (
-         vertexString = toString new Array from apply(keys(G#graph), i -> "\""|toString(i)|"\"");
-       	 --vertexString = toString(toArray(apply(keys(G#graph), i -> toString i))); -- Create a string containing an ordered list of the vertices in the older Graphs package.
-    --);
+    if value((options Graphs).Version) == 0.1 then (
+	 vertexString = toString new Array from apply(keys(G#graph), i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the older Graphs package.
+	 tempG = new MutableHashTable from G;
+	 tempG#vertexSet = {};
+	 G = new HashTable from tempG;
+    ) else (
+         vertexString = toString new Array from apply(G#vertexSet, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+    );
     
     visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visGraph/visGraph-template.html"); -- Copy the visGraph template to a temporary directory.
     
