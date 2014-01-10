@@ -579,8 +579,10 @@ function getIncidenceMatrix (nodeSet, edgeSet){
     }
   }
 
+  console.log(toString(links)+"\n");
+  console.log(toString(incMatrix)+"\n");
+
   for (var i = 0; i < links.length; i++) {
-    print incMatrix;
     incMatrix[links[i].source.id][i] = 1; // Set matrix entries corresponding to incidences to 1.
     incMatrix[links[i].target.id][i] = 1;
   }
