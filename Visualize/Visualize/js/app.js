@@ -55,14 +55,12 @@ function initializeBuilder() {
   for (var i = 0; i<data.length; i++) {
 
       nodes.push( {name: names[i], id: i, reflexive:false } );
-      //console.log("I " + i);
 
   }
   for (var i = 0; i<data.length; i++) {
       for (var j = 0; j < i ; j++) {
           if (data[i][j] != 0) {
               links.push( { source: nodes[i], target: nodes[j], left: false, right: false} );
-              //console.log("I " + i + "  J " + j);
           }    
       }
   }
@@ -318,11 +316,16 @@ function restart() {
         links.push(link);
       }
 
+      document.getElementById("constructorString").innerHTML = "Macaulay2 Constructor: " + graph2M2Constructor(nodes,links);
+      document.getElementById("incString").innerHTML = "Incidence Matrix: " + arraytoM2Matrix(getIncidenceMatrix(nodes,links));
+      document.getElementById("adjString").innerHTML = "Adjacency Matrix: " + arraytoM2Matrix(getAdjacencyMatrix(nodes,links));
+
       // select new link
       if (curEdit) selected_link = link;
       selected_node = null;
       restart();
     })
+
   .on('dblclick', function(d) {
       name = "";
       while (name=="") {
@@ -354,10 +357,6 @@ function restart() {
 
   // set the graph in motion
   force.start();
-  
-  document.getElementById("constructorString").innerHTML = "Macaulay2 Constructor: " + graph2M2Constructor(nodes,links);
-  document.getElementById("incString").innerHTML = "Incidence Matrix: " + arraytoM2Matrix(getIncidenceMatrix(nodes,links));
-  document.getElementById("adjString").innerHTML = "Adjacency Matrix: " + arraytoM2Matrix(getAdjacencyMatrix(nodes,links));
 }
 
 function checkName(name) {
@@ -385,7 +384,7 @@ function mousedown() {
   // insert new node at point
 
   var point = d3.mouse(this);
-  var curName = lastNodeId.toString();
+  var curName = (lastNodeId + 1).toString();
   if (checkName(curName)) {
     curName += 'a';
   }
@@ -393,10 +392,14 @@ function mousedown() {
     curName = curName.substring(0, curName.length - 1) + getNextAlpha(curName.slice(-1));
   }
 
-  node = {id: ++lastNodeId, name: curName, reflexive: false};
+  node = {id: lastNodeId++, name: curName, reflexive: false};
   node.x = point[0];
   node.y = point[1];
   nodes.push(node);
+
+  document.getElementById("constructorString").innerHTML = "Macaulay2 Constructor: " + graph2M2Constructor(nodes,links);
+  document.getElementById("incString").innerHTML = "Incidence Matrix: " + arraytoM2Matrix(getIncidenceMatrix(nodes,links));
+  document.getElementById("adjString").innerHTML = "Adjacency Matrix: " + arraytoM2Matrix(getAdjacencyMatrix(nodes,links));
 
   restart();
 }
@@ -424,10 +427,8 @@ function mouseup() {
   // clear mouse event vars
   resetMouseVars();
 
-  // Need to refresh these again since mouseup doesn't call restart().
-  document.getElementById("constructorString").innerHTML = "Macaulay2 Constructor: " + graph2M2Constructor(nodes,links);
-  document.getElementById("incString").innerHTML = "Incidence Matrix: " + arraytoM2Matrix(getIncidenceMatrix(nodes,links));
-  document.getElementById("adjString").innerHTML = "Adjacency Matrix: " + arraytoM2Matrix(getAdjacencyMatrix(nodes,links));
+  restart();
+
 }
 
 function spliceLinksForNode(node) {
@@ -542,6 +543,14 @@ function enableEditing() {
   svg.classed('shift', false);
 }
 
+function setAllNodesFixed() {
+  for (var i = 0; i<nodes.length; i++) {
+    //d3.select(this).classed(d.fixed = true);
+    nodes[i].fixed = true;
+  }
+
+}
+
 function updateWindowSize2d() {
 
         var svg = document.getElementById("canvasElement");
@@ -628,27 +637,24 @@ function singletons(nodeSet, edgeSet){
 
 // Constructs the incidence matrix for a graph as a multidimensional array.
 function getIncidenceMatrix (nodeSet, edgeSet){
-  var incMatrix = []; 
-  console.log(nodeSet);
-  console.log(edgeSet);
+
+  var incMatrix = [];
 
   // The next two loops create an initial (nodes.length) x (links.length) matrix of zeros.
   for(var i = 0;i < nodeSet.length; i++){
     incMatrix[i] = [];
+
+    console.log("nodeID: " + nodeSet[i].id + "\n");
+
     for(var j = 0; j < edgeSet.length; j++){
       incMatrix[i][j] = 0;
     }
   }
 
   for (var i = 0; i < edgeSet.length; i++) {
-    console.log("i: " + i + "\n");
-    console.log("Source id: " + edgeSet[i].source.id + "\n");
-    console.log("Target id: " + edgeSet[i].target.id + "\n");
     incMatrix[(edgeSet[i].source.id)][i] = 1; // Set matrix entries corresponding to incidences to 1.
     incMatrix[(edgeSet[i].target.id)][i] = 1;
   }
-
-  console.log(incMatrix);
 
   return incMatrix;
 }
@@ -694,10 +700,9 @@ function arraytoM2Matrix (arr){
 }
 
 function exportTikz() {
+  alert("export tikkkzzz");
+}
 
-
-
-
-
-
+function forceStop() {
+  force.stop();
 }
