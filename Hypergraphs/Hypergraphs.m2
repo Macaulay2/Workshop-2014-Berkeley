@@ -29,6 +29,37 @@ export {
 -- 3 - add function for hypergraph dual
 -- 4 - add function for induced subhypergraph
 
+{*
+Functions We Might Want to Include
+
+From EdgeIdeals:
+chromaticNumber
+complementGraph
+connectedComponents
+numberConnectedComponents
+hypergraphToSimplicialComplex
+coverIdeal (This should maybe be of class MonomialIdeal?
+edgeIdeal (Also MonomialIdeal?)
+deleteEdges
+independenceComplex
+lineGraph
+simplicialComplexToHypergraph
+vertexCovers
+vertexCoverNumber
+isGraph
+isCM
+isSCM
+isConnected
+isForest
+isLeaf
+
+From Nauty:
+areIsomorphic
+addEdges
+generateHypergraphs
+
+*}
+
 --the classes defined in this package
 Hypergraph = new Type of HashTable;
 
@@ -48,7 +79,8 @@ hypergraph(List, List) := Hypergraph => opts -> (V, E) -> (
 		edges => E,
 		vertices => V,
 		incidenceMatrix => A,
-		vertexContainments => hashTable vContainments, --keys are vertices and values are lists of edges numbered 0 through #E-1
+		vertexContainments => hashTable vContainments,
+		    --keys are vertices and values are lists of edges numbered 0 through #E-1
 		neighbors => nbors
 	};
 )
@@ -71,12 +103,13 @@ hypergraph(Matrix) := Hypergraph => opts -> (incMatrix) -> (
 	return hypergraph(V, E, opts);
 )
 
-inducedSubhypergraph = method(TypicalValue => Hypergraph, Options => {Singletons => null});
-inducedSubhypergraph(List, Hypergraph) := Hypergraph => opts -> (V, H) -> (
-    vComplement := select(H.vertices, x -> not member(x,V));
-    eComplement := unique flatten apply(vComplement, v -> H.vertexContainments#v); --returns the indices of the edges to delete
-    E := H.edges_(select(toList(0 .. #H.edges-1), e -> not member(e, eComplement)));
-	return hypergraph(V, E, opts);
+inducedSubhypergraph = method(TypicalValue => Hypergraph);
+inducedSubhypergraph(List,Hypergraph) := Hypergraph => (V,H) -> (
+    vComplement := select (H.vertices, x -> not member(x,V));
+    eComplement := unique flatten apply (vComplement, v -> H.vertexContainments#v); --returns the indices of the edges to delete
+    E := H.edges_(select(toList(0 .. #H.edges-1), e -> not member (e, eComplement)));
+    G := hypergraph(V,E); 
+    return G;
 )
 
 hypergraphDual = method(TypicalValue => Hypergraph);

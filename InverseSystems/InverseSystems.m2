@@ -12,7 +12,7 @@ newPackage(
 	    
 export {newFromDual,modFromDual,newToDual,newToDualTrunc,intersectInverseSystems}
         	
-    
+        	
 newFromDual = method()
 modFromDual = method()
 newToDual = method()    
