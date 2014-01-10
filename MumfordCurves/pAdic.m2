@@ -307,8 +307,21 @@ expression PAdicMatrix := M -> MatrixExpression applyTable(M.matrix, expression)
 
 end
 ----------------------------
+--Friday Demonstration
+----------------------------
+
+load "~/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
+
+--for any p have field QQQ_p
+
+QQQ
+
+
+
+----------------------------
 --Qingchun's testing area
 ----------------------------
+
 restart
 load "/Users/qingchun/Desktop/M2Berkeley/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
 Q3 = pAdicField(3)
