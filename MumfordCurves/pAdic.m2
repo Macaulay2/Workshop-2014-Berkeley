@@ -33,6 +33,24 @@ PAdicFields = new MutableHashTable
 PAdicField = new Type of InexactField
 PAdicFieldElement = new Type of HashTable
 
+net PAdicFieldElement := a->(expans:=a#"expansion";
+  p:=(class a)#prime;
+  keylist:=expans_0;
+  ((horizontalJoin apply(#keylist,i->
+  net(expans_1_i)|"*"|net p|
+  (net keylist_i)^1|"+"))
+|"O("|net p|(net(precision a))^1|")"))
+
+toString PAdicFieldElement := a->(expans:=a#"expansion";
+  p:=(class a)#prime;
+  keylist:=expans_0;
+  ((concatenate apply(#keylist,i->
+  toString(expans_1_i)|"*"|toString p|"^"|
+  (toString keylist_i)|"+"))
+|"O("|toString p|"^"|(toString(precision a))|")"))
+
+
+
 new PAdicField from List := (PAdicField, inits) -> new PAdicField of PAdicFieldElement from new HashTable from inits
 
 net PAdicField := A->"QQQ_"|toString(A#prime)
@@ -50,12 +68,6 @@ pAdicField ZZ:=(p)->(
      valuation A := a->(if #a#"expansion">0 then return min a#"expansion"_0;
 	  infinity);
      relativePrecision A:= a -> (precision a)-(valuation a);
-     net A := a->(expans:=a#"expansion";
-	  keylist:=expans_0;
-       	  ((concatenate apply(#keylist,i->
-		  toString(expans_1_i)|"*"|toString p|"^"
-		  |toString keylist_i|"+"))
-		|"O("|toString p|"^"|toString(precision a)|")"));
      computeCarryingOver := (aKeys,aValues,prec) -> (
 	  newKeys := ();
 	  newValues := ();
