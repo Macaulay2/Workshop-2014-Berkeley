@@ -225,7 +225,6 @@
       if (!menuOpen) return;
 
       var tempMenu = document.getElementById("popupMenu");
-      console.log(tempMenu.offsetHeight);
 
       if ( (e.x < tempMenu.offsetLeft) || (e.y > tempMenu.offsetTop + tempMenu.offsetHeight) ) {
         document.getElementById("popupMenu").style.visibility = "hidden";
