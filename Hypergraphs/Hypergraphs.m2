@@ -19,7 +19,8 @@ export {
 	"vertices",
 	"incidenceMatrix",
 	"vertexContainments",
-	"neighbors"
+	"neighbors",
+	"inducedSubhypergraph"
 }
 
 --to do:
@@ -48,6 +49,7 @@ hypergraph(List, List) := Hypergraph => opts -> (V, E) -> (
 		vertices => V,
 		incidenceMatrix => A,
 		vertexContainments => hashTable vContainments,
+		    --keys are vertices and values are lists of edges numbered 0 through #E-1
 		neighbors => nbors
 	};
 )
@@ -67,6 +69,14 @@ hypergraph(Matrix) := Hypergraph => opts -> (incMatrix) -> (
 	);
 
 	return hypergraph(V, E, opts);
+)
+
+inducedSubhypergraph = method(TypicalValue => Hypergraph);
+inducedSubhypergraph(List,Hypergraph) := Hypergraph => opts -> (V,H) -> (
+    vComplement := select (H.vertices, x -> not member(x,V));
+    eComplement := unique flatten apply (vComplement, v -> H.vertexContainments#v); --returns the indices of the edges to delete
+    E := H.edges_(select(toList(0 .. #H.edges-1), e -> not member (e, eComplement)));
+    return hypergraph(V,E, opts); 
 )
 
 hypergraphDual = method(TypicalValue => Hypergraph);
