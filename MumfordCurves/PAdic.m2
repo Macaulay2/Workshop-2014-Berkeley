@@ -521,17 +521,19 @@ document {
      Usage => "s=henselApproximation(f,r,n,p)",
      Headline=> "a method for approximating p-adic roots",
      PARA{TT "henselApproximation"," approximates to precision ",TT "n"," a ",TT "p","-adic root of a polynomial
-	  ",TT "f"," congruent to ",TT "r mod p",".  The polynomial must have integer coefficients,and ",TT "r"," 
+	  ",TT "f"," congruent to ",TT "r mod p",".  The polynomial must have integer coefficients, 
+	  and ",TT "r"," 
 	  must be a simple root of ",TT "f mod p","." },
-     EXAMPLE {"ZZ[x]",
-	  "henselApproximation(x^2+1,3,6,5)"}
+     EXAMPLE {"ZZ[x];",
+	  "a=henselApproximation(x^2+1,3,6,5)",
+	  "a^2+1==0"}
      }
 
 
 
 
 document {
-     Key =>valuation,
+     Key =>{valuation,(valuation,PAdicFieldElement)},
      Inputs => {"x" => ofClass PAdicFieldElement},
      Outputs => {"n" => ofClass ZZ},
      Usage => "n=valuation(x)",
@@ -544,7 +546,7 @@ document {
      }
 
 document {
-     Key =>relativePrecision,
+     Key =>{relativePrecision,(relativePrecision,PAdicFieldElement)},
      Inputs => {"x" => ofClass PAdicFieldElement},
      Outputs => {"n" => ofClass ZZ},
      Usage => "n=valuation(x)",
@@ -571,6 +573,13 @@ document {
 
 document {
      Key =>PAdicFieldElement,
+     Headline=> "type of elements found in a PAdicField",
+     PARA{"A ",TT "PAdicFieldElement"," is ",ofClass HashTable," representing
+	  an element of some ",TO PAdicField,". The key ",TT toString("precision"),"
+	   stores an integer representing the ",TO precision," of the element. The
+	   key ",TT toString("expansion")," stores ",ofClass List," whose first 
+	   element is a list of the exponents of p which appear, and the second
+	   element is a list of the corresponding coefficients."}
      }
 
 
