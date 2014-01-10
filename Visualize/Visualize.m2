@@ -249,8 +249,8 @@ visGraph(Graph) := opts -> G -> (
     	 -- This is a workaround for finding and referring to the key vertexSet in the hash table for G.
          -- Would be better to be able to refer to G.vertexSet, but the package
 	 -- seems not to load if we try this.
-	 keyPosition = position(values G, i -> i == symbol vertexSet);
-	 vertexString = toString new Array from apply((values G)#keyPosition, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+	 keyPosition = position(keys G, i -> toString i == "vertexSet");
+	 vertexString = toString new Array from apply((values G)#keyPosition, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package
 	 
 	 --vertexSet = symbol vertexSet;
 	 --vertexString = toString new Array from apply(G.vertexSet, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
@@ -325,7 +325,6 @@ multidoc ///
      Description
        Text
      	 We use really rediculusly cools things to do really cool things.
-<<<<<<< HEAD
      Caveat
      	 Let's see.
   Node
@@ -348,7 +347,6 @@ multidoc ///
      Text
        We are able to see the interactive staircase diagram. More stuff
        should be here about the convext hull and other stuff.	    
-=======
 ///
 
 
@@ -361,9 +359,9 @@ doc ///
     Creates staircase diagram for an ideal
   Usage
     visIdeal I
-  Inputs
-    I:Ideal
-      An ideal in a ring with 2 or 3 variables.
+--  Inputs
+--    I:Ideal
+--      An ideal in a ring with 2 or 3 variables.
   Outputs
     An interactive html file that is opened in the user's default browser.
   Description
@@ -454,7 +452,6 @@ doc ///
      socleCheck(I,x*y);
      socleCheck(I,x^2);
      socleCheck(I,x);
->>>>>>> 8daa13ad0347ad3cc4aa1fecec3eefb2d5879bd3
 ///
 
 -------------------------------------------------------------------------------------------
@@ -479,6 +476,7 @@ restart
 loadPackage"Graphs"
 uninstallPackage"Visualize"
 installPackage"Visualize"
+loadPackage"Visualize"
 viewHelp Visualize
 
 (options Visualize).Configuration
@@ -498,12 +496,20 @@ H = graph({{x_1, x_0}, {x_3, x_0}, {x_3, x_1}, {x_4, x_0}}, Singletons => {x_2, 
 visGraph H
 
 -- New Graphs
-G = graph(toList(0..5),{{0,1},{0,3},{0,4},{1,3},{2,3}},Singletons => {5},EntryMode => "edges")
+G = graph((0..5),{{0,1},{0,3},{0,4},{1,3},{2,3}},Singletons => {5},EntryMode => "edges")
 G = graph(toList(0..5),{0,{1,2,3,4}},Singletons => {5})--,EntryMode => "edges")
 visGraph G
 visGraph( G, VisPath => "/Users/bstone/Desktop/Test/")
 S = G.vertexSet
 toString S
+
+(keys G)#0 == A
+A = symbol vertexSet
+"vertexSet" == toString((keys G)#0)
+
+
+viewHelp ideal
+
 
 R = QQ[a,b,c]
 I = ideal"a2,ab,b2c,c5,b4"

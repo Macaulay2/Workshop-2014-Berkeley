@@ -1,6 +1,6 @@
 --natural map from a module to its double dual courtesy of Frank Moore
-restart
-bidualityMap = M -> (
+bidualityMap = method()
+bidualityMap := M -> (
    R := ring M;
    Md := Hom(M,R^1);
    Mdd := Hom(Md,R^1);
@@ -60,13 +60,6 @@ liftModuleMap (Module, Module, Matrix) := (N,M,A) -> (
 
 --version 3 is below, implementing a better way of constructing
 --the final chain complex map from the constructed pieces.
-
--- example for testing constructionV2
-R = QQ[x,y,z]/ideal(x*y*z)
-M = coker map(R^1,,{gens R})
-g=3
-n=5
-
 constructionV3 = 
 method(TypicalValue => ChainComplex
      , Options => {LengthLimit => 2}
@@ -137,12 +130,56 @@ constructionV3 (ZZ,Module):=
     cRes
     )
 
+buildMaps = method()
+buildMaps(ZZ) := j -> (
+    mapsList := ();
+    if (j > max(g+2,n) 	or j< (g-1)-max(g+2,n)) 
+    then error "integer out of bounds";
+    for i from (g-1-max(g+2,n)) to max(g+2,n) do (
+    if i == j then mapsList = append(mapsList, f_i)
+    else mapsList = append(mapsList, null);
+    );
+    mapsList
+    )
+buildComplex = method()
+buildComplex(ZZ) := t -> (
+    mapsList := buildMaps(t);
+    C = map(P,S,i -> mapsList_(i+(g-1+1)));
+    C
+    )
+sign = method()
+sign(ZZ) := j -> (
+    if j >= 0 then return 1 else return (-1))
+
+end
 --------Test Code----------
+restart
+load "construction3-6v3.m2"
+R = QQ[x,y,z]/ideal(x*y*z)
+g = 3
+n = 5
+M = coker vars R
 --This code here checks if the source and target of the f_i maps are what they should be
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
       print (i, source f_i === S_i, target f_i === P_i)
       )
-  
+--a less strict test;
+for i from (g-1-max(g+2,n)) to max(g+2,n) do (
+      print (i, source f_i == S_i, target f_i == P_i)
+      )  
+--a test, build a simple map of chain complexes with only one non-zero map
+
+--a test for the above methods
+g=3
+n=5
+
+mapsList = ()
+for i from (g-1-max(g+2,n)) to max(g+2,n) do (
+    mapsList = append(mapsList,-(sign i)*(id_(R^1))))
+--    mapsList = append(mapsList,id_(R^(1))))
+mapsList
+P = chainComplex(mapsList)[g]
+--P = chainComplex(mapsList)
 
 --check that everything is ===
 
@@ -169,19 +206,17 @@ for i from (g-1-max(g+2,n)) to max(g+2,n) do (
      cRes.target.dd_g=P.dd_g;
      cRes.source.dd_g=lambdaDual*d*w;
 --     cRes_g=id_(P_g);
---=====\end{old stuff}
-
      cRes
      )
-     
+--=====\end{old stuff}     
 
 
--- example for testing constructionV2
+-- example for testing constructionV3
 R = QQ[x,y,z]/ideal(x*y*z)
 M = coker map(R^1,,{gens R})
 g=3
-n=2
-C = constructionV2(g,M)
+n=5
+C = constructionV3(g,M)
 P = resolution(M, LengthLimit=>max(g+2,n))
 --neither C.source or C.target has differentials that square to 0.
 --something is wrong. At least one source of the error is the following:

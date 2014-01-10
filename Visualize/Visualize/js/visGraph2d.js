@@ -42,6 +42,7 @@ function initializeBuilder() {
     .attr('height', height)
     .attr('id', 'canvasElement2d');
 
+
   // set up initial nodes and links
   //  - nodes are known by 'id', not by index in array.
   //  - reflexive edges are indicated on the node (as a bold black circle).
@@ -71,6 +72,8 @@ function initializeBuilder() {
 
   if(maxLength < 4){
     d3.selectAll("text").classed("fill", 0xfefcff);
+  } else { 
+    d3.selectAll("text").classed("fill", #000000);
   }
 
   constrString = graph2M2Constructor(nodes,links);
@@ -349,6 +352,18 @@ function restart() {
       if(name != null) {
         d.name = name;
         d3.select(this.parentNode).select("text").text(function(d) {return d.name});
+      }
+
+      document.getElementById("constructorString").innerHTML = "Macaulay2 Constructor: " + graph2M2Constructor(nodes,links);
+
+      var maxLength = d3.max(nodes, function(d) {
+        return d.name.length;
+      });
+      
+      if(maxLength < 4){
+        d3.selectAll("text").classed("fill", #FEFCFF);
+      } else { 
+        d3.selectAll("text").classed("fill", #000000);
       }
 
     });
