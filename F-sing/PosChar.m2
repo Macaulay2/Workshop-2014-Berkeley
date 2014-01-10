@@ -58,6 +58,7 @@ export{
      "isFPTPoly",
      "isFRegularPoly",
      "isFRegularQGor",
+     "isJToAInIToPe",
      "isSharplyFPurePoly",
 	"minimalCompatible",		--- MK
 ---	"Mstar",			--- MK
