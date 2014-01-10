@@ -21,10 +21,10 @@ newPackage(
     	Version => "0.2", 
     	Date => "October 2, 2013",
     	Authors => {       
-     	     {Name => "Brett Barwick", Email => "Brett@barwick.edu", HomePage => "http://www.bard.edu/~bstone/"},	     
+     	     {Name => "Brett Barwick", Email => "Brett@barwick.edu", HomePage => "http://math.bard.edu/~bstone/"},	     
 	     {Name => "Elliot Korte", Email => "ek2872@bard.edu"},	     
 	     {Name => "Will Smith", Email => "smithw12321@gmail.com"},		
-	     {Name => "Branden Stone", Email => "bstone@bard.edu", HomePage => "http://www.bard.edu/~bstone/"},	     
+	     {Name => "Branden Stone", Email => "bstone@bard.edu", HomePage => "http://math.bard.edu/~bstone/"},	     
 	     {Name => "Jim Vallandingham", Email => "vlandham@gmail.com", HomePage => "http://vallandingham.me/"}
 	     },
     	Headline => "Visualize",
@@ -288,23 +288,125 @@ copyJS(String) := dst -> (
 -- DOCUMENTATION
 --------------------------------------------------
 
--- use simple doc
+
 beginDocumentation()
+needsPackage "SimpleDoc"
+--debug SimpleDoc
 
-document {
-     Key => Visualize,
-     Headline => "A package to help visualize algebraic objects in the browser using javascript.",
-     
-     "Lots of cool stuff happens here.",
-     
-     PARA{}, "For the mathematical background see ",
+doc ///
+     Key
+     	 Visualize
+     Headline 
+     	 A package to help visualize algebraic objects in the browser using javascript.
+     Description
+       Text
+     	 We use really rediculusly cools things to do really cool things.
+///
 
-     
-     UL {
-	  {"Winfried Bruns and Jürgen Herzog.", EM " Cohen-Macaulay Rings."},
-	},
-     
-     }
+
+end
+
+doc ///
+  Key
+    (visIdeal, Ideal)
+  Headline
+    Creates staircase diagram for an ideal
+  Usage
+    visIdeal I
+  Inputs
+    I:Ideal
+      An ideal in a ring with 2 or 3 variables.
+  Outputs
+    An interactive html file that is opened in the user's default browser.
+  Description
+    Text
+      We are able to see the interactive staircase diagram. More stuff
+      should be here about the convext hull and other stuff. 
+///
+
+end
+
+
+doc ///
+  Key
+    bigIdeal
+    (bigIdeal,ZZ,List)
+    BaseField
+  Headline
+    Constructs one of the family of ideals with large projective dimension and regularity.
+  Usage
+    bigIdeal(g,L)
+    bigIdeal(g,{2,1,3})
+  Inputs
+    g:ZZ
+      Assumed to be at least 2.
+    L:List
+      List of integers {m_1,...m_n} such that m_n is nonnegative, m_{n-1} > 0 and all other
+      m_i > 1.
+  Outputs
+    I:Ideal
+      An ideal with g+1 generators in degree m_1+...+m_n+1.
+  Description
+   Text
+     The ideal returned has g generators of the form x_i^d and 1 generator using the remaining
+     variables.  Note that the y variables are indexed by matrices with entries prescribed by
+     the entries of L.  The special case where L contains a single integer reverts to the ideals
+     defined by the jasonIdeal command.
+   Example
+     bigIdeal(2,{3,1})
+     bigIdeal(2,{2,1,2})
+     bigIdeal(3,{2})
+///
+
+doc ///
+  Key
+    (jasonIdeal,ZZ,ZZ,ZZ)
+  Headline
+    Constructs one of the family of ideals in "A Family of Ideals with Few Generators in Low Degree and Large Projective Dimension" by Jason McCullough.
+  Usage
+    x = jasonIdeal(m,n,d)
+  Inputs
+    m:ZZ
+      Assumed to be at least 2.
+    n:ZZ
+      Assumed to be at least 1.
+    d:ZZ
+      Assumed to be at least 1.
+  Outputs
+    I:Ideal
+      An ideal with m+n generators in degree d and with pd(R/I) = (m + d - 2)!/((m-1)!(d-1)!).
+  Description
+   Text
+     The ideal returned has m generators of the form x_i^d and n generators each of which
+     are a sum of the y_i variables times each of the degree-(d-1) monomials in the x_is.
+   Example
+     jasonIdeal(3,1,3)
+///
+
+doc ///
+  Key
+    socleCheck
+    (socleCheck,Ideal,RingElement)
+  Headline
+    Checks where a ring element is nonzero is nonzero in socle(R/I) for an ideal I.
+  Usage
+    socleCheck(I,s)
+  Inputs
+    I:Ideal
+    s:RingElement
+  Outputs
+    x:Boolean
+      True if s is in (I:m) - I.  False otherwise.
+  Description
+   Text
+     This function merely checks whether every variable multiplies s into I and that s is not already in I.
+   Example
+     R = QQ[x,y];
+     I = ideal(x^2,y^2);
+     socleCheck(I,x*y);
+     socleCheck(I,x^2);
+     socleCheck(I,x);
+///
 
 -------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------
@@ -324,9 +426,12 @@ end
 -----------------------------
 -----------------------------
 -- branden
-restart 
+restart
 loadPackage"Graphs"
-loadPackage"Visualize"
+uninstallPackage"Visualize"
+installPackage"Visualize"
+viewHelp Visualize
+
 (options Visualize).Configuration
 
 searchReplace("visArray","kickass string", testFile)
@@ -339,8 +444,6 @@ G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5
 visGraph G
 H = graph({{x_1, x_0}, {x_3, x_0}, {x_3, x_1}, {x_4, x_0}}, Singletons => {x_2, x_5, 6, cat_sandwich})
 visGraph H
-
-apply(keys(G), i -> class i)
 
 -- New Graphs
 G = graph(toList(0..5),{{0,1},{0,3},{0,4},{1,3},{2,3}},Singletons => {5},EntryMode => "edges")
@@ -364,7 +467,7 @@ visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
 copyJS "/Users/bstone/Desktop/Test/"
 yes
-copyJS ( currentDirectory()|"temp
+
 
 
 -----------------------------
@@ -385,8 +488,58 @@ copyJS ( currentDirectory()|"temp
 -----------------------------
 -----------------------------
 
+restart
+loadPackage"Graphs"
+loadPackage"Visualize"
+
+-- Old Graphs
+G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
+visGraph Gp
+H = graph({{Y,c},{1, 0}, {3, 0}, {3, 1}, {4, 0}}, Singletons => {A, x_5, 6, cat_sandwich})
+visGraph H
 
 restart
+loadPackage"Graphs"
+loadPackage"Visualize"
+-- New Graphs
+G = graph(toList(0..5),{{0,1},{0,3},{0,4},{1,3},{2,3}},Singletons => {5},EntryMode => "edges")
+visGraph G
+cycleGraph 9
+visGraph oo
+wheelGraph 8
+visGraph oo
+generalizedPetersenGraph(3,4)
+visGraph oo
+completeGraph(70)
+visGraph oo
+cocktailParty(70)
+visGraph oo
+
+
+R = QQ[a,b,c]
+I = ideal"a2,ab,b2c,c5,b4"
+I = ideal"x4,xyz3,yz,xz,z6,y5"
+visIdeal I
+copyJS "/Users/bstone/Desktop/Test/"
+yes
+visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
+
+S = QQ[x,y]
+I = ideal"x4,xy3,y5"
+visIdeal I
+visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
+
+
+copyJS "/Users/bstone/Desktop/Test/"
+yes
+
+
+
+
+restart
+uninstallPackage"Graphs"
+loadPackage"Graphs"
+peek Graphs
 loadPackage"Visualize"
 
 -- Creates staircase diagram 

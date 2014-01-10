@@ -42,6 +42,7 @@ relativePrecision = method()
 
 pAdicField = method()
 pAdicField ZZ:=(p)->(
+     if not isPrime p then error(toString(p)|" is not a prime!");
      if PAdicFields#?p then return PAdicFields#p;
      R := ZZ;
      A := new PAdicField from {(symbol prime) => p};
@@ -368,6 +369,16 @@ transpose PAdicMatrix := M -> (
 net PAdicMatrix := M -> net expression M
 expression PAdicMatrix := M -> MatrixExpression applyTable(M.matrix, expression)
 
+henselApproximation = method()
+henselApproximation (ZZ[x],ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
+	x:=(ring f)_0;
+	f':=diff(x,f);
+	g:= a->sum(0..(degree(f))_0, j->coefficient(x^j,f)*a^j);
+	g':= a->sum(0..(degree(f'))_0, j->coefficient(x^j,f')*a^j);
+	local s; s=toPAdicFieldElement(r,n,QQQ_p); i=0;
+	while i<n+1 do (s=s-(g(s)/g'(s));i=i+1);
+	s)
+
 end
 ----------------------------
 --Friday Demonstration
@@ -437,7 +448,8 @@ end
 --Nathan's testing area
 ----------------------------
 restart
-load "~/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
+loadPackage "pAdic"
+
 
 x=toPAdicFieldElement({1,2,2,2},QQQ_3)
 
@@ -501,3 +513,13 @@ b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->a_j*b_(i-j)),S)/sub(a_0,S),R)+p)%p;i=i+1)
 			i=i+1);
 	       S
 	       )
+--Hensel code rough draft
+henselApproximation = method()
+henselApproximation (ZZ[x],ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
+	x:=(ring f)_0;
+	f':=diff(x,f); print f';
+	g:= a->sum(0..(degree(f))_0, j->coefficient(x^j,f)*a^j);
+	g':= a->sum(0..(degree(f'))_0, j->coefficient(x^j,f')*a^j);
+	local s; s=toPAdicFieldElement(r,n,QQQ_p); i=0;
+	while i<n+1 do ( print i; s=s-(g(s)/g'(s));i=i+1);
+	s)
