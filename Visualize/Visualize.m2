@@ -190,20 +190,40 @@ visIdeal(Ideal) := opts -> J -> (
     return opts.VisPath|A_1;
     )
 
+loadPackage"Graphs"
+peek Graphs
+(options Graphs).Version
+
+peek OptionTable
+
 --input: A graph
 --output: the graph in the browswer
 --
 visGraph = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
-    local A; local arrayList; local arrayString; local B;
+    local A; local B; local arrayString; local vertexList; local vertexString; local tempFile;
     
     A = adjacencyMatrix G;
-    arrayList = toArray entries A;
-    arrayString = toString arrayList;
+    arrayString = toString toArray entries A; -- Turn the adjacency matrix into a nested array (as a string) to copy to the template html file.
     
-    B = visOutput( "visArray", arrayString, opts.VisTemplate, VisPath => opts.VisPath );    
+    if (options Graphs).Version != 0.1 then (
+	 vertexList = toString(G.vertexSet); -- Create a string containing an ordered list of the vertices.
+    ) else (
+    	 vertexList = toString(keys G#graph);
+    );
+    
+    vertexString = 
+    
+    tempFile = copyTemplate(currentDirectory()|"Visualize/templates/visGraph/visGraph-template.html"); -- Copy the visGraph template to a temporary directory.
+    
+    searchReplace("visArray",arrayString, tempFile); -- Replace visArray in the visGraph html file by the adjacency matrix.
+    searchReplace("visLabels",vertexString, tempFile); -- Replace visLabels in the visGraph html file by the ordered list of vertices.
 
-    return opts.VisPath|B_1;
+    copyJS(replace(tempFile,);
+    
+    show new URL from { "file://"|tempFile };
+    
+    return tempFile;
     )
 
 
@@ -299,7 +319,7 @@ searchReplace("XXX","kickass string", testFile)
 searchReplace("YYY","kickass string", testFile)
 searchReplace("ZZZ","kickass string", testFile)
 
-	
+
 visFilePath = 
 replace("XXX", "visString" , get visFilePath)
 
