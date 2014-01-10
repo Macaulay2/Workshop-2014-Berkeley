@@ -87,6 +87,18 @@
         z-index: 5;
 
       }
+      #resetButton {
+        position:relative;
+        vertical-align: middle;
+        left: 5%;
+        top: 5%;
+      }
+      #forceToggle {
+        position:relative;
+        vertical-align: middle;
+        left: 5%;
+        top: 15%;
+      }
 
 
       #canvasElement {
@@ -153,6 +165,7 @@
       menuOpen = false;
       dataData = visArray;
       labelData = visLabels;
+      forceOn = true;
     </script>
   </head>
   
@@ -162,7 +175,8 @@
         <a id= "exportToggle"> export</a>
         <a id= "moreOptions"> more</a>
         <div id="popupMenu"> 
-          <button onclick="resetGraph();">reset nodes</button>
+          <button id = "resetButton" onclick="resetGraph();">reset nodes</button>
+          <button id = "forceToggle" onclick="toggleForce();">turn off force</button>
         </div>
   </body>
 
@@ -215,10 +229,21 @@
             }
 
     function switchTo2d() {
-
+      document.getElementById("forceToggle").innerHTML = "turn on force";
     }
     function switchTo3d() {
       
+    }
+    function toggleForce() {
+      if (forceOn) {
+        setAllNodesFixed();
+        document.getElementById("forceToggle").innerHTML = "turn on force";
+      }
+      else {
+        resetGraph();
+        document.getElementById("forceToggle").innerHTML = "turn off force";
+      }
+      forceOn = !forceOn;
     }
 
     window.addEventListener("mousedown", function(e) {
