@@ -109,7 +109,7 @@ constructionV3 (ZZ,Module):=
     S.ring = M.ring;
     --put in the modules
     for i from (g-1-max(g+2,n)) to g-1 do (
-	S_i = Ld_(g-1-i);
+	S_i = Ld_(-g+1+i); 
 	)
     for i from g to max(g+2,n) do (
 	S_i = P_i;
@@ -117,7 +117,7 @@ constructionV3 (ZZ,Module):=
    -- S_g = P_g;
     --put in the differentials
     for i from (g-1-max(g+2,n)) to g-1 do (
-	S.dd_i = Ld.dd_(g-1-i);
+	S.dd_i = Ld.dd_(-g+1+i);
 	)
     for i from g+1 to max(g+2,n) do (
     	S.dd_i = P.dd_i;	
@@ -130,7 +130,7 @@ constructionV3 (ZZ,Module):=
 --build the maps between the source and target;
     --name the maps consistently
     for i from (g-1-max(g+2,n)) to g-1 do(
-	f_i = kappaLifted_(g-1-i);
+	f_i = dual kappaLifted_(-g+1+i);
 	)
     for i from g to max(g+2,n) do (
 	f_i = id_(P_i);
