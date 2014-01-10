@@ -132,7 +132,7 @@ minimalNSIdeal(Poset) := Ideal => P -> (
 	n:= # unique toList select(L, placeholder -> placeholder =!= OneHolder);
 	x := getSymbol "x";
 	R := QQ(monoid[x_0..x_(n-1)]); 
-  	L' := apply(L, placeholder -> if placeholder === OneHolder then 1 else x_(placeholder));
+  	L' := apply(L, placeholder -> if placeholder === OneHolder then 1 else R_(placeholder));
 	-- convert L to monomials    
 	labeling(Q, toList L');
 	possCoord Q	
@@ -334,9 +334,9 @@ doc ///
             This takes a lattice and produces the corresponding monomial idea with highest possible powers of each variable.  
 	  For definitions and context see
     -- math/1009.1430, \"Finite atomic lattices and resolutions of monomial ideals\", by "Sonja Mapes."
-      --  Example
-	--     P = poset {{a,b},{a,c},{a,d},{b,e},{c,e},{d,e}};
-	  --   minimalNSIdeal P
+        Example
+	     P = poset {{a,b},{a,c},{a,d},{b,e},{c,e},{d,e}};
+	     minimalNSIdeal P
             
     SeeAlso
        minimalNSIdeal
@@ -423,7 +423,7 @@ doc ///
 			--For the code behind the construction of the ring
 ///
 
-end
+
 
 ------------------------------------------
 ------------------------------------------
@@ -476,7 +476,7 @@ TEST ///
     assert(I === J)
 ///
 
-
+end
 ------------------------------------------
 --Polarizations:
 ------------------------------------------
