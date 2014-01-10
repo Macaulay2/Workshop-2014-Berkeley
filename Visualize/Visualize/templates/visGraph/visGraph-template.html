@@ -220,7 +220,8 @@
     }
     function switchTo3d() {
 
-      force.stop();
+      stopForce();
+      
       
     }
     function toggleForce() {
@@ -233,9 +234,6 @@
         document.getElementById("forceToggle").innerHTML = "turn off force";
       }
       forceOn = !forceOn;
-    }
-    function exportTikz() {
-
     }
 
     window.addEventListener("mousedown", function(e) {
