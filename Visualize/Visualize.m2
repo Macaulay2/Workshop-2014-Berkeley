@@ -129,9 +129,9 @@ copyTemplate String := src -> (
     
     dirPath = temporaryFileName();
     makeDirectory dirPath;
-    dirPath = dirPath|"/";
+    dirPath = concatenate(dirPath,"/",fileName);
     
-    copyFile( src, concatenate (dirPath,fileName));
+    copyFile( src, dirPath);
     
     return dirPath;
 )
@@ -274,8 +274,6 @@ searchReplace method(Options => {VisPath => currentDirectory()})
 searchReplace(String,String,String) := opts -> (oldString,newString,tempSrc) -> (
             
     )
-
-
 
 
 
