@@ -125,9 +125,19 @@ constructionV3 (ZZ,Module):=
     for i from g to max(g+2,n) do (
 	f_i = id_(P_i);
 	);
-    --make the chain complex map
-    cRes := map (P,S,i-> f_i); 
-    cRes
+
+--output P, S, and f_i as a hash table
+output := new MutableHashTable;
+output.ff = new MutableHashTable;
+output.source = S;
+output.target = P;
+for i from (g-1-max(g+2,n)) to max(g+2,n) do (
+    output.ff#i = f_i
+    );
+output
+    --make the chain complex map    
+--    cRes := map (P,S,i-> f_i); 
+--    cRes
     )
 
 buildMaps = method()
@@ -156,6 +166,7 @@ end
 restart
 load "construction3-6v3.m2"
 R = QQ[x,y,z]/ideal(x*y*z)
+M = coker map(R^1,,{gens R})
 g = 3
 n = 5
 M = coker vars R
@@ -167,11 +178,6 @@ for i from (g-1-max(g+2,n)) to max(g+2,n) do (
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
       print (i, source f_i == S_i, target f_i == P_i)
       )  
---a test, build a simple map of chain complexes with only one non-zero map
-
---a test for the above methods
-g=3
-n=5
 
 mapsList = ()
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
