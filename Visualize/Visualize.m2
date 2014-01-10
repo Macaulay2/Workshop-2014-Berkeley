@@ -177,9 +177,12 @@ visIdeal(Ideal) := opts -> J -> (
     )
     else (
 	visTemp = opts.VisTemplate|"3D.html";
+	copyTemplate(visTemp);
+	
     	arrayList = apply(flatten entries basis(0,infinity, R/J), m -> flatten exponents m );
     	arrayList = toArray arrayList;
     	arrayString = toString arrayList;
+	
     );
     
     A = visOutput( "visArray", arrayString, visTemp, VisPath => opts.VisPath );
@@ -288,35 +291,9 @@ loadPackage"Visualize"
 
 
 
+time testFile = copyTemplate(currentDirectory()|"Visualize/templates/visIdeal/visIdeal3d.html")
+/var/folders/41/smyxyt0s5d5_rx02rltn5dl00000gn/T/M2-363-0/1/1389324560.html
 
-
-visOutput = method(Options => {VisPath => currentDirectory()})
-visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
-    local fileName; local openFile; local PATH;
-    
-    fileName = (toString currentTime() )|".html";
-    PATH = opts.VisPath|fileName;
-    openOut PATH << 
-    	replace(visKey, visString , get visTemplate) << 
-	close;
-                  
-    return (show new URL from { "file://"|PATH }, fileName);
-    )
-
-searchReplace = method(Options => {VisPath => currentDirectory()})
-searchReplace(String,String,String) := opts -> (oldString,newString,visSrc) -> (
-    local visFilePathTemp;
-    
-    visFilePathTemp = temporaryFileName();
-    copyFile(visSrc,visFilePathTemp);
-    openOut visSrc << 
-    	replace(oldString, newString , get visFilePathTemp) << 
-	close;
-	
-    return visSrc;
-    )
-
-testFile = copyTemplate(currentDirectory()|"Visualize/templates/visIdeal/visIdeal3d.html")
 searchReplace("visArray","kickass string", testFile)
 searchReplace("XXX","kickass string", testFile)
 searchReplace("YYY","kickass string", testFile)
