@@ -24,7 +24,8 @@ newPackage(
      	     {Name => "Brett Barwick", Email => "Brett@barwick.edu", HomePage => "http://math.bard.edu/~bstone/"},	     
 	     {Name => "Elliot Korte", Email => "ek2872@bard.edu"},	     
 	     {Name => "Will Smith", Email => "smithw12321@gmail.com"},		
-	     {Name => "Branden Stone", Email => "bstone@bard.edu", HomePage => "http://math.bard.edu/~bstone/"},	     
+	     {Name => "Branden Stone", Email => "bstone@bard.edu", HomePage => "http://math.bard.edu/~bstone/"},
+	     {Name => "Julio Urenda", Email => "jcurenda@nmsu.edu"},	     
 	     {Name => "Jim Vallandingham", Email => "vlandham@gmail.com", HomePage => "http://vallandingham.me/"}
 	     },
     	Headline => "Visualize",
@@ -315,7 +316,8 @@ beginDocumentation()
 needsPackage "SimpleDoc"
 debug SimpleDoc
 
-doc ///
+multidoc ///
+  Node
      Key
      	 Visualize
      Headline 
@@ -323,6 +325,28 @@ doc ///
      Description
        Text
      	 We use really rediculusly cools things to do really cool things.
+     Caveat
+     	 Let's see.
+  Node
+    Key
+       [visIdeal,VisPath]
+       [visIdeal,VisTemplate]
+       (visIdeal, Ideal)
+       visIdeal
+    Headline
+       Creates staircase diagram for an ideal
+    Usage
+       visIdeal I
+    Inputs
+       I: Ideal
+         An ideal in a ring with 2 or 3 variables.
+    Outputs
+       visTemp: String
+         Path to html containg polytope.
+    Description
+     Text
+       We are able to see the interactive staircase diagram. More stuff
+       should be here about the convext hull and other stuff.	    
 ///
 
 
@@ -335,9 +359,9 @@ doc ///
     Creates staircase diagram for an ideal
   Usage
     visIdeal I
-  Inputs
-    I:Ideal
-      An ideal in a ring with 2 or 3 variables.
+--  Inputs
+--    I:Ideal
+--      An ideal in a ring with 2 or 3 variables.
   Outputs
     An interactive html file that is opened in the user's default browser.
   Description
@@ -452,6 +476,7 @@ restart
 loadPackage"Graphs"
 uninstallPackage"Visualize"
 installPackage"Visualize"
+loadPackage"Visualize"
 viewHelp Visualize
 
 (options Visualize).Configuration
@@ -499,7 +524,6 @@ yes
 -- Julio's tests
 -----------------------------
 restart
-path = append(path, "/home/esmeralda/Workshop-2014-Berkeley/Visualize")
 loadPackage "Visualize"
 "TEST" << "let" << close
 replaceInFile("e", "i", "TEST")

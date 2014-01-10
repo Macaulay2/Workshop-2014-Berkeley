@@ -41,6 +41,7 @@ function initializeBuilder() {
     .attr('width', width)
     .attr('height', height)
     .attr('id', 'canvasElement2d');
+    .attr('id', 'canvasElement');
 
   // set up initial nodes and links
   //  - nodes are known by 'id', not by index in array.
@@ -63,6 +64,16 @@ function initializeBuilder() {
               links.push( { source: nodes[i], target: nodes[j], left: false, right: false} );
           }    
       }
+  }
+
+  var maxLength = d3.max(nodes, function(d) {
+    return d.name.length;
+  });
+
+  if(maxLength < 4){
+    d3.selectAll("text").classed("fill", #FEFCFF);
+  } else { 
+    d3.selectAll("text").classed("fill", #000000);
   }
 
   constrString = graph2M2Constructor(nodes,links);
@@ -343,6 +354,18 @@ function restart() {
         d3.select(this.parentNode).select("text").text(function(d) {return d.name});
       }
 
+      document.getElementById("constructorString").innerHTML = "Macaulay2 Constructor: " + graph2M2Constructor(nodes,links);
+
+      var maxLength = d3.max(nodes, function(d) {
+        return d.name.length;
+      });
+      
+      if(maxLength < 4){
+        d3.selectAll("text").classed("fill", #FEFCFF);
+      } else { 
+        d3.selectAll("text").classed("fill", #000000);
+      }
+
     });
 
   // show node IDs
@@ -554,6 +577,7 @@ function setAllNodesFixed() {
 function updateWindowSize2d() {
 
         var svg = document.getElementById("canvasElement2d");
+        var svg = document.getElementById("canvasElement");
         svg.style.width = window.innerWidth;
         svg.style.height = window.innerHeight - 150;
         svg.width = window.innerWidth;

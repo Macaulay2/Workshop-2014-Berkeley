@@ -1,5 +1,5 @@
 newPackage(
-     "pAdic",
+     "PAdic",
      Version => "0.1", 
      Date => "Jan 9, 2013",
      Authors => {{Name => "Nathan Ilten", 
@@ -15,6 +15,31 @@ newPackage(
      Headline => "a package for p-adic numbers",
      DebuggingMode => true
      )
+
+
+---------------------------------------------------------------------------
+-- COPYRIGHT NOTICE:
+--
+-- Copyright 2014 Nathan Owen Ilten, Ralph Morrison, and Qingchun Ren
+--
+--
+-- This program is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+---------------------------------------------------------------------------
+
+
+
 
 export {PAdicField,
      prime,
@@ -443,6 +468,28 @@ henselApproximation (RingElement,ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
 	local s; s=toPAdicFieldElement(r,n,QQQ_p); i:=0;
 	while i<n+1 do (s=s-(g(s)/g'(s));i=i+1);
 	s)
+
+---------------------------------------------
+-- Documentation
+---------------------------------------------
+
+beginDocumentation()
+
+document {
+     Key => PAdic,
+     Headline => "a package for p-adic numbers",
+     PARA{
+    "This package facilitates basic computations with p-adic numbers, including
+    arithmetic and a simple form of Hensel lifting."}}
+
+--document {
+  --   Key =>PAdicField,
+    -- }
+
+document {
+     Key =>PAdicFieldElement,
+     }
+
 
 ----------------------------
 --Package test cases

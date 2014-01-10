@@ -92,7 +92,7 @@
       }
 
 
-      #canvasElement {
+      #canvasElement2d {
         background-color: #FFF;
         cursor: default;
         -webkit-touch-callout: none;
@@ -103,7 +103,7 @@
         user-select: none;
       }
 
-      #canvasElement:not(.active):not(.shift) {
+      #canvasElement2d:not(.active):not(.shift) {
         cursor: crosshair;
       }
 
@@ -114,7 +114,7 @@
         cursor: default;
       }
 
-      #canvasElement:not(.active):not(.shift) path.link {
+      #canvasElement2d:not(.active):not(.shift) path.link {
         cursor: pointer;
       }
 
@@ -149,8 +149,20 @@
         text-anchor: middle;
         font-weight: bold;
       }
+
+      #canvasElement3d {
+        background-color: #FFF;
+        cursor: default;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
     </style>
     <script type="text/javascript">
+      //global variables
       curEdit = false;
   	  curView = "2d";
       menuOpen = false;
@@ -167,14 +179,26 @@
         <div id="popupMenu"> 
           <button id = "resetButton" onclick="resetGraph();">reset nodes</button>
           <button id = "forceToggle" onclick="toggleForce();">turn off force</button>
-          <button id = "exportToggle" onclick="exportTicksy();">export ticksy</button>
+          <button id = "exportToggle" onclick="exportTikz();">export tikz</button>
         </div>
+        <div id="canvasElement3d"></div>
   </body>
 
   <script src="js/d3.v3.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/three.min.js"></script>
+  <script src="js/Detectors.js"></script>
+  <script src="js/Stats.js"></script>
+  <script src="js/OrbitControls.js"></script>
+  <script src="js/THREEx.KeyboardState.js"></script>
+  <script src="js/THREEx.FullScreen.js"></script>
+  <script src="js/THREEx.WindowResize.js"></script>
+  <script src="js/RequestAnimationFrame.js"></script>
+  <script src="js/GraphBuilder.js"></script>
+  <script src="js/visGraph2d.js"></script>
   <script type="text/javascript">
-
+    window.getElementById("canvasElement3d").style.width = window.innerWidth;
+    window.getElementById("canvasElement3d").style.width = window.innerHeight - 125;
     window.onload = function() {
                 var a = document.getElementById("tdToggle");
                 a.onclick = function() {
@@ -219,6 +243,9 @@
 
     }
     function switchTo3d() {
+
+      stopForce();
+
       
     }
     function toggleForce() {
@@ -231,9 +258,6 @@
         document.getElementById("forceToggle").innerHTML = "turn off force";
       }
       forceOn = !forceOn;
-    }
-    function exportTicksy() {
-
     }
 
     window.addEventListener("mousedown", function(e) {
