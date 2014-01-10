@@ -491,6 +491,11 @@ function keydown() {
       }
       selected_link = null;
       selected_node = null;
+
+      document.getElementById("constructorString").innerHTML = "Macaulay2 Constructor: " + graph2M2Constructor(nodes,links);
+      document.getElementById("incString").innerHTML = "Incidence Matrix: " + arraytoM2Matrix(getIncidenceMatrix(nodes,links));
+      document.getElementById("adjString").innerHTML = "Adjacency Matrix: " + arraytoM2Matrix(getAdjacencyMatrix(nodes,links));
+
       restart();
       break;
     case 66: // B
