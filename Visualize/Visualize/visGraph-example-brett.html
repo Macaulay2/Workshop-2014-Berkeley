@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Macaulay2: editGraph</title>
+    <script type="text/javascript">
+      curEdit = false;
+  	  curView = "2d";
+      dataData = [[0, 1, 0, 0, 0, 0], [1, 0, 0, 0, 1, 1], [0, 0, 0, 0, 1, 0],
+     [0, 0, 0, 0, 0, 0], [0, 1, 1, 0, 0, 1], [0, 1, 0, 0, 1, 0]];
+      labelData = ["x_1","x_2","x_3","a","b","7"];
+    </script>
+  </head>
+  
+  <body>
+  	    <a id= "tdToggle"> switch to 3d</a>
+        <a id= "editToggle"> disable editing</a>
+        <a id= "exportToggle"> export</a>
+        <a id= "moreOptions"> more</a>
+  </body>
+
+  <script src="js/d3.v3.js"></script>
+  <script src="js/app.js"></script>
+  <script type="text/javascript">
+
+  window.onload = function() {
+                var a = document.getElementById("tdToggle");
+                a.onclick = function() {
+
+                }
+                var b = document.getElementById("editToggle");
+                b.onclick = function() {
+                	console.log(curEdit);
+
+                	if (curEdit) {
+                		b.innerHTML = "enable editing";
+                		curEdit = !curEdit;
+                		disableEditing();
+                	}
+                	else {
+                		b.innerHTML = "disable editing";
+                		curEdit = !curEdit;
+                		enableEditing();
+                	}
+                    
+                }
+                var c = document.getElementById("exportToggle");
+                c.onclick = function() {
+                    console.log("3d3d3d");
+                }
+                var d = document.getElementById("moreOptions");
+                d.onclick = function() {
+                    resetGraph();
+                }
+
+                //start with 2d
+                initializeBuilder();
+                disableEditing();
+            }
+
+  	
+  	window.addEventListener('resize', updateWindowSize2d, false);
+  </script>
+</html>
+
+<style>
+#tdToggle
+{
+color:#0000FF;
+vertical-align: middle;
+position:relative;
+left:15%;
+top:0px;
+z-index:1;
+}
+#tdToggle:hover {
+    text-decoration:underline;
+}
+#tdToggle:active {
+    text-decoration:underline;
+    color:#800080;
+}
+
+#editToggle
+{
+color:#0000FF;
+vertical-align: middle;
+position:relative;
+left:25%;
+top:0px;
+z-index:1;
+}
+#editToggle:hover {
+    text-decoration:underline;
+}
+#editToggle:active {
+    text-decoration:underline;
+    color:#800080;
+}
+
+#exportToggle
+{
+color:#0000FF;
+vertical-align: middle;
+position:relative;
+left:40%;
+top:0px;
+z-index:1;
+}
+#exportToggle:hover {
+    text-decoration:underline;
+}
+#exportToggle:active {
+    text-decoration:underline;
+    color:#800080;
+}
+
+#moreOptions
+{
+color:#0000FF;
+vertical-align: middle;
+position:relative;
+left:50%;
+top:0px;
+z-index:1;
+}
+#moreOptions:hover {
+    text-decoration:underline;
+}
+#moreOptions:active {
+    text-decoration:underline;
+    color:#800080;
+}
+
+a { cursor: pointer; cursor: hand; }
+
+
+#canvasElement {
+  background-color: #FFF;
+  cursor: default;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+#canvasElement:not(.active):not(.shift) {
+  cursor: crosshair;
+}
+
+path.link {
+  fill: none;
+  stroke: #000;
+  stroke-width: 4px;
+  cursor: default;
+}
+
+#canvasElement:not(.active):not(.shift) path.link {
+  cursor: pointer;
+}
+
+path.link.selected {
+  stroke-dasharray: 10,2;
+}
+
+path.link.dragline {
+  pointer-events: none;
+}
+
+path.link.hidden {
+  stroke-width: 0;
+}
+
+circle.node {
+  stroke-width: 1.5px;
+  cursor: pointer;
+}
+
+circle.node.reflexive {
+  stroke: #000 !important;
+  stroke-width: 2.5px;
+}
+
+text {
+  font: 12px sans-serif;
+  pointer-events: none;
+}
+
+text.id {
+  text-anchor: middle;
+  font-weight: bold;
+}
+</style>
