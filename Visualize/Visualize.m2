@@ -43,10 +43,14 @@ export {
      "visIntegralClosure",
      "visIdeal",
      "visGraph",
-     "runServer", --helper
-     "toArray", --helper
-     "getCurrPath", --helper
-     "copyJS"
+     "copyJS",
+     
+    -- Helpers 
+     "runServer",
+     "toArray", 
+     "getCurrPath", 
+     "copyTemplate"     
+
 }
 
 needsPackage"Graphs"
@@ -266,26 +270,32 @@ loadPackage"Visualize"
 (options Visualize).Configuration
 
 
--- input: path to ah html file
--- output: a copy of the input file in a temporary folder
---
-copyTemplate = method()
-copyTemplate String := src -> (
-    local fileName; local dirPath;
+searchReplace method(Options => {VisPath => currentDirectory()})
+searchReplace(String,String,String) := opts -> (oldString,newString,tempSrc) -> (
+            
+    )
+
+
+
+
+
+visOutput = method(Options => {VisPath => currentDirectory()})
+visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
+    local fileName; local openFile; local PATH;
+    
     fileName = (toString currentTime() )|".html";
-    dirPath = temporaryFileName();
-    makeDirectory dirPath;
-    dirPath = dirPath|"/";
---    tempPath = currentDirectory()|"Visualize/templates/"
---    copyFile( tempPath|"visIdeal/visIdeal3D.html", concatenate (dirPath,"/",fileName))
-    copyFile( src, concatenate (dirPath,fileName));
-    return dirPath;
-)
+    PATH = opts.VisPath|fileName;
+    openOut PATH << 
+    	replace(visKey, visString , get visTemplate) << 
+	close;
+                  
+    return (show new URL from { "file://"|PATH }, fileName);
+    )
+
 
 copyTemplate(currentDirectory()|"Visualize/templates/visIdeal/visIdeal3d.html")
 
-dirPath
-fileName
+
 
 
 
