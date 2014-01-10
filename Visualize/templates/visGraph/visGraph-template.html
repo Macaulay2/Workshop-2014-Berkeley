@@ -1,117 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>M2 -- visGraph</title>
-        <script type = "text/javascript">
-            dataData = visArray;
-            curView = "2d";
-        </script>
-        <script type="text/javascript" src="js/d3.v3.js"></script>
-        <script src="js/three.min.js"></script>
-        <script src="js/Detectors.js"></script>
-        <script src="js/OrbitControls.js"></script>
-        <script src="js/THREEx.KeyboardState.js"></script>
-        <script src="js/THREEx.FullScreen.js"></script>
-        <script src="js/THREEx.WindowResize.js"></script>
-        <script src="js/RequestAnimationFrame.js"></script>
-        <script src="js/GraphBuilder2d.js"></script>
-        <script src="js/GraphBuilder3d.js"></script>
-        <style>
-            
-            #tdToggle
-            {
-            color:#0000FF;
-            vertical-align: middle;
-            position:relative;
-            left:15%;
-            top:0px;
-            z-index:1;
-            }
-            #tdToggle:hover {
-                text-decoration:underline;
-            }
-            #tdToggle:active {
-                text-decoration:underline;
-                color:#800080;
-            }
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Macaulay2: editGraph</title>
+    <style> svg {
+  background-color: #FFF;
+  cursor: default;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
 
-            #editToggle
-            {
-            color:#0000FF;
-            vertical-align: middle;
-            position:relative;
-            left:40%;
-            top:0px;
-            z-index:1;
-            }
-            #editToggle:hover {
-                text-decoration:underline;
-            }
-            #editToggle:active {
-                text-decoration:underline;
-                color:#800080;
-            }
+svg:not(.active):not(.ctrl) {
+  cursor: crosshair;
+}
 
-            #exportToggle
-            {
-            color:#0000FF;
-            vertical-align: middle;
-            position:relative;
-            left:65%;
-            top:0px;
-            z-index:1;
-            }
-            #exportToggle:hover {
-                text-decoration:underline;
-            }
-            #exportToggle:active {
-                text-decoration:underline;
-                color:#800080;
-            }
+path.link {
+  fill: none;
+  stroke: #000;
+  stroke-width: 4px;
+  cursor: default;
+}
 
-            #canvasElement
-            {
-            position:absolute;
-            left:0px;
-            top:25px;
-            z-index:0;
-            }
+svg:not(.active):not(.ctrl) path.link {
+  cursor: pointer;
+}
 
-            a { cursor: pointer; cursor: hand; }
-            
-        </style>
-    </head>
-    <body>
-        <a id= "tdToggle"> switch to 3d</a>
-        <a id= "editToggle"> enable editing</a>
-        <a id= "exportToggle"> export</a>
+path.link.selected {
+  stroke-dasharray: 10,2;
+}
 
-        <script type="text/javascript">
-            window.onload = function() {
-                var a = document.getElementById("tdToggle");
-                a.onclick = function() {
+path.link.dragline {
+  pointer-events: none;
+}
 
-                    console.log("3d3d3d");
-                }
-                var b = document.getElementById("editToggle");
-                a.onclick = function() {
-                    console.log("3d3d3d");
-                }
-                var c = document.getElementById("exportToggle");
-                a.onclick = function() {
-                    console.log("3d3d3d");
-                }
+path.link.hidden {
+  stroke-width: 0;
+}
 
-                //start with 2d
-                generate2dGraph(dataData);
-            }
+circle.node {
+  stroke-width: 1.5px;
+  cursor: pointer;
+}
 
-            window.addEventListener('resize', updateWindowSize2d, false);
-        </script>
+circle.node.reflexive {
+  stroke: #000 !important;
+  stroke-width: 2.5px;
+}
 
-        <script type="text/javascript">
-            
-        </script>
-    </body>
-</html> 
+text {
+  font: 12px sans-serif;
+  pointer-events: none;
+}
+
+text.id {
+  text-anchor: middle;
+  font-weight: bold;
+}</style>
+
+  <script type = "text/javascript"> dataData = visArray </script>
+  <script src="d3.v3.js"></script>
+  <script src="GraphBuilder2d.js"></script>
+  
+  </head>
+  
+  <body>
+
+  </body>
+
+</html>
