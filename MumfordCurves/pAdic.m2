@@ -1,3 +1,33 @@
+newPackage(
+     "pAdic",
+     Version => "0.1", 
+     Date => "Jan 9, 2013",
+     Authors => {{Name => "Nathan Ilten", 
+	       Email => "nilten@math.berkeley.edu", 
+	       HomePage => "http://http://math.berkeley.edu/~nilten/"},
+          {Name => "Ralph Morrison",
+	       Email => "morrison@math.berkeley.edu",
+	       HomePage => "http://math.berkeley.edu/~ralph42/"},
+	  {Name => "Qingchun Ren",
+	       Email => "qingchun.ren@gmail.com",
+	       HomePage => "http://math.berkeley.edu/~qingchun/"}
+          },
+     Headline => "a package for p-adic numbers",
+     DebuggingMode => false
+     )
+
+export {PAdicField,
+     prime,
+     PAdicFieldElement,
+     valuation,
+     relativePrecision,
+     pAdicField,
+     QQQ,
+     toPAdicFieldElement,
+     PAdicMatrix,
+     pAdicMatrix
+     }
+
 PAdicFields = new MutableHashTable
 
 PAdicField = new Type of InexactField
@@ -12,6 +42,7 @@ relativePrecision = method()
 
 pAdicField = method()
 pAdicField ZZ:=(p)->(
+     if not isPrime p then error(toString(p)|" is not a prime!");
      if PAdicFields#?p then return PAdicFields#p;
      R := ZZ;
      A := new PAdicField from {(symbol prime) => p};
@@ -151,23 +182,35 @@ pAdicField ZZ:=(p)->(
      ZZ + A := (n,a)->a+n;
      A - ZZ := (a,n)->a+(-n);
      ZZ - A := (n,a)->(-a)+n;
-     pValuation := n->(
-	  b := n;
-	  v := 0;
-          while b%p==0 do (
-	       b = b//p;
-	       v = v+1;
-	       );
-	  v
-	  );
      A * ZZ := (a,n)->(
 	  if n==0 then 0 else (
-	       v := pValuation(n);
+	       v := pValuation(n,p);
 	       b := toPAdicFieldElement(n,v+relativePrecision a,A);
 	       a*b
 	       )
 	  );
      ZZ * A := (n,a)->a*n;
+     A / ZZ := (a,n)->(
+	  if n==0 then (
+	       error "You cannot divide by zero!";
+	       ) else (
+	       v := pValuation(n,p);
+	       b := toPAdicFieldElement(n,v+relativePrecision a,A);
+	       a/b
+	       )
+	  );
+     ZZ / A := (n,a)->n*inverse(a);
+     A + QQ := (a,r)->(
+	  b := toPAdicFieldElement(r,precision a,A);
+	  a+b
+	  );
+     QQ + A := (r,a)->a+r;
+     A - QQ := (a,r)->a+(-r);
+     QQ - A := (r,a)->(-a)+r;
+     A * QQ := (a,r)->a*numerator(r)/denominator(r);
+     QQ * A := (r,a)->a*r;
+     A / QQ := (a,r)->a/numerator(r)*denominator(r);
+     QQ / A := (r,a)->inverse(a)*numerator(r)/denominator(r);
      coarse := method();
      coarse(A,ZZ) := (a,prec) -> (
 	  newPrecision := min(prec,precision a);
@@ -211,8 +254,17 @@ QQQ#subscript=i->(pAdicField i)
 -- precision (value ZZ)
 -- expansion (hashtable, two entries: exponents, coefficients)
 
-
-
+pValuation = method()
+pValuation(ZZ,ZZ) := (n,p)->(
+     b := n;
+     v := 0;
+     while b%p==0 do (
+	  b = b//p;
+	  v = v+1;
+	  );
+     v
+     );
+pValuation(QQ,ZZ) := (r,p)->(pValuation(numerator(r),p)-pValuation(denominator(r),p));
 
 toPAdicFieldElement = method()
 
@@ -225,6 +277,18 @@ toPAdicFieldElement (List,PAdicField) := (L,S) -> (
    )
 toPAdicFieldElement(ZZ,ZZ,PAdicField) := (n,prec,S) -> (
      new S from ({0},{n},prec)
+     );
+toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
+     n := numerator r;
+     d := denominator r;
+     p := S.prime;
+     nVal := pValuation(n,p);
+     dVal := pValuation(d,p);
+     rVal := nVal-dVal;
+     newRelativePrecision := prec-rVal;
+     nPAdic := toPAdicFieldElement(n,nVal+newRelativePrecision,S);
+     dPAdic := toPAdicFieldElement(d,dVal+newRelativePrecision,S);
+     nPAdic/dPAdic
      );
 
 
@@ -305,37 +369,87 @@ transpose PAdicMatrix := M -> (
 net PAdicMatrix := M -> net expression M
 expression PAdicMatrix := M -> MatrixExpression applyTable(M.matrix, expression)
 
+henselApproximation = method()
+henselApproximation (ZZ[x],ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
+	x:=(ring f)_0;
+	f':=diff(x,f);
+	g:= a->sum(0..(degree(f))_0, j->coefficient(x^j,f)*a^j);
+	g':= a->sum(0..(degree(f'))_0, j->coefficient(x^j,f')*a^j);
+	local s; s=toPAdicFieldElement(r,n,QQQ_p); i=0;
+	while i<n+1 do (s=s-(g(s)/g'(s));i=i+1);
+	s)
+
 end
+----------------------------
+--Friday Demonstration
+----------------------------
+restart
+load "~/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
+
+--for any p have field QQQ_p
+
+QQQ_23
+
+--can make p-adics from rationals:
+x=toPAdicFieldElement(1,100,QQQ_23)
+y=toPAdicFieldElement(-345,5,QQQ_23)
+z=toPAdicFieldElement(-345,6,QQQ_23)
+
+y==z
+y===z
+
+
+w=toPAdicFieldElement(17/(4*23^5),30,QQQ_23)
+precision w
+valuation w
+
+
+--addition, subtraction, multiplication, and division
+y*w
+y*z
+y-w
+y/w
+
+--QQQ_23 only gets created once!
+ZZ[s]===ZZ[s]
+QQQ_27===QQQ_27
+
+--basic matrix operations
+M=pAdicMatrix {{x,y},{z,w*z}}
+M+M
+M*M
+M^5
+
+
+
+
+
+
 ----------------------------
 --Qingchun's testing area
 ----------------------------
+
 restart
 load "/Users/qingchun/Desktop/M2Berkeley/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
 Q3 = pAdicField(3)
 x = toPAdicFieldElement({1,2,0,1,0},Q3);
 y = toPAdicFieldElement(0,3,Q3);
 z = toPAdicFieldElement(10,10,Q3);
-print(x<<3);
-print(y<<15);
-print(x<<(-5));
-print(x+x)
-print(x*x)
-print(x+y)
-print(x*y)
-print(y*y)
-print(x+1)
-print((1-x)+x)
-print(82*x)
-a = toPAdicFieldElement(10,1000,Q3)
-print(a^(-100))
-print(a^(-100)*(a^100))
+w = toPAdicFieldElement(1/2,5,Q3);
+a = toPAdicFieldElement(10,100,Q3)
+assert(x+y==y+x);
+assert(a^100*a^(-100)==1);
+assert(14/w*w==14);
+assert(1/6+w-1/2+1/3==w);
+assert((6/9)*w/(1/3)==w+w);
 end
 
 ----------------------------
 --Nathan's testing area
 ----------------------------
 restart
-load "~/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
+loadPackage "pAdic"
+
 
 x=toPAdicFieldElement({1,2,2,2},QQQ_3)
 
@@ -399,3 +513,13 @@ b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->a_j*b_(i-j)),S)/sub(a_0,S),R)+p)%p;i=i+1)
 			i=i+1);
 	       S
 	       )
+--Hensel code rough draft
+henselApproximation = method()
+henselApproximation (ZZ[x],ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
+	x:=(ring f)_0;
+	f':=diff(x,f); print f';
+	g:= a->sum(0..(degree(f))_0, j->coefficient(x^j,f)*a^j);
+	g':= a->sum(0..(degree(f'))_0, j->coefficient(x^j,f')*a^j);
+	local s; s=toPAdicFieldElement(r,n,QQQ_p); i=0;
+	while i<n+1 do ( print i; s=s-(g(s)/g'(s));i=i+1);
+	s)

@@ -1,4 +1,3 @@
-
 var width  = null,
       height = null,
       colors = null;
@@ -309,7 +308,7 @@ function restart() {
       .attr('x', 0)
       .attr('y', 4)
       .attr('class', 'id')
-      .text(function(d) { return d.id; });
+      .text(function(d) { return d.name; });
 
   // remove old nodes
   circle.exit().remove();
@@ -352,7 +351,7 @@ function mousedown() {
     curName += 'a';
   }
   while (checkName(curName)) {
-    curName = curName.substring(0, curName.length() - 1) + getNextAlpha(curName.slice(-1));
+    curName = curName.substring(0, curName.length - 1) + getNextAlpha(curName.slice(-1));
   }
 
   node = {id: ++lastNodeId, name: curName, reflexive: false};
@@ -385,6 +384,11 @@ function mouseup() {
 
   // clear mouse event vars
   resetMouseVars();
+
+  // Need to refresh these again since mouseup doesn't call restart().
+  document.getElementById("constructorString").innerHTML = "Macaulay2 Constructor: " + graph2M2Constructor(nodes,links);
+  document.getElementById("incString").innerHTML = "Incidence Matrix: " + arraytoM2Matrix(getIncidenceMatrix(nodes,links));
+  document.getElementById("adjString").innerHTML = "Adjacency Matrix: " + arraytoM2Matrix(getAdjacencyMatrix(nodes,links));
 }
 
 function spliceLinksForNode(node) {
@@ -415,10 +419,10 @@ function keydown() {
   switch(d3.event.keyCode) {
     case 8: // backspace
     case 46: // delete
-      if(selected_node) {
+      if(curEdit && selected_node) {
         nodes.splice(nodes.indexOf(selected_node), 1);
         spliceLinksForNode(selected_node);
-      } else if(selected_link) {
+      } else if(curEdit && selected_link) {
 
         links.splice(links.indexOf(selected_link), 1);
       }
@@ -471,6 +475,9 @@ function keyup() {
 function disableEditing() {
   circle.call(drag);
   svg.classed('shift', true);
+  current_node = null;
+  current_link = null;
+  restart;
 }
 
 function enableEditing() {
@@ -492,14 +499,14 @@ function updateWindowSize2d() {
 // Functions to construct M2 constructors for graph, incidence matrix, and adjacency matrix.
 
 function graph2M2Constructor( nodeSet, edgeSet ){
-  var strEdges = "";
+  var strEdges = "{";
   var e = edgeSet.length;
   for( var i = 0; i < e; i++ ){
     if(i != (e-1)){
       strEdges = strEdges + "{" + (edgeSet[i].source.name).toString() + ", " + (edgeSet[i].target.name).toString() + "}, ";
     }
     else{
-      strEdges = strEdges + "{" + (edgeSet[i].source.name).toString() + ", " + (edgeSet[i].target.name).toString() + "}";
+      strEdges = strEdges + "{" + (edgeSet[i].source.name).toString() + ", " + (edgeSet[i].target.name).toString() + "}}";
     } 
   }
   // determine if the singleton set is empty
@@ -575,6 +582,9 @@ function getIncidenceMatrix (nodeSet, edgeSet){
     }
   }
 
+  console.log(toString(links)+"\n");
+  console.log(toString(incMatrix)+"\n");
+
   for (var i = 0; i < links.length; i++) {
     incMatrix[links[i].source.id][i] = 1; // Set matrix entries corresponding to incidences to 1.
     incMatrix[links[i].target.id][i] = 1;
@@ -621,4 +631,13 @@ function arraytoM2Matrix (arr){
   }
   
   return str;
+}
+
+function exportTikz() {
+
+
+
+
+
+
 }

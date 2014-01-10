@@ -2,30 +2,185 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Macaulay2: editGraph</title>
+    <title>Macaulay2: visGraph</title>
+    <style>
+      #tdToggle
+      {
+      color:#0000FF;
+      vertical-align: middle;
+      position:relative;
+      left:15%;
+      top:0px;
+      z-index:1;
+      }
+      #tdToggle:hover {
+          text-decoration:underline;
+      }
+      #tdToggle:active {
+          text-decoration:underline;
+          color:#800080;
+      }
+
+      #editToggle
+      {
+      color:#0000FF;
+      vertical-align: middle;
+      position:relative;
+      left:25%;
+      top:0px;
+      z-index:1;
+      }
+      #editToggle:hover {
+          text-decoration:underline;
+      }
+      #editToggle:active {
+          text-decoration:underline;
+          color:#800080;
+      }
+
+      #exportToggle
+      {
+      color:#0000FF;
+      vertical-align: middle;
+      position:relative;
+      left:40%;
+      top:0px;
+      z-index:1;
+      }
+      #exportToggle:hover {
+          text-decoration:underline;
+      }
+      #exportToggle:active {
+          text-decoration:underline;
+          color:#800080;
+      }
+
+      #moreOptions
+      {
+      color:#0000FF;
+      vertical-align: middle;
+      position:relative;
+      left:50%;
+      top:0px;
+      z-index:1;
+      }
+      #moreOptions:hover {
+          text-decoration:underline;
+      }
+      #moreOptions:active {
+          text-decoration:underline;
+          color:#800080;
+      }
+
+      a { cursor: pointer; cursor: hand; }
+
+
+      #popupMenu {
+        visibility:hidden;
+        position:absolute;
+        left:69%;
+        top:4%;
+        width:135px;
+        height:220px;
+        background-color:#000000;
+        opacity:.6;
+        z-index: 5;
+
+      }
+
+
+      #canvasElement {
+        background-color: #FFF;
+        cursor: default;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      #canvasElement:not(.active):not(.shift) {
+        cursor: crosshair;
+      }
+
+      path.link {
+        fill: none;
+        stroke: #B6B6B6;
+        stroke-width: 2px;
+        cursor: default;
+      }
+
+      #canvasElement:not(.active):not(.shift) path.link {
+        cursor: pointer;
+      }
+
+      path.link.selected {
+        stroke-dasharray: 10,2;
+      }
+
+      path.link.dragline {
+        pointer-events: none;
+      }
+
+      path.link.hidden {
+        stroke-width: 0;
+      }
+
+      circle.node {
+        stroke-width: 0px;
+        cursor: pointer;
+      }
+
+      circle.node.reflexive {
+        stroke: #000 !important;
+        stroke-width: 2.5px;
+      }
+
+      text {
+        font: 12px sans-serif;
+        pointer-events: none;
+      }
+
+      text.id {
+        text-anchor: middle;
+        font-weight: bold;
+      }
+    </style>
     <script type="text/javascript">
       curEdit = false;
   	  curView = "2d";
+      menuOpen = false;
       dataData = visArray;
-      labelData = ["x_1","x_2","x_3","a","b","7"];
+      labelData = visLabels;
     </script>
   </head>
   
   <body>
   	    <a id= "tdToggle"> switch to 3d</a>
-        <a id= "editToggle"> disable editing</a>
+        <a id= "editToggle"> enable editing</a>
         <a id= "exportToggle"> export</a>
         <a id= "moreOptions"> more</a>
+        <div id="popupMenu"> 
+          <button onclick="resetGraph();">reset nodes</button>
+        </div>
   </body>
 
   <script src="js/d3.v3.js"></script>
   <script src="js/app.js"></script>
   <script type="text/javascript">
 
-  window.onload = function() {
+    window.onload = function() {
                 var a = document.getElementById("tdToggle");
                 a.onclick = function() {
-
+                  if (curView=="2d") {
+                    switchTo3d();
+                    curView = "3d";
+                  }
+                  else {
+                    switchTo2d();
+                    curView = "2d";
+                  }
                 }
                 var b = document.getElementById("editToggle");
                 b.onclick = function() {
@@ -45,11 +200,13 @@
                 }
                 var c = document.getElementById("exportToggle");
                 c.onclick = function() {
-                    console.log("3d3d3d");
+                    console.log("export ticksy");
                 }
                 var d = document.getElementById("moreOptions");
                 d.onclick = function() {
-                    resetGraph();
+                    //resetGraph();
+                    document.getElementById("popupMenu").style.visibility = "visible";
+                    menuOpen = true;
                 }
 
                 //start with 2d
@@ -57,138 +214,24 @@
                 disableEditing();
             }
 
-  	
+    function switchTo2d() {
+
+    }
+    function switchTo3d() {
+      
+    }
+
+    window.addEventListener("mousedown", function(e) {
+      if (!menuOpen) return;
+
+      var tempMenu = document.getElementById("popupMenu");
+      console.log(tempMenu.offsetHeight);
+
+      if ( (e.x < tempMenu.offsetLeft) || (e.y > tempMenu.offsetTop + tempMenu.offsetHeight) ) {
+        document.getElementById("popupMenu").style.visibility = "hidden";
+      }
+
+    }, false);
   	window.addEventListener('resize', updateWindowSize2d, false);
   </script>
 </html>
-
-<style>
-#tdToggle
-{
-color:#0000FF;
-vertical-align: middle;
-position:relative;
-left:15%;
-top:0px;
-z-index:1;
-}
-#tdToggle:hover {
-    text-decoration:underline;
-}
-#tdToggle:active {
-    text-decoration:underline;
-    color:#800080;
-}
-
-#editToggle
-{
-color:#0000FF;
-vertical-align: middle;
-position:relative;
-left:25%;
-top:0px;
-z-index:1;
-}
-#editToggle:hover {
-    text-decoration:underline;
-}
-#editToggle:active {
-    text-decoration:underline;
-    color:#800080;
-}
-
-#exportToggle
-{
-color:#0000FF;
-vertical-align: middle;
-position:relative;
-left:40%;
-top:0px;
-z-index:1;
-}
-#exportToggle:hover {
-    text-decoration:underline;
-}
-#exportToggle:active {
-    text-decoration:underline;
-    color:#800080;
-}
-
-#moreOptions
-{
-color:#0000FF;
-vertical-align: middle;
-position:relative;
-left:50%;
-top:0px;
-z-index:1;
-}
-#moreOptions:hover {
-    text-decoration:underline;
-}
-#moreOptions:active {
-    text-decoration:underline;
-    color:#800080;
-}
-
-a { cursor: pointer; cursor: hand; }
-
-
-#canvasElement {
-  background-color: #FFF;
-  cursor: default;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-
-#canvasElement:not(.active):not(.shift) {
-  cursor: crosshair;
-}
-
-path.link {
-  fill: none;
-  stroke: #000;
-  stroke-width: 4px;
-  cursor: default;
-}
-
-#canvasElement:not(.active):not(.shift) path.link {
-  cursor: pointer;
-}
-
-path.link.selected {
-  stroke-dasharray: 10,2;
-}
-
-path.link.dragline {
-  pointer-events: none;
-}
-
-path.link.hidden {
-  stroke-width: 0;
-}
-
-circle.node {
-  stroke-width: 1.5px;
-  cursor: pointer;
-}
-
-circle.node.reflexive {
-  stroke: #000 !important;
-  stroke-width: 2.5px;
-}
-
-text {
-  font: 12px sans-serif;
-  pointer-events: none;
-}
-
-text.id {
-  text-anchor: middle;
-  font-weight: bold;
-}
-</style>

@@ -220,10 +220,46 @@ function tick() {
         sourceY = d.source.y + (sourcePadding * normY),
         targetX = d.target.x - (targetPadding * normX),
         targetY = d.target.y - (targetPadding * normY);
+    if (sourceX > width - 15) {
+      sourceX = width - 15;
+    }
+    else if (sourceX < 15) {
+      sourceX = 15;
+    }
+    if (targetX > width - 15) {
+      targetX = width -15;
+    }
+    else if (targetX < 15) {
+      targetX = 15;
+    }
+    if (sourceY > height - 15) {
+      sourceY = height - 15;
+    }
+    else if (sourceY < 15) {
+      sourceY = 15;
+    }
+    if (targetY  > height - 15) {
+      targetY = height - 15;
+    }
+    else if (targetY  < 15) {
+      targetY = 15;
+    }
     return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
   });
 
   circle.attr('transform', function(d) {
+    if (d.x > width - 15) {
+      d.x = width - 15;
+    }
+    else if (d.x < 15) {
+      d.x = 15;
+    }
+    if (d.y > height - 15) {
+      d.y = height - 15;
+    }
+    else if (d.y < 15) {
+      d.y = 15;
+    }
     return 'translate(' + d.x + ',' + d.y + ')';
   });
 }

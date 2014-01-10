@@ -155,10 +155,51 @@ function tick() {
         sourceY = d.source.y + (sourcePadding * normY),
         targetX = d.target.x - (targetPadding * normX),
         targetY = d.target.y - (targetPadding * normY);
+
+        //check x and y are on screen 
+        if (sourceX > width - 15) {
+          sourceX = width - 15;
+        }
+        else if (sourceX < 15) {
+          sourceX = 15;
+        }
+        if (targetX > width - 15) {
+          targetX = width -15;
+        }
+        else if (targetX < 15) {
+          targetX = 15;
+        }
+        if (sourceY > height - 15) {
+          sourceY = height - 15;
+        }
+        else if (sourceY < 15) {
+          sourceY = 15;
+        }
+        if (targetY  > height - 15) {
+          targetY = height - 15;
+        }
+        else if (targetY  < 15) {
+          targetY = 15;
+        }
+
     return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
   });
 
   circle.attr('transform', function(d) {
+
+    //check x and y are on screen 
+    if (d.x > width - 15) {
+      d.x = width - 15;
+    }
+    else if (d.x < 15) {
+      d.x = 15;
+    }
+    if (d.y > height - 15) {
+      d.y = height - 15;
+    }
+    else if (d.y < 15) {
+      d.y = 15;
+    }
     return 'translate(' + d.x + ',' + d.y + ')';
   });
 }
@@ -309,7 +350,7 @@ function restart() {
       .attr('x', 0)
       .attr('y', 4)
       .attr('class', 'id')
-      .text(function(d) { return d.id; });
+      .text(function(d) { return d.name; });
 
   // remove old nodes
   circle.exit().remove();
@@ -352,7 +393,7 @@ function mousedown() {
     curName += 'a';
   }
   while (checkName(curName)) {
-    curName = curName.substring(0, curName.length() - 1) + getNextAlpha(curName.slice(-1));
+    curName = curName.substring(0, curName.length - 1) + getNextAlpha(curName.slice(-1));
   }
 
   node = {id: ++lastNodeId, name: curName, reflexive: false};
@@ -483,10 +524,12 @@ function enableEditing() {
 function updateWindowSize2d() {
 
         var svg = document.getElementById("canvasElement");
-        svg.style.width = window.innerWidth;
-        svg.style.height = window.innerHeight - 150;
-        svg.width = window.innerWidth;
-        svg.height = window.innerHeight - 150;
+        width = window.innerWidth;
+        height = window.innerHeight - 150;
+        svg.style.width = width;
+        svg.style.height = height;
+        svg.width = width;
+        svg.height = height;
 }
 
 // Functions to construct M2 constructors for graph, incidence matrix, and adjacency matrix.
