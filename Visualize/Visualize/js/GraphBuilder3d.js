@@ -119,14 +119,9 @@ function generateGraph() {
     var data = [];
 
     for (var i = 0; i<dataData.length; i++) {
-
-      nodes.push( {name: names[i], id: i, reflexive:false } );
-
-    }
-    for (var i = 0; i<dataData.length; i++) {
         for (var j = 0; j < i ; j++) {
             if (dataData[i][j] != 0) {
-                links.push( { source: nodes[i], target: nodes[j], left: false, right: false} );
+                data.push( { source: nodes[i], target: nodes[j], left: false, right: false} );
             }    
         }
     }
