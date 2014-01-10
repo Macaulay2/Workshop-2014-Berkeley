@@ -470,12 +470,16 @@ transpose PAdicMatrix := M -> (
 net PAdicMatrix := M -> net expression M
 expression PAdicMatrix := M -> MatrixExpression applyTable(M.matrix, expression)
 
+---------------------------------------------
+-- Hensel approximation
+---------------------------------------------
+
 henselApproximation = method()
 henselApproximation (RingElement,ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
 	x:=(ring f)_0;
 	f':=diff(x,f);
-	g:= a->sum(0..(degree(f))_0, j->coefficient(x^j,f)*a^j);
-	g':= a->sum(0..(degree(f'))_0, j->coefficient(x^j,f')*a^j);
+	g:= a->sum(1..(degree(f))_0, j->coefficient(x^j,f)*a^j)+coefficient(x^0,f);
+	g':= a->sum(1..(degree(f'))_0, j->coefficient(x^j,f')*a^j)+coefficient(x^0,f');
 	if not sub(g(r),ZZ/p) == sub(0,ZZ/p) then error "The starting value is not a root";
 	if sub(g'(r),ZZ/p) == sub(0,ZZ/p) then error "This is a double root";
 	local s; s=toPAdicFieldElement(r,n,QQQ_p); i:=0;
@@ -740,6 +744,26 @@ a := toPAdicFieldElement(-123,10,QQQ_7);
 assert((a<<1)==a*7);
 assert((a<<15)!=0);
 assert(((a<<23)<<(-23))==a);
+///
+
+TEST ///
+a := toPAdicFieldElement(123456789,10,QQQ_7);
+assert(a^10*a^(-10)==1);
+assert(a^3*a^7/a^4*a^(-5)==a);
+///
+
+TEST ///
+R := ZZ[x];
+a := henselApproximation(x^2+1,3,6,5);
+assert(precision a==6);
+assert(a#"expansion"_1#0==3);
+assert(a^2+1==0);
+b := henselApproximation(x^2+6*x+5,0,6,5);
+assert(b==-5);
+c := henselApproximation(x^3-7,3,6,5);
+assert(precision c==6);
+assert(c#"expansion"_1#0==3);
+assert(c^3==7);
 ///
 
 end
