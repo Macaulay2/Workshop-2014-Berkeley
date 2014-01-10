@@ -514,6 +514,60 @@ document {
      EXAMPLE {"pAdicField(7)"}
      }
 
+document {
+     Key =>henselApproximation,
+     Inputs => {"f" => ofClass RingElement,"r" => ofClass ZZ,"n" => ofClass ZZ,"p" => ofClass ZZ},
+     Outputs => {"s" => ofClass PAdicFieldElement},
+     Usage => "s=henselApproximation(f,r,n,p)",
+     Headline=> "a method for approximating p-adic roots",
+     PARA{TT "henselApproximation"," approximates to precision ",TT "n"," a ",TT "p","-adic root of a polynomial
+	  ",TT "f"," congruent to ",TT "r mod p",".  The polynomial must have integer coefficients,and ",TT "r"," 
+	  must be a simple root of ",TT "f mod p","." },
+     EXAMPLE {"ZZ[x]",
+	  "henselApproximation(x^2+1,3,6,5)"}
+     }
+
+
+
+
+document {
+     Key =>valuation,
+     Inputs => {"x" => ofClass PAdicFieldElement},
+     Outputs => {"n" => ofClass ZZ},
+     Usage => "n=valuation(x)",
+     Headline=> "calculates the valuation of a p-adic number",
+     PARA{TT "valuation"," returns the exponent of the smallest
+	  power of p in the p-adic representation of ",TT "x"," for
+	  which the coefficient is non-zero."},
+     EXAMPLE {"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "valuation x"}
+     }
+
+document {
+     Key =>relativePrecision,
+     Inputs => {"x" => ofClass PAdicFieldElement},
+     Outputs => {"n" => ofClass ZZ},
+     Usage => "n=valuation(x)",
+     Headline=> "calculates the valuation of a p-adic number",
+     PARA{TT "relativePrecision"," returns the difference of the
+	   ",TO precision," and the ",TO valuation," of ",TT "x",", unless
+	   all coefficients are zero, in which case zero is returned."},
+     EXAMPLE {"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "relativePrecision x"} 
+     }
+
+document {
+     Key =>(precision,PAdicFieldElement),
+     Inputs => {"x" => ofClass PAdicFieldElement},
+     Outputs => {"n" => ofClass ZZ},
+     Usage => "n=precision(x)",
+     Headline=> "calculates the precision of a p-adic number",
+     PARA{TT "precision"," returns the exponent of the smallest
+	  power of p in the p-adic representation of ",TT "x"," for
+	  which the coefficient is unknown."},
+     EXAMPLE {"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "precision x"}           
+     }
 
 document {
      Key =>PAdicFieldElement,
