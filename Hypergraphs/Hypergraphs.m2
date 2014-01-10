@@ -103,7 +103,10 @@ hypergraph(Matrix) := Hypergraph => opts -> (incMatrix) -> (
 	return hypergraph(V, E, opts);
 )
 
+<<<<<<< Updated upstream
 --------------------------------------------
+=======
+>>>>>>> Stashed changes
 
 inducedSubhypergraph = method(TypicalValue => Hypergraph);
 inducedSubhypergraph(List,Hypergraph) := Hypergraph => (V,H) -> (
