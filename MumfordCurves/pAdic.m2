@@ -25,7 +25,8 @@ export {PAdicField,
      QQQ,
      toPAdicFieldElement,
      PAdicMatrix,
-     pAdicMatrix
+     pAdicMatrix,
+     henselApproximation
      }
 
 PAdicFields = new MutableHashTable
@@ -47,9 +48,10 @@ pAdicField ZZ:=(p)->(
      R := ZZ;
      A := new PAdicField from {(symbol prime) => p};
      precision A := a->a#"precision";
-     valuation A := a->(if #a#"expansion">0 then return min a#"expansion"_0;
+     valuation A := a->(if #(a#"expansion"_0)>0 then return min a#"expansion"_0;
 	  infinity);
-     relativePrecision A:= a -> (precision a)-(valuation a);
+     relativePrecision A:= a -> (
+	  if #(a#"expansion"_0)==0 then 0 else (precision a)-(valuation a));
      net A := a->(expans:=a#"expansion";
 	  keylist:=expans_0;
        	  ((concatenate apply(#keylist,i->
@@ -370,12 +372,12 @@ net PAdicMatrix := M -> net expression M
 expression PAdicMatrix := M -> MatrixExpression applyTable(M.matrix, expression)
 
 henselApproximation = method()
-henselApproximation (ZZ[x],ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
+henselApproximation (RingElement,ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
 	x:=(ring f)_0;
 	f':=diff(x,f);
 	g:= a->sum(0..(degree(f))_0, j->coefficient(x^j,f)*a^j);
 	g':= a->sum(0..(degree(f'))_0, j->coefficient(x^j,f')*a^j);
-	local s; s=toPAdicFieldElement(r,n,QQQ_p); i=0;
+	local s; s=toPAdicFieldElement(r,n,QQQ_p); i:=0;
 	while i<n+1 do (s=s-(g(s)/g'(s));i=i+1);
 	s)
 
@@ -430,7 +432,9 @@ M^5
 ----------------------------
 
 restart
-load "/Users/qingchun/Desktop/M2Berkeley/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
+loadPackage "pAdic"
+ZZ[x]
+henselApproximation(x^2+1,2,3,5)
 Q3 = pAdicField(3)
 x = toPAdicFieldElement({1,2,0,1,0},Q3);
 y = toPAdicFieldElement(0,3,Q3);
