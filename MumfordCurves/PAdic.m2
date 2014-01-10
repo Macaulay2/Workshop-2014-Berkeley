@@ -161,14 +161,18 @@ toPAdicFieldElement(ZZ,ZZ,PAdicField) := (n,prec,S) -> (
 toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
      n := numerator r;
      d := denominator r;
-     p := S.prime;
-     nVal := pValuation(n,p);
-     dVal := pValuation(d,p);
-     rVal := nVal-dVal;
-     newRelativePrecision := prec-rVal;
-     nPAdic := toPAdicFieldElement(n,nVal+newRelativePrecision,S);
-     dPAdic := toPAdicFieldElement(d,dVal+newRelativePrecision,S);
-     nPAdic/dPAdic
+     if d==1 then (
+	  toPAdicFieldElement(n,prec,S)
+	  ) else (
+     	  p := S.prime;
+     	  nVal := pValuation(n,p);
+     	  dVal := pValuation(d,p);
+     	  rVal := nVal-dVal;
+     	  newRelativePrecision := prec-rVal;
+     	  nPAdic := toPAdicFieldElement(n,nVal+newRelativePrecision,S);
+     	  dPAdic := toPAdicFieldElement(d,dVal+newRelativePrecision,S);
+     	  nPAdic/dPAdic
+	  )
      );
 
 ---------------------------------------------
@@ -374,6 +378,13 @@ PAdicFieldElement == ZZ := (a,n) -> (
 
 ZZ == PAdicFieldElement := (n,a) -> a==n
 
+PAdicFieldElement == QQ := (a,r) -> (
+     b := toPAdicFieldElement(r,precision a,class a);
+     a === b
+     )
+
+QQ == PAdicFieldElement := (r,a) -> a==r
+
 PAdicFieldElement << ZZ := (a,n) -> (
      newPrecision := a#"precision"+n;
      newKeys := for i in a#"expansion"_0 list i+n;
@@ -459,12 +470,16 @@ transpose PAdicMatrix := M -> (
 net PAdicMatrix := M -> net expression M
 expression PAdicMatrix := M -> MatrixExpression applyTable(M.matrix, expression)
 
+---------------------------------------------
+-- Hensel approximation
+---------------------------------------------
+
 henselApproximation = method()
 henselApproximation (RingElement,ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
 	x:=(ring f)_0;
 	f':=diff(x,f);
-	g:= a->sum(0..(degree(f))_0, j->coefficient(x^j,f)*a^j);
-	g':= a->sum(0..(degree(f'))_0, j->coefficient(x^j,f')*a^j);
+	g:= a->sum(1..(degree(f))_0, j->coefficient(x^j,f)*a^j)+coefficient(x^0,f);
+	g':= a->sum(1..(degree(f'))_0, j->coefficient(x^j,f')*a^j)+coefficient(x^0,f');
 	if not sub(g(r),ZZ/p) == sub(0,ZZ/p) then error "The starting value is not a root";
 	if sub(g'(r),ZZ/p) == sub(0,ZZ/p) then error "This is a double root";
 	local s; s=toPAdicFieldElement(r,n,QQQ_p); i:=0;
@@ -514,9 +529,72 @@ document {
      EXAMPLE {"pAdicField(7)"}
      }
 
+document {
+     Key =>henselApproximation,
+     Inputs => {"f" => ofClass RingElement,"r" => ofClass ZZ,"n" => ofClass ZZ,"p" => ofClass ZZ},
+     Outputs => {"s" => ofClass PAdicFieldElement},
+     Usage => "s=henselApproximation(f,r,n,p)",
+     Headline=> "a method for approximating p-adic roots",
+     PARA{TT "henselApproximation"," approximates to precision ",TT "n"," a ",TT "p","-adic root of a polynomial
+	  ",TT "f"," congruent to ",TT "r mod p",".  The polynomial must have integer coefficients, 
+	  and ",TT "r"," 
+	  must be a simple root of ",TT "f mod p","." },
+     EXAMPLE {"ZZ[x];",
+	  "a=henselApproximation(x^2+1,3,6,5)",
+	  "a^2+1==0"}
+     }
+
+
+
+
+document {
+     Key =>{valuation,(valuation,PAdicFieldElement)},
+     Inputs => {"x" => ofClass PAdicFieldElement},
+     Outputs => {"n" => ofClass ZZ},
+     Usage => "n=valuation(x)",
+     Headline=> "calculates the valuation of a p-adic number",
+     PARA{TT "valuation"," returns the exponent of the smallest
+	  power of p in the p-adic representation of ",TT "x"," for
+	  which the coefficient is non-zero."},
+     EXAMPLE {"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "valuation x"}
+     }
+
+document {
+     Key =>{relativePrecision,(relativePrecision,PAdicFieldElement)},
+     Inputs => {"x" => ofClass PAdicFieldElement},
+     Outputs => {"n" => ofClass ZZ},
+     Usage => "n=valuation(x)",
+     Headline=> "calculates the valuation of a p-adic number",
+     PARA{TT "relativePrecision"," returns the difference of the
+	   ",TO precision," and the ",TO valuation," of ",TT "x",", unless
+	   all coefficients are zero, in which case zero is returned."},
+     EXAMPLE {"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "relativePrecision x"} 
+     }
+
+document {
+     Key =>(precision,PAdicFieldElement),
+     Inputs => {"x" => ofClass PAdicFieldElement},
+     Outputs => {"n" => ofClass ZZ},
+     Usage => "n=precision(x)",
+     Headline=> "calculates the precision of a p-adic number",
+     PARA{TT "precision"," returns the exponent of the smallest
+	  power of p in the p-adic representation of ",TT "x"," for
+	  which the coefficient is unknown."},
+     EXAMPLE {"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "precision x"}           
+     }
 
 document {
      Key =>PAdicFieldElement,
+     Headline=> "type of elements found in a PAdicField",
+     PARA{"A ",TT "PAdicFieldElement"," is ",ofClass HashTable," representing
+	  an element of some ",TO PAdicField,". The key ",TT toString("precision"),"
+	   stores an integer representing the ",TO precision," of the element. The
+	   key ",TT toString("expansion")," stores ",ofClass List," whose first 
+	   element is a list of the exponents of p which appear, and the second
+	   element is a list of the corresponding coefficients."}
      }
 
 
@@ -617,6 +695,20 @@ TEST ///
 a := toPAdicFieldElement(1/2,10,QQQ_7);
 b := toPAdicFieldElement(1/7,15,QQQ_7);
 c := toPAdicFieldElement(0,8,QQQ_7);
+assert(a==1/2);
+assert(a!=1/7);
+assert(b==1/7);
+assert(0/1==c);
+assert(not a!=1/2);
+assert(not a==1/7);
+assert(not b!=1/7);
+assert(not 0/1!=c);
+///
+
+TEST ///
+a := toPAdicFieldElement(1/2,10,QQQ_7);
+b := toPAdicFieldElement(1/7,15,QQQ_7);
+c := toPAdicFieldElement(0,8,QQQ_7);
 assert(a*2==1);
 assert(b*7==1);
 assert((1/3+a)*6==5);
@@ -630,6 +722,48 @@ assert(c*132*123*134/1234==0);
 TEST ///
 a := toPAdicFieldElement(3,0,QQQ_7);
 assert(a#"expansion"_0=={});
+///
+
+TEST ///
+a := toPAdicFieldElement(-123,10,QQQ_7);
+assert(precision a==10);
+assert(valuation a==0);
+assert(relativePrecision a==10);
+b := toPAdicFieldElement(23*7,10,QQQ_7);
+assert(precision b==10);
+assert(valuation b==1);
+assert(relativePrecision b==9);
+c := toPAdicFieldElement(0,10,QQQ_7);
+assert(precision c==10);
+assert(valuation c==infinity);
+assert(relativePrecision c==0);
+///
+
+TEST ///
+a := toPAdicFieldElement(-123,10,QQQ_7);
+assert((a<<1)==a*7);
+assert((a<<15)!=0);
+assert(((a<<23)<<(-23))==a);
+///
+
+TEST ///
+a := toPAdicFieldElement(123456789,10,QQQ_7);
+assert(a^10*a^(-10)==1);
+assert(a^3*a^7/a^4*a^(-5)==a);
+///
+
+TEST ///
+R := ZZ[x];
+a := henselApproximation(x^2+1,3,6,5);
+assert(precision a==6);
+assert(a#"expansion"_1#0==3);
+assert(a^2+1==0);
+b := henselApproximation(x^2+6*x+5,0,6,5);
+assert(b==-5);
+c := henselApproximation(x^3-7,3,6,5);
+assert(precision c==6);
+assert(c#"expansion"_1#0==3);
+assert(c^3==7);
 ///
 
 end

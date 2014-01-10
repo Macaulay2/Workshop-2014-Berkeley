@@ -45,6 +45,7 @@ export {
      "visIntegralClosure",
      "visIdeal",
      "visGraph",
+     "visDigraph",
      "copyJS",
      
     -- Helpers 
@@ -301,6 +302,45 @@ visGraph(Graph) := opts -> G -> (
 )
 
 
+visDigraph = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html"})
+visDigraph(Digraph) := opts -> G -> (
+    local A; local arrayString; local vertexString; local visTemp;
+    local keyPosition; local vertexSet;
+    
+    A = adjacencyMatrix G;
+    arrayString = toString toArray entries A; -- Turn the adjacency matrix into a nested array (as a string) to copy to the template html file.
+    
+    -- Add this back in when we figure out how to deal with the old
+    -- Graphs package not knowing what G.vertexSet means.
+    
+    if value((options Graphs).Version) == 0.1 then (
+	 vertexString = toString new Array from apply(keys(G#graph), i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the older Graphs package.
+    ) else (
+    
+    	 -- This is a workaround for finding and referring to the key vertexSet in the hash table for G.
+         -- Would be better to be able to refer to G.vertexSet, but the package
+	 -- seems not to load if we try this.
+	 keyPosition = position(keys G, i -> toString i == "vertexSet");
+	 vertexString = toString new Array from apply((values G)#keyPosition, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package
+	 
+	 --vertexSet = symbol vertexSet;
+	 --vertexString = toString new Array from apply(G.vertexSet, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+	 -- vertexString = toString new Array from apply((values G)#0, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+    );
+    
+    visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visGraph/visGraph-template.html"); -- Copy the visGraph template to a temporary directory.
+    
+    searchReplace("visArray",arrayString, visTemp); -- Replace visArray in the visGraph html file by the adjacency matrix.
+    searchReplace("visLabels",vertexString, visTemp); -- Replace visLabels in the visGraph html file by the ordered list of vertices.
+
+    copyJS(replace(baseFilename visTemp, "", visTemp)); -- Copy the javascript libraries to the temp folder.
+    
+    show new URL from { "file://"|visTemp };
+    
+    return visTemp;
+)
+
+
 --input: a String of a path to a directory
 --output: Copies the js library to path
 --
@@ -511,7 +551,25 @@ loadPackage"Graphs"
 loadPackage"Visualize"
 
 (options Visualize).Configuration
+<<<<<<< HEAD
 defualtPath
+=======
+
+searchReplace("visArray","kickass string", testFile)
+searchReplace("XXX","kickass string", testFile)
+searchReplace("YYY","kickass string", testFile)
+searchReplace("ZZZ","kickass string", testFile)
+
+-- Digraphs
+restart
+loadPackage"Graphs"
+loadPackage"Visualize"
+G = digraph({ {1,{2,3}} , {2,{3}} , {3,{1}}})
+A = adjacencyMatrix G
+keys(G#graph)
+visGraph G
+
+>>>>>>> df189489ae986d7b336757b610e78d7dd2c2db5d
 -- Old Graphs
 restart
 loadPackage"Graphs"
