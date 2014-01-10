@@ -93,7 +93,9 @@ function initializeBuilder() {
       .on('tick', tick);
 
   drag = force.drag()
-    .on("dragstart", dragstart);
+    .on("dragstart", dragstart)
+    .on("drag", dragmove)
+    .on("dragend", dragend);
 
   // line displayed when dragging new nodes
   drag_line = svg.append('svg:path')
@@ -127,8 +129,22 @@ function resetGraph() {
   restart();
 }
 
-function dragstart(d) {
-  d3.select(this).classed(d.fixed = true);
+function dragstart(d, i) {
+  force.stop(); // stops the force auto positioning before you start dragging
+}
+
+function dragmove(d, i) {
+  d.px += d3.event.dx;
+  d.py += d3.event.dy;
+  d.x += d3.event.dx;
+  d.y += d3.event.dy;
+  tick(); // this is the key to make it work together with updating both px,py,x,y on d
+}
+
+function dragend(d, i) {
+  d.fixed = true; // set the node to fixed so the force doesn't include the node in its auto positioning stuff
+  tick();
+  force.resume();
 }
 
 function resetMouseVars() {
@@ -342,6 +358,8 @@ function restart() {
         d.name = name;
         d3.select(this.parentNode).select("text").text(function(d) {return d.name});
       }
+
+      document.getElementById("constructorString").innerHTML = "Macaulay2 Constructor: " + graph2M2Constructor(nodes,links);
 
     });
 
