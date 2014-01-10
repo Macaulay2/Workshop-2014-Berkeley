@@ -29,35 +29,26 @@ export {PAdicField,
      henselApproximation
      }
 
-PAdicFields = new MutableHashTable
+PAdicFields = new MutableHashTable -- save created PAdicFields here
+
+---------------------------------------------
+-- New types
+---------------------------------------------
 
 PAdicField = new Type of InexactField
 PAdicFieldElement = new Type of HashTable
+PAdicMatrix = new Type of MutableHashTable
 
-net PAdicFieldElement := a->(expans:=a#"expansion";
-  p:=(class a)#prime;
-  keylist:=expans_0;
-  ((horizontalJoin apply(#keylist,i->
-  net(expans_1_i)|"*"|net p|
-  (net keylist_i)^1|"+"))
-|"O("|net p|(net(precision a))^1|")"))
-
-toString PAdicFieldElement := a->(expans:=a#"expansion";
-  p:=(class a)#prime;
-  keylist:=expans_0;
-  ((concatenate apply(#keylist,i->
-  toString(expans_1_i)|"*"|toString p|"^"|
-  (toString keylist_i)|"+"))
-|"O("|toString p|"^"|(toString(precision a))|")"))
-
-
+---------------------------------------------
+-- Creating PAdicFields
+---------------------------------------------
 
 new PAdicField from List := (PAdicField, inits) -> new PAdicField of PAdicFieldElement from new HashTable from inits
 
 net PAdicField := A->"QQQ_"|toString(A#prime)
 
-valuation = method()
-relativePrecision = method()
+QQQ=new ScriptedFunctor
+QQQ#subscript=i->(pAdicField i)
 
 pAdicField = method()
 pAdicField ZZ:=(p)->(
@@ -69,11 +60,9 @@ pAdicField ZZ:=(p)->(
      A
 )
 
-precision PAdicFieldElement := a->a#"precision";
-valuation PAdicFieldElement := a->(if #(a#"expansion"_0)>0 then return min a#"expansion"_0;
-	  infinity);
-relativePrecision PAdicFieldElement:= a -> (
-	  if #(a#"expansion"_0)==0 then 0 else (precision a)-(valuation a));
+---------------------------------------------
+-- non-exported auxilliary functions
+---------------------------------------------
 
 computeCarryingOver := (aKeys,aValues,prec,A) -> (
      	  p:=A#prime;
@@ -106,6 +95,38 @@ computeCarryingOver := (aKeys,aValues,prec,A) -> (
 	       "expansion"=>{toList deepSplice newKeys,
 		    toList deepSplice newValues}}
 	  )
+
+---------------------------------------------
+-- Methods for PAdicFieldElements
+---------------------------------------------
+
+
+net PAdicFieldElement := a->(expans:=a#"expansion";
+  p:=(class a)#prime;
+  keylist:=expans_0;
+  ((horizontalJoin apply(#keylist,i->
+  net(expans_1_i)|"*"|net p|
+  (net keylist_i)^1|"+"))
+|"O("|net p|(net(precision a))^1|")"))
+
+toString PAdicFieldElement := a->(expans:=a#"expansion";
+  p:=(class a)#prime;
+  keylist:=expans_0;
+  ((concatenate apply(#keylist,i->
+  toString(expans_1_i)|"*"|toString p|"^"|
+  (toString keylist_i)|"+"))
+|"O("|toString p|"^"|(toString(precision a))|")"))
+
+
+precision PAdicFieldElement := a->a#"precision";
+
+valuation = method()
+valuation PAdicFieldElement := a->(if #(a#"expansion"_0)>0 then return min a#"expansion"_0;
+	  infinity);
+
+relativePrecision = method()
+relativePrecision PAdicFieldElement:= a -> (
+	  if #(a#"expansion"_0)==0 then 0 else (precision a)-(valuation a));
 
 PAdicFieldElement + PAdicFieldElement := (a,b) -> (
 	  if not (class b)===(class a) then error "Elements must be in same PAdicField";
@@ -145,7 +166,6 @@ PAdicFieldElement * PAdicFieldElement := (a,b)->(
   )
 
 
-
 toPAdicInverse = method ()
 toPAdicInverse(List,PAdicField):= (L,A) -> (
      	  p:=A#prime;
@@ -162,7 +182,7 @@ toPAdicInverse(List,PAdicField):= (L,A) -> (
 	  S
 	  )
 
- inverse PAdicFieldElement := a->(
+inverse PAdicFieldElement := a->(
       A:=class a;
       if valuation(a)==infinity then (
 	   error "You cannot divide by 0!";
@@ -295,16 +315,6 @@ PAdicFieldElement << ZZ := (a,n) -> (
 	  "expansion"=>{newKeys,a#"expansion"_1}}
      )
 
-
-QQQ=new ScriptedFunctor
-QQQ#subscript=i->(pAdicField i)
-
-
-
--- PAdicField Elements are hashtables with following keys:
--- precision (value ZZ)
--- expansion (hashtable, two entries: exponents, coefficients)
-
 pValuation = method()
 pValuation(ZZ,ZZ) := (n,p)->(
      b := n;
@@ -315,10 +325,10 @@ pValuation(ZZ,ZZ) := (n,p)->(
 	  );
      v
      );
+
 pValuation(QQ,ZZ) := (r,p)->(pValuation(numerator(r),p)-pValuation(denominator(r),p));
 
 toPAdicFieldElement = method()
-
 toPAdicFieldElement (List,PAdicField) := (L,S) -> (
    n:=#L;
    local expans;
@@ -344,7 +354,9 @@ toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
 
 
 
-PAdicMatrix = new Type of MutableHashTable
+---------------------------------------------
+-- Matrix stuff
+---------------------------------------------
 
 pAdicMatrix = method()
 pAdicMatrix List := L -> (
