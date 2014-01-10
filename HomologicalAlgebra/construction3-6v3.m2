@@ -42,8 +42,14 @@ augmentChainComplex =
 	  )
 augmentChainComplex (Module) := opts -> M -> (
      Q := resolution(M, LengthLimit => opts.LengthLimit);
-     augQ := Q;
-     augQ.dd_(0) = map(M, Q_0,id_(Q_0));
+--    augQ := Q;     
+     mapsList = ();
+     mapsList = append(mapsList, map(M, Q_0,id_(Q_0)));
+     for j from 1 to max Q do (
+	 f_j = Q.dd_j;
+	 mapsList = append(mapsList, f_j); );
+     augQ := chainComplex(mapsList)[1];
+--     augQ.dd_(0) = map(M, Q_0,id_(Q_0);
      augQ
 )
 
@@ -162,13 +168,22 @@ sign(ZZ) := j -> (
 
 end
 --------Test Code----------
+
+--test augmentChainComplex; it shouldn't override res M
 restart
 load "construction3-6v3.m2"
 R = QQ[x,y,z]/ideal(x*y*z)
-M = coker map(R^1,,{gens R})
+M = coker vars R
+P = res M
+Q = augmentChainComplex M
+P == Q --returns false, as desired
+
+restart
+load "construction3-6v3.m2"
+R = QQ[x,y,z]/ideal(x*y*z)
+M = coker vars R
 g = 3
 n = 5
-M = coker vars R
 C = constructionV3(g,M)
 --This code here checks if the source and target of the f_i maps are what they should be
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (

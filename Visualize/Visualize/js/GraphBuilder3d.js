@@ -29,20 +29,21 @@ function initializeBuilder3d() {
 
     container = document.getElementById("canvasElement3d");
     windowWidth = window.innerWidth;
-    windowHeight = window.innerHeight;
+    windowHeight = window.innerHeight -  125;
 
     renderer = new THREE.WebGLRenderer( {antialias:true} );
 
 
     renderer.setSize(windowWidth, windowHeight);
-    renderer.setClearColor(0xeaecfe, 1);
+    renderer.setClearColor(0xffffff, 1);
+
     container.appendChild( renderer.domElement );
 
     // Create a new Three.js scene
     scene = new THREE.Scene();
 
     // Put in a camera
-    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+    camera = new THREE.PerspectiveCamera( 60, windowWidth/ windowHeight, 1, 20000 );
     camera.position.set( 0, 0, 600 );
 
     // EVENTS
@@ -94,7 +95,7 @@ function initializeBuilder3d() {
 
 function generateGraph() {
     //takes an ajacency matrix representation of a graph g and draws it in Three dimensional space
-    
+    renderer.setClearColor(0xffffff, 1);
     var size = dataData[0].length;
     var numRows = Math.floor(size / 4);
     var curNode = null;
@@ -367,8 +368,8 @@ function onMouseMove( event ) {
         updateLabels();
     }
 
-    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+    mouse.x = ( event.clientX / window.innerWidth  ) * 2 - 1;
+    mouse.y = - ( event.clientY / (window.innerHeight - 125) ) * 2 + 1;
 
     //
 
