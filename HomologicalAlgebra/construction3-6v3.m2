@@ -142,7 +142,42 @@ constructionV3 (ZZ,Module):=
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
       print (i, source f_i === S_i, target f_i === P_i)
       )
-  
+--a less strict test;
+for i from (g-1-max(g+2,n)) to max(g+2,n) do (
+      print (i, source f_i == S_i, target f_i == P_i)
+      )  
+--a test, build a simple map of chain complexes with only one non-zero map
+buildMaps = method()
+buildMaps(ZZ) := j -> (
+    mapsList := ();
+    if (j > max(g+2,n) 	or j< (g-1)-max(g+2,n)) 
+    then error "integer out of bounds";
+    for i from (g-1-max(g+2,n)) to max(g+2,n) do (
+    if i == j then mapsList = append(mapsList, f_i)
+    else mapsList = append(mapsList, null);
+    );
+    mapsList
+    )
+buildComplex = method()
+buildComplex(ZZ) := t -> (
+    mapsList := buildMaps(t);
+    C = map(P,S,i -> mapsList_(i+(g-1+1)));
+    C
+    )
+sign = method()
+sign(ZZ) := j -> (
+    if j >= 0 then return 1 else return (-1))
+--a test for the above methods
+g=3
+n=5
+R = QQ[x,y,z]/ideal(x*y*z)
+mapsList = ()
+for i from (g-1-max(g+2,n)) to max(g+2,n) do (
+    mapsList = append(mapsList,-(sign i)*(id_(R^1))))
+--    mapsList = append(mapsList,id_(R^(1))))
+mapsList
+P = chainComplex(mapsList)[g]
+--P = chainComplex(mapsList)
 
 --check that everything is ===
 
@@ -169,11 +204,9 @@ for i from (g-1-max(g+2,n)) to max(g+2,n) do (
      cRes.target.dd_g=P.dd_g;
      cRes.source.dd_g=lambdaDual*d*w;
 --     cRes_g=id_(P_g);
---=====\end{old stuff}
-
      cRes
      )
-     
+--=====\end{old stuff}     
 
 
 -- example for testing constructionV2
@@ -181,7 +214,7 @@ R = QQ[x,y,z]/ideal(x*y*z)
 M = coker map(R^1,,{gens R})
 g=3
 n=2
-C = constructionV2(g,M)
+C = constructionV3(g,M)
 P = resolution(M, LengthLimit=>max(g+2,n))
 --neither C.source or C.target has differentials that square to 0.
 --something is wrong. At least one source of the error is the following:
