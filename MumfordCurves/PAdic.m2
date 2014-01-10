@@ -465,6 +465,8 @@ henselApproximation (RingElement,ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
 	f':=diff(x,f);
 	g:= a->sum(0..(degree(f))_0, j->coefficient(x^j,f)*a^j);
 	g':= a->sum(0..(degree(f'))_0, j->coefficient(x^j,f')*a^j);
+	if not sub(g(r),ZZ/p) == sub(0,ZZ/p) then error "The starting value is not a root";
+	if sub(g'(r),ZZ/p) == sub(0,ZZ/p) then error "This is a double root";
 	local s; s=toPAdicFieldElement(r,n,QQQ_p); i:=0;
 	while i<n+1 do (s=s-(g(s)/g'(s));i=i+1);
 	s)
@@ -482,9 +484,90 @@ document {
     "This package facilitates basic computations with p-adic numbers, including
     arithmetic and a simple form of Hensel lifting."}}
 
---document {
-  --   Key =>PAdicField,
-    -- }
+document {
+     Key =>PAdicField,
+     Headline=> "a new type of InexactField used for p-adic fields",
+     PARA{"A ",TT "PAdicField"," is a new type of ",TO InexactField," 
+	  used for p-adic fields. When a new ",TT "PAdicField"," is created,
+	  it is stored for future reference."},
+     PARA{"A new ",TT "PAdicField"," may be created with ",TO QQQ,"."}
+     }
+
+
+document {
+     Key =>QQQ,
+     Headline=> "a scripted functor for creating p-adic fields",
+     PARA{TT "QQQ"," is ",ofClass ScriptedFunctor," used for creating p-adic
+	  fields. ",TT "QQQ_p"," refers to the field of p-adic numbers, where
+	  p is a prime. ",TT "QQQ"," is a synonym for ",TO pAdicField,"."},
+     EXAMPLE {"QQQ_7"}
+          }
+
+document {
+     Key =>pAdicField,
+     Inputs => {"p" => ofClass ZZ},
+     Outputs => {"A" => ofClass PAdicField},
+     Usage => "A=pAdicField(p)",
+     Headline=> "a method for creating p-adic fields",
+     PARA{TT "pAdicField"," creates ",ofClass PAdicField," with
+	  respect to the prime ",TT "p","." },
+     EXAMPLE {"pAdicField(7)"}
+     }
+
+document {
+     Key =>henselApproximation,
+     Inputs => {"f" => ofClass RingElement,"r" => ofClass ZZ,"n" => ofClass ZZ,"p" => ofClass ZZ},
+     Outputs => {"s" => ofClass PAdicFieldElement},
+     Usage => "s=henselApproximation(f,r,n,p)",
+     Headline=> "a method for approximating p-adic roots",
+     PARA{TT "henselApproximation"," approximates to precision ",TT "n"," a ",TT "p","-adic root of a polynomial
+	  ",TT "f"," congruent to ",TT "r mod p",".  The polynomial must have integer coefficients,and ",TT "r"," 
+	  must be a simple root of ",TT "f mod p","." },
+     EXAMPLE {"ZZ[x]",
+	  "henselApproximation(x^2+1,3,6,5)"}
+     }
+
+
+
+
+document {
+     Key =>valuation,
+     Inputs => {"x" => ofClass PAdicFieldElement},
+     Outputs => {"n" => ofClass ZZ},
+     Usage => "n=valuation(x)",
+     Headline=> "calculates the valuation of a p-adic number",
+     PARA{TT "valuation"," returns the exponent of the smallest
+	  power of p in the p-adic representation of ",TT "x"," for
+	  which the coefficient is non-zero."},
+     EXAMPLE {"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "valuation x"}
+     }
+
+document {
+     Key =>relativePrecision,
+     Inputs => {"x" => ofClass PAdicFieldElement},
+     Outputs => {"n" => ofClass ZZ},
+     Usage => "n=valuation(x)",
+     Headline=> "calculates the valuation of a p-adic number",
+     PARA{TT "relativePrecision"," returns the difference of the
+	   ",TO precision," and the ",TO valuation," of ",TT "x",", unless
+	   all coefficients are zero, in which case zero is returned."},
+     EXAMPLE {"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "relativePrecision x"} 
+     }
+
+document {
+     Key =>(precision,PAdicFieldElement),
+     Inputs => {"x" => ofClass PAdicFieldElement},
+     Outputs => {"n" => ofClass ZZ},
+     Usage => "n=precision(x)",
+     Headline=> "calculates the precision of a p-adic number",
+     PARA{TT "precision"," returns the exponent of the smallest
+	  power of p in the p-adic representation of ",TT "x"," for
+	  which the coefficient is unknown."},
+     EXAMPLE {"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "precision x"}           
+     }
 
 document {
      Key =>PAdicFieldElement,
