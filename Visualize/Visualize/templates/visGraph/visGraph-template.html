@@ -76,7 +76,7 @@
 
 
       #popupMenu {
-        visibility:hidden;
+        display:none;
         position:absolute;
         left:69%;
         top:4%;
@@ -205,7 +205,7 @@
                 var d = document.getElementById("moreOptions");
                 d.onclick = function() {
                     //resetGraph();
-                    document.getElementById("popupMenu").style.visibility = "visible";
+                    document.getElementById("popupMenu").style.display = "inline";
                     menuOpen = true;
                 }
 
@@ -222,12 +222,16 @@
     }
 
     window.addEventListener("mousedown", function(e) {
+      
+      e.preventDefault();
+
       if (!menuOpen) return;
 
       var tempMenu = document.getElementById("popupMenu");
 
-      if ( (e.x < tempMenu.offsetLeft) || (e.y > tempMenu.offsetTop + tempMenu.offsetHeight) ) {
-        document.getElementById("popupMenu").style.visibility = "hidden";
+      if ( (e.clientX < tempMenu.offsetLeft) || (e.clientY > tempMenu.offsetTop + tempMenu.offsetHeight) ) {
+        document.getElementById("popupMenu").style.display = "none";
+        menuOpen = false;
       }
 
     }, false);

@@ -629,8 +629,8 @@ function singletons(nodeSet, edgeSet){
 // Constructs the incidence matrix for a graph as a multidimensional array.
 function getIncidenceMatrix (nodeSet, edgeSet){
   var incMatrix = []; 
-  console.log(nodeSet);
-  console.log(edgeSet);
+  //console.log(nodeSet);
+  //console.log(edgeSet);
 
   // The next two loops create an initial (nodes.length) x (links.length) matrix of zeros.
   for(var i = 0;i < nodeSet.length; i++){
@@ -641,14 +641,14 @@ function getIncidenceMatrix (nodeSet, edgeSet){
   }
 
   for (var i = 0; i < edgeSet.length; i++) {
-    console.log("i: " + i + "\n");
-    console.log("Source id: " + edgeSet[i].source.id + "\n");
-    console.log("Target id: " + edgeSet[i].target.id + "\n");
+    //console.log("i: " + i + "\n");
+    //console.log("Source id: " + edgeSet[i].source.id + "\n");
+    //console.log("Target id: " + edgeSet[i].target.id + "\n");
     incMatrix[(edgeSet[i].source.id)][i] = 1; // Set matrix entries corresponding to incidences to 1.
     incMatrix[(edgeSet[i].target.id)][i] = 1;
   }
 
-  console.log(incMatrix);
+  //console.log(incMatrix);
 
   return incMatrix;
 }
