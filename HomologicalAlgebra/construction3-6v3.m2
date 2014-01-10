@@ -109,8 +109,7 @@ constructionV3 (ZZ,Module):=
     --put in the differentials
     for i from (g-1-max(g+2,n)) to g-1 do (
 	S.dd_i = Ld.dd_(-g+1+i);
-	);
---yields:stdio:118:20:(3): error: expected argument 1 to be a hash table    
+	);   
     for i from g+1 to max(g+2,n) do (
     	S.dd_i = P.dd_i;	
     	);
@@ -170,6 +169,7 @@ M = coker map(R^1,,{gens R})
 g = 3
 n = 5
 M = coker vars R
+C = constructionV3(g,M)
 --This code here checks if the source and target of the f_i maps are what they should be
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
       print (i, source f_i === S_i, target f_i === P_i)
@@ -185,59 +185,3 @@ for i from (g-1-max(g+2,n)) to max(g+2,n) do (
 --    mapsList = append(mapsList,id_(R^(1))))
 mapsList
 P = chainComplex(mapsList)[g]
---P = chainComplex(mapsList)
-
---check that everything is ===
-
---====== \begin{old stuff}
-     cRes := id_(resolution (ring M)^0);     
-     --Jason's portion
-     for j from (g-1-max(g+2, n)) to g-1 do (
---     for j from (g-1-max(g+2)) to g-1 do (
---	  cRes.target_j = P_j;
-	  cRes.target.dd_j = P.dd_j;
---	  cRes.source_j = Ld_(g-1-j);
-	  cRes.source.dd_j = Ld.dd_(g-1-j); 
---	  cRes_j = kappaLifted_(g-1-j);
-	  );     
-     --Kat's portion
-     for i from g+1 to max(g+2,n) do (
---     for i from g+1 to max(g+n) do (
-	  cRes.source.dd_i=P.dd_i;
-	  cRes.target.dd_i=P.dd_i;
---	  cRes_i=id_(P_i);
-	  );
-     
-     --for portion in middle (i.e. the degree g part)
-     cRes.target.dd_g=P.dd_g;
-     cRes.source.dd_g=lambdaDual*d*w;
---     cRes_g=id_(P_g);
-     cRes
-     )
---=====\end{old stuff}     
-
-
--- example for testing constructionV3
-R = QQ[x,y,z]/ideal(x*y*z)
-M = coker map(R^1,,{gens R})
-g=3
-n=5
-C = constructionV3(g,M)
-P = resolution(M, LengthLimit=>max(g+2,n))
---neither C.source or C.target has differentials that square to 0.
---something is wrong. At least one source of the error is the following:
-  --i86 : for j from -4 to 5 do(
-  --	  print(j, source C.source.dd_j === source C.target.dd_(j+1))
-  --	  )
-  --(-4, true)
-  --(-3, true)
-  --(-2, true)
-  --(-1, true)
-  --(0, true)
-  --(1, false)
-  --(2, false)
-  --(3, false)
-  --(4, false)
-  --stdio:415:59:(3):[1]: error: wrong number of rows or columns
---Moreover, C.target should be exactly P = res M in all degrees;
---this fails for degrees less than g-1.
