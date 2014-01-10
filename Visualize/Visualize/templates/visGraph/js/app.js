@@ -419,10 +419,10 @@ function keydown() {
   switch(d3.event.keyCode) {
     case 8: // backspace
     case 46: // delete
-      if(selected_node) {
+      if(curEdit && selected_node) {
         nodes.splice(nodes.indexOf(selected_node), 1);
         spliceLinksForNode(selected_node);
-      } else if(selected_link) {
+      } else if(curEdit && selected_link) {
 
         links.splice(links.indexOf(selected_link), 1);
       }
@@ -475,6 +475,9 @@ function keyup() {
 function disableEditing() {
   circle.call(drag);
   svg.classed('shift', true);
+  current_node = null;
+  current_link = null;
+  restart;
 }
 
 function enableEditing() {
