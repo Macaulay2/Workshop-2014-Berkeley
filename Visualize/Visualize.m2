@@ -211,6 +211,7 @@ visIdeal(Ideal) := opts -> J -> (
 visGraph = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
     local A; local arrayString; local vertexString; local visTemp;
+    local keyPosition; local vertexSet;
     
     A = adjacencyMatrix G;
     arrayString = toString toArray entries A; -- Turn the adjacency matrix into a nested array (as a string) to copy to the template html file.
@@ -221,7 +222,16 @@ visGraph(Graph) := opts -> G -> (
     if value((options Graphs).Version) == 0.1 then (
 	 vertexString = toString new Array from apply(keys(G#graph), i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the older Graphs package.
     ) else (
-         vertexString = toString new Array from apply((values G)#0, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+    
+    	 -- This is a workaround for finding and referring to the key vertexSet in the hash table for G.
+         -- Would be better to be able to refer to G.vertexSet, but the package
+	 -- seems not to load if we try this.
+	 keyPosition = position(values G, i -> i == symbol vertexSet);
+	 vertexString = toString new Array from apply((values G)#keyPosition, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+	 
+	 --vertexSet = symbol vertexSet;
+	 --vertexString = toString new Array from apply(G.vertexSet, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+	 -- vertexString = toString new Array from apply((values G)#0, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
     );
     
     visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visGraph/visGraph-template.html"); -- Copy the visGraph template to a temporary directory.
