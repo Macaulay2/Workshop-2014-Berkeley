@@ -21,6 +21,7 @@ newPackage(
     	Version => "0.2", 
     	Date => "October 2, 2013",
     	Authors => {       
+     	     {Name => "Brett Barwick", Email => "Brett@barwick.edu", HomePage => "http://www.bard.edu/~bstone/"},	     
 	     {Name => "Elliot Korte", Email => "ek2872@bard.edu"},	     
 	     {Name => "Will Smith", Email => "smithw12321@gmail.com"},		
 	     {Name => "Branden Stone", Email => "bstone@bard.edu", HomePage => "http://www.bard.edu/~bstone/"},	     
@@ -144,11 +145,7 @@ visIdeal(Ideal) := opts -> J -> (
     
     A = visOutput( "visArray", arrayString, visTemp, VisPath => opts.VisPath );
     
-    print defaultPath;
-    print currentDirectory();
-    
-    
-    return currentDirectory()|A_1;
+    return opts.VisPath|A_1;
     )
 
 --input: A graph
@@ -163,8 +160,8 @@ visGraph(Graph) := opts -> G -> (
     arrayString = toString arrayList;
     
     B = visOutput( "visArray", arrayString, opts.VisTemplate, VisPath => opts.VisPath );    
-    print defaultPath;
-    return currentDirectory()|B_1;
+
+    return opts.VisPath|B_1;
     )
 
 
@@ -250,6 +247,29 @@ loadPackage"Graphs"
 loadPackage"Visualize"
 (options Visualize).Configuration
 
+
+-- input: 
+
+copyTemplate = method()
+copyTemplate String := src -> (
+    local fileName; local dirPath;
+    
+     
+    fileName = (toString currentTime() )|".html";
+        
+    dirPath = temporaryFileName();
+    makeDirectory dirPath;
+    
+    tempPath = currentDirectory()|"Visualize/templates/"
+    copyFile( tempPath|"visIdeal/visIdeal3D.html", concatenate (dirPath,"/",fileName))
+)
+
+
+dirPath
+fileName
+
+
+
 -- Old Graphs
 G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
 
@@ -272,8 +292,8 @@ visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
 
 copyJS "/Users/bstone/Desktop/Test/"
-copyJS ( currentDirectory()|"temp
 yes
+copyJS ( currentDirectory()|"temp
 
 
 -----------------------------
