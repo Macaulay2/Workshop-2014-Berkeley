@@ -22,11 +22,14 @@ export {
      nfPoints,
      separators,
      FGLM,
-     stdmons,
-     multmatrices,
-     multmatricesGB,
-     pointsNew,
-     getEssGens
+     stdmons, --standardMonomials
+     multmatrices, --multMatrices
+     multmatricesGB, --GBFromMatrices
+     pointsNew, --not to be exported
+     pointsStd, --default std, option for GB.
+     pointsGB,
+     splitGens --not export, 
+     --bordermonomials
      }
 
 
@@ -128,6 +131,7 @@ pointsByIntersection (Matrix,Ring) := (M,R) -> (
 -- Bugfix: All variables are now local.
 -- Returns the *inverse* of the stds evaluated at points.
 -- Returns the stds as a list instead of as matrix.
+-- Name change: pointsMat -> pointsStd
 pointsMat = method()
 pointsMat(Matrix,Ring) := (M,R) -> (
      -- The columns of M form the points.  M should be a matrix of size
@@ -253,8 +257,8 @@ points (Matrix,Ring) := (M,R) -> (
      (Q,inG,G)
      )
  
-getEssGens = method()
-getEssGens (Matrix, Ring) := (M,R) -> (
+splitGens = method()
+splitGens (Matrix, Ring) := (M,R) -> (
        K := coefficientRing R;
      s := numgens source M;
      Fs := makeRingMaps(M,R);
@@ -295,7 +299,7 @@ getEssGens (Matrix, Ring) := (M,R) -> (
 
 
 pointsNew = method()
-pointsNew (Matrix,Ring) := (M,R) -> (
+pointsNew (Matrix,Ring,Boolean) := (M,R,stdsonly) -> (
      -- The columns of M form the points.  M should be a matrix of size
      -- n by s, where n is the number of variables of R
      K := coefficientRing R;
@@ -312,15 +316,15 @@ pointsNew (Matrix,Ring) := (M,R) -> (
      -- inG is the ideal of initial monomials for the GB
      essgens := {};
      nonessgens := {};
-     essGenCall := false;
+     splitGensCall := false;
+     -- Rhough estimate whether or not we gain speed using the call to splitGens.
      if (s < numgens R and numgens R > 50) then (
-     	 (essgens,nonessgens) = getEssGens(M,R);
-	 essGenCall = true;
+     	 (essgens,nonessgens) = splitGens(M,R);
+	 splitGensCall = true;
 	 ) else (
 	 essgens = sort gens R; --sorts in ascending wrt the monomial order of R
-	 essGenCall = false;
-	 );
-	 
+	 splitGensCall = false;
+	 );	 
      Fs := makeRingMaps(M,R);
      P := mutableMatrix map(K^s, K^(s+1), 0);
      PC := mutableMatrix map(K^(s+1), K^(s+1), 0);
@@ -329,8 +333,6 @@ pointsNew (Matrix,Ring) := (M,R) -> (
      Lhash := new MutableHashTable; -- used to determine which monomials come next
      L := 1_R;
      Lhash#L = 0; -- start with multiplication by essgen_0.
-   
- 
      thiscol := 0;
      G := {};
      inG := trim ideal(0_R);
@@ -348,19 +350,27 @@ pointsNew (Matrix,Ring) := (M,R) -> (
 	  L = L - monom;
 	  -- Now fix up the matrices P, PC
           addNewMonomial(P,thiscol,monom,Fs);
-	  rawMatrixColumnScale(raw PC, raw(0_K), thiscol, false);
-	  PC_(thiscol,thiscol) = 1_K;
-          isLT = reduceColumn(P,PC,H,thiscol);
+	  if (stdsonly == false) then ( --if GB, we need to remember the ops
+	      rawMatrixColumnScale(raw PC, raw(0_K), thiscol, false);
+	      PC_(thiscol,thiscol) = 1_K;
+          );
+	  isLT = reduceColumn(P,PC,H,thiscol);
 	  if isLT then (
 	       -- we add to G, inG	  
 	       inG = inG + ideal(monom);
 	       inGB = forceGB gens inG;
-	       g = sum apply(toList(0..thiscol-1), i -> PC_(i,thiscol) * Q_i);
-	       G = append(G, PC_(thiscol,thiscol) * monom + g);
+	       if (stdsonly == false) then (
+		   g = sum apply(toList(0..thiscol-1), i -> PC_(i,thiscol) * Q_i);
+	       	   G = append(G, PC_(thiscol,thiscol) * monom + g);
+	     	 );
 	       )
 	  else (
 	       -- we modify L, Lhash, thiscol, and also PC
 	       Q = append(Q, monom);
+	       if (length Q == s and stdsonly == true ) then ( --stds are done	     
+     		   return (Q, inverse transpose matrix{apply(
+			   Fs, f -> f(transpose matrix{Q}))});    		   
+		   );
 	       f = sum apply(toList(Lhash#monom .. #essgens - 1), i -> (
 			 newmon := monom * essgens_i;
 			 Lhash#newmon = i;
@@ -374,50 +384,55 @@ pointsNew (Matrix,Ring) := (M,R) -> (
       --in nonessgen. For efficiency purposes, they were not added to L in the
       --first step. One could also use that we already have reduced them in
       --the getEssGen-procedure.
-    if (essGenCall == true) then (
-    L = sum apply(toList(0..#nonessgens -1), i-> (nonessgens_i));	      
-         while (L != 0 ) do (
-	     monom = someTerms(L,-1,1);
-	     L = L - monom;
-	     addNewMonomial(P,thiscol,monom,Fs);
-	     rawMatrixColumnScale(raw PC, raw(0_K), thiscol, false);
-	     PC_(thiscol,thiscol) = 1_K;
-             reduceColumn(P,PC,H,thiscol);	  
-	     inG = inG + ideal(monom);
+      if (splitGensCall == true and stdsonly == false) then (
+    	  L = sum apply(toList(0..#nonessgens -1), i-> (nonessgens_i));	      
+          while (L != 0 ) do (
+	      monom = someTerms(L,-1,1);
+	      L = L - monom;
+	      addNewMonomial(P,thiscol,monom,Fs);
+	      rawMatrixColumnScale(raw PC, raw(0_K), thiscol, false);
+	      PC_(thiscol,thiscol) = 1_K;
+              reduceColumn(P,PC,H,thiscol);	  
+	      inG = inG + ideal(monom);
 	    -- inGB = forceGB gens inG;
-	     g = sum apply(toList(0..thiscol-1), i -> PC_(i,thiscol) * Q_i);
-	     G = append(G, PC_(thiscol,thiscol) * monom + g);
-      );
-    );  
---     print("number of monomials considered = "|nL);
-     (Q,inG,G)
-     )
+	    g = sum apply(toList(0..thiscol-1), i -> PC_(i,thiscol) * Q_i);
+	    G = append(G, PC_(thiscol,thiscol) * monom + g);
+      	    );
+    	);  
+    --     print("number of monomials considered = "|nL);
+    if stdsonly then (
+     	stds := transpose matrix{Q};
+     	A := inverse transpose matrix{apply(Fs, f -> f stds)};
+    	return (Q,A);
+    	) else (
+    	return (Q,inG,G);
+     	)
+    )
 
 
 -- The separators of the points as linear combinations of the standard monomials
 -- stds are the standard monomials returned by pointsMat
--- Ainv is the inverse of the matrix returned by pointsMat
+-- A is the inverse of the matrix B where b_(i,j) = std_i(p_j
 separators = method()
-separators (Matrix, Matrix) := (stds, Ainv) -> (
-     transpose (Ainv) * (matrix entries stds)
+separators (Matrix, Matrix) := (stds, A) -> (
+     transpose (A) * (matrix entries stds)
      )
 
 
 -- The normal form of a polynomial using Ainv and linear algebra
 -- p is the polynomial of which we want to compute nf
--- phi are the ring maps returned from makeRingMaps 
--- stds are the standard monomials returned by pointsMat
--- Ainv is the inverse of the matrix returned by pointsMat
-nfPoints = method()
-nfPoints (RingElement, List, List, Matrix) := (p, phi, stds, Ainv) -> (
+-- phi is the list of ring maps returned from makeRingMaps 
+-- stds is the list of standard monomials.
+-- A is the inverse of the matrix B where b_(i,j) = std_i(p_j).
+nfPoints = method();
+nfPoints (RingElement, Matrix, List, Matrix) := (f, pointsMatrix, std, A) ->
+   nfPoints(f, makeRingMaps(pointsMatrix, ring f), std, A);
+nfPoints (RingElement, List, List, Matrix) := (p, phi, stds, A) -> (
      --Evaluate the vector on the points
      v := transpose matrix {apply (phi, r -> r p)};
-     w := Ainv * v;
+     w := A * v;
      --Fix the stds
      stdsniceform := matrix {stds};
-     print(stdsniceform);
-     w;
-     print(w);
      --return the normal form
      first (first entries (stdsniceform*w))
      )
@@ -440,9 +455,19 @@ FGLM (GroebnerBasis, PolynomialRing, Option) := (GS,S,monOrd) -> (
      basisS := stdmons (S,GS);
      s := length basisS;
       K := coefficientRing S;
-      connectionvector := flatten toList (1_K,toList(s-1:0_K));
+      connectionvector := flatten toList (1_K,toList(s-1:0_K));  --ok even if s-1<0
     return multmatricesGB(multmatrices(basisS, GS, S), 
-	connectionvector, S, monOrd); --ok even if s-2<0
+	connectionvector, S, monOrd);
+    )
+
+pointsStd = method()
+pointsStd(Matrix,Ring) := (M,R) -> (
+    return pointsNew(M,R,true);
+    )
+
+pointsGb = method()
+pointsGb(Matrix,Ring) := (M,R) -> (
+    return pointsNew(M,R,false);
     )
 
 --Removes elements at the end of the list for which supp(m) > #copies.
@@ -536,7 +561,7 @@ multmatricesGB (List, List, PolynomialRing, Option) :=
 	  L = removeElements(L);
 	  );
      --print("number of monomials considered = " numList);
-     (R,G,Q)
+     (Q,G,R)
      )
 
 
@@ -548,38 +573,40 @@ beginDocumentation()
 document {
      Key => PointsNew,
      "A package to compute with points in affine and projective spaces",
-     {*
-     Subnodes => {
-	  -- Mike wanted this: TO (points,Matrix,Ring)
-	  }
-     *}
      }
 document {
      Key => {nfPoints, (nfPoints,RingElement,List,List,Matrix)},
      Headline => "Normal form wrt standard monomials using linear algebra",
-     Usage => "makeRingMaps(p,phi,std,Ainv)",
+     Usage => "nfPoints(p,phi,std,A)",
      Inputs => {
      	  "p" => RingElement => "The polynomial for which we want to compute the normal form",
-	  "phi" => List => "The ring maps",
-	  "std" => Matrix => "in which each column consists of the coordinates of a point",
-	  "Ainv" => Matrix => "Inverse of the matrix achieved by evaluating the standard monomials on the input points",
+	  "phi" => List => "The ring maps.",
+	  "std" => Matrix => "The standard monomials as a list",
+	  "A" => Matrix => "The matrix returned by pointsstd, i.e. the inverse of the matrix defined by evaluating the standard monomials on the input points",
 	  },
      Outputs => {RingElement => "The normal form of f wrt the standard monomials"},
      "Computing normal forms with respect to a vanishing ideal of points should be done by linear algebra and not by means of a Gröbner basis. 
      The timing below indicates that the speedup is drastic, even for toy examples. ",
      EXAMPLE lines ///
      
-     M = random(ZZ^10, ZZ^15);
-     R = QQ[a..j];
-     (A, std) = pointsMat(M, R);
-     phi = makeRingMaps(M,R);
-     Ainv = inverse A;
-     f = b^3*c^10;
-     timing f1 = nfPoints(f, phi, std, Ainv)
+    loadPackage "PointsNew"
+     n = 40
+     m = 30
+     pointsMatrix = random(ZZ^n, ZZ^m)      
+      R = QQ[vars(0..(n-1))]
+time     (A, std) = pointsMat(pointsMatrix, R);
+time (stdnew,Anew) = pointsStd(pointsMatrix,R);
+A===Anew
+     phi = makeRingMaps(pointsMatrix,R);
+     f=     b^3*c^3;
+     timing (f1 = nfPoints(f, phi, stdnew, Anew);)
+--     timing (f2 = nfPoints(f, pointsMatrix, stdnew, Anew);)
+--     f1==f2
      --0.005261 seconds
-     (Q,inG,G) = points(M,R)
+timing     ((Q,inG,G) = points(pointsMatrix,R);)
      Gb = forceGB (matrix {G});
-     timing f2= f % Gb
+     timing(f2= f % Gb;)
+length G
      --14.7422 seconds
      --The normal forms are the same
      f1 == f2

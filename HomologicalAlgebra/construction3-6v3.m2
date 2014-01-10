@@ -1,6 +1,6 @@
 --natural map from a module to its double dual courtesy of Frank Moore
 bidualityMap = method()
-bidualityMap := M -> (
+bidualityMap(Module) := M -> (
    R := ring M;
    Md := Hom(M,R^1);
    Mdd := Hom(Md,R^1);
