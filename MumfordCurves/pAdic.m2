@@ -93,8 +93,11 @@ pAdicField ZZ:=(p)->(
 	  );
      toPAdicInverse := method ();
      toPAdicInverse List := L -> (
-	       n=#L;
-	       i=1; b_0=(sub(1/sub(L_0,ZZ/p),ZZ)+p)%p; s_0=-1; S={b_0};
+	       n:=#L;
+	       i:=1;
+	       b := new IndexedVariableTable;
+	       s := new IndexedVariableTable;
+	       b_0=(sub(1/sub(L_0,ZZ/p),ZZ)+p)%p; s_0=-1; S:={b_0};
 	       while i<n do(
 			s_i=s_(i-1)+sum(0..i-1, j-> L_j*b_(i-1-j))*p^(i-1); 
 	       		b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->L_j*b_(i-j)),ZZ/p)/sub(L_0,ZZ/p),ZZ)+p)%p;
@@ -126,6 +129,21 @@ pAdicField ZZ:=(p)->(
 	  );
      A - A:= (a,b)->(a+(-b));
      A / A:= (a,b)->(a*inverse(b));
+     A ^ ZZ := (a,n)->(
+	  if n>=0 then (
+	       m := 1;
+	       c := a;
+	       while n>0 do (
+		    if n%2==1 then m = m*c;
+		    n = n//2;
+		    c = c*c;
+		    );
+	       m
+	       ) else (
+	       inverse(a^(-n))
+	       )
+	  );
+		    
      A + ZZ := (a,n)->(
 	  b := toPAdicFieldElement(n,precision a,A);
 	  a+b
@@ -150,6 +168,34 @@ pAdicField ZZ:=(p)->(
 	       )
 	  );
      ZZ * A := (n,a)->a*n;
+     coarse := method();
+     coarse(A,ZZ) := (a,prec) -> (
+	  newPrecision := min(prec,precision a);
+	  newKeys := select(a#"expansion"_0,i->(i<newPrecision));
+	  newValues := for i in 0..#newKeys-1 list a#"expansion"_1#i;
+	  new A from {"precision"=>newPrecision,
+	       "expansion"=>{newKeys,newValues}}
+	  );
+     A == A := (a,b) -> (
+	  if precision a < precision b then (
+	       a === coarse(b,precision a)
+	       ) else if precision a > precision b then (
+	       b === coarse(a,precision b)
+	       ) else (
+	       a === b
+	       )
+	  );
+     A == ZZ := (a,n) -> (
+	  b := toPAdicFieldElement(n,precision a,A);
+	  a === b
+	  );
+     ZZ == A := (n,a) -> a==n;
+     A << ZZ := (a,n) -> (
+	  newPrecision := a#"precision"+n;
+	  newKeys := for i in a#"expansion"_0 list i+n;
+	  new A from {"precision"=>newPrecision,
+	       "expansion"=>{newKeys,a#"expansion"_1}}
+	  );
      PAdicFields#p=A;
      A
 )
@@ -191,6 +237,9 @@ Q3 = pAdicField(3)
 x = toPAdicFieldElement({1,2,0,1,0},Q3);
 y = toPAdicFieldElement(0,3,Q3);
 z = toPAdicFieldElement(10,10,Q3);
+print(x<<3);
+print(y<<15);
+print(x<<(-5));
 print(x+x)
 print(x*x)
 print(x+y)
@@ -199,6 +248,9 @@ print(y*y)
 print(x+1)
 print((1-x)+x)
 print(82*x)
+a = toPAdicFieldElement(10,1000,Q3)
+print(a^(-100))
+print(a^(-100)*(a^100))
 end
 
 ----------------------------

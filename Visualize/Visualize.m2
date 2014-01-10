@@ -29,7 +29,7 @@ newPackage(
     	Headline => "Visualize",
     	DebuggingMode => true,
 	AuxiliaryFiles => true,
-	Configuration => {} 
+	Configuration => {"DefaultPath" => concatenate(currentDirectory(),"temp-files/") } 
     	)
 
 export {
@@ -50,6 +50,10 @@ export {
 
 needsPackage"Graphs"
 
+
+defaultPath = (options Visualize).Configuration#"DefaultPath"
+
+-- (options Visualize).Configuration
 
 ------------------------------------------------------------
 -- METHODS
@@ -114,7 +118,7 @@ visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
 --input: A monomial ideal of a polynomial ring in 2 or 3 variables.
 --output: The newton polytope of the of the ideal.
 --
-visIdeal = method(Options => {VisPath => currentDirectory()|"temp-files/", VisTemplate => currentDirectory() |"Visualize/templates/visIdeal/visIdeal"})
+visIdeal = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() |"Visualize/templates/visIdeal/visIdeal"})
 visIdeal(Ideal) := opts -> J -> (
     local R; local arrayList; local arrayString; local numVar; local visTemp;
     local A;
@@ -140,13 +144,17 @@ visIdeal(Ideal) := opts -> J -> (
     
     A = visOutput( "visArray", arrayString, visTemp, VisPath => opts.VisPath );
     
+    print defaultPath;
+    print currentDirectory();
+    
+    
     return currentDirectory()|A_1;
     )
 
 --input: A graph
 --output: the graph in the browswer
 --
-visGraph = method(Options => {VisPath => currentDirectory()|"temp-files/", VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html"})
+visGraph = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
     local A; local arrayList; local arrayString; local B;
     
@@ -155,7 +163,7 @@ visGraph(Graph) := opts -> G -> (
     arrayString = toString arrayList;
     
     B = visOutput( "visArray", arrayString, opts.VisTemplate, VisPath => opts.VisPath );    
-    
+    print defaultPath;
     return currentDirectory()|B_1;
     )
 
@@ -174,7 +182,7 @@ copyJS(String) := dst -> (
     
     -- get list of filenames in js/
     jsdir = delete("..",delete(".",
-	    readDirectory(currentDirectory()|"temp-files/js/")
+	    readDirectory(currentDirectory()|"Visualize/js/")
 	    ));
     
     -- test to see if files exist in target
@@ -191,7 +199,7 @@ copyJS(String) := dst -> (
 	       );
     	);
     
-    copyDirectory(currentDirectory()|"temp-files/js/",dst);
+    copyDirectory(currentDirectory()|"Visualize/js/",dst);
     
     return "Created directory "|dst;
 )
@@ -240,6 +248,7 @@ end
 restart 
 loadPackage"Graphs"
 loadPackage"Visualize"
+(options Visualize).Configuration
 
 -- Old Graphs
 G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
@@ -248,10 +257,9 @@ visGraph G
 -- New Graphs
 G = graph(toList(x_0..x_5),{{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5},EntryMode => "edges")
 visGraph G
+visGraph( G, VisPath => "/Users/bstone/Desktop/Test/")
 S = G.vertexSet
 toString S
-
-
 
 R = QQ[x,y,z]
 I = ideal"x4,xyz3,yz,xz,z6,y5"
@@ -265,6 +273,7 @@ visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
 
 copyJS "/Users/bstone/Desktop/Test/"
+copyJS ( currentDirectory()|"temp
 yes
 
 

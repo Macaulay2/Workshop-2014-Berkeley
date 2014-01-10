@@ -104,10 +104,43 @@ constructionV3 (ZZ,Module):=
 --here are the significant changes to version 3;
 
 --build the source of the chain complex map
-
+    S = new ChainComplex;
+    -- put in the ring
+    S.ring = M.ring;
+    --put in the modules
+    for i from (g-1-max(g+2,n)) to g-1 do (
+	S_i = Ld_(-g+1+i); 
+	)
+    for i from g to max(g+2,n) do (
+	S_i = P_i;
+	)
+   -- S_g = P_g;
+    --put in the differentials
+    for i from (g-1-max(g+2,n)) to g-1 do (
+	S.dd_i = Ld.dd_(-g+1+i);
+	)
+--yields:stdio:118:20:(3): error: expected argument 1 to be a hash table    
+    for i from g+1 to max(g+2,n) do (
+    	S.dd_i = P.dd_i;	
+    	)
+    S.dd_g = lambdaDual*d*w;
+    
 --build the target of the chain complex map
+--actually this is already built as it is P    
 
 --build the maps between the source and target;
+    --name the maps consistently
+    for i from (g-1-max(g+2,n)) to g-1 do(
+	f_i = dual kappaLifted_(-g+1+i);
+	)
+    for i from g to max(g+2,n) do (
+	f_i = id_(P_i);
+	)
+    --make the chain complex map
+    cRes := map (P,S,i-> f_i) 
+    cRes
+    )
+
 --check that everything is ===
 
 --====== \begin{old stuff}

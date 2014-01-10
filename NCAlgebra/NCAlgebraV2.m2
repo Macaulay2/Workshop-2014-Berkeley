@@ -172,6 +172,22 @@ NCMatrix ++ NCMatrix := (M,N) -> (
    assignDegrees(ds,M.target | N.target, M.source | N.source)
 )
 
+--- The method below is in a state of disrepair... I need to 
+--- get acquainted with all the bergman stuff
+
+-- digraph(NCGroebnerBasis) := G -> (
+    -- N := {normal forms};
+    -- F := {obstructions};
+    -- ringGens := {get the gens from the ring} 
+    ---- maybe this is why the method should take NCIdeal, to pull the ring gens?
+    --suffixes := apply(keys G, k -> flatten apply( degree k - 1, i -> ncMonomial drop(k#monslist,i)));
+    -- vertset := {1} | ringGens | suffixes;
+    -- secondEdges := flatten apply(vertset,v -> {v,{w | vw contains a unique elt of F as a suffix}})
+    ----  need to figure out how to write that function...
+    -- edgeset :=  {{1,ringGens}, secondEdges;
+    -- digraph(edgeset)   
+--    )
+
 -------------------------------------------
 --- NCChainComplex Methods ----------------
 -------------------------------------------
