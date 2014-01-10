@@ -75,32 +75,6 @@
       a { cursor: pointer; cursor: hand; }
 
 
-      #popupMenu {
-        display:none;
-        position:absolute;
-        left:69%;
-        top:4%;
-        width:135px;
-        height:220px;
-        background-color:#000000;
-        opacity:.6;
-        z-index: 5;
-
-      }
-      #resetButton {
-        position:relative;
-        vertical-align: middle;
-        left: 5%;
-        top: 5%;
-      }
-      #forceToggle {
-        position:relative;
-        vertical-align: middle;
-        left: 5%;
-        top: 15%;
-      }
-
-
       #canvasElement {
         background-color: #FFF;
         cursor: default;
@@ -118,7 +92,7 @@
 
       path.link {
         fill: none;
-        stroke: #B6B6B6;
+        stroke: #CCCCCC;
         stroke-width: 2px;
         cursor: default;
       }
@@ -140,7 +114,7 @@
       }
 
       circle.node {
-        stroke-width: 0px;
+        stroke-width: 1.5px;
         cursor: pointer;
       }
 
@@ -162,10 +136,8 @@
     <script type="text/javascript">
       curEdit = false;
   	  curView = "2d";
-      menuOpen = false;
-      dataData = visArray;
-      labelData = visLabels;
-      forceOn = true;
+      dataData = [[0, 1, 0, 0, 0, 0], [1, 0, 0, 0, 1, 1], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0], [0, 1, 1, 0, 0, 1], [0, 1, 0, 0, 1, 0]];
+      labelData = ["x_1","x_2","x_3","a","b","7"];
     </script>
   </head>
   
@@ -174,27 +146,16 @@
         <a id= "editToggle"> enable editing</a>
         <a id= "exportToggle"> export</a>
         <a id= "moreOptions"> more</a>
-        <div id="popupMenu"> 
-          <button id = "resetButton" onclick="resetGraph();">reset nodes</button>
-          <button id = "forceToggle" onclick="toggleForce();">turn off force</button>
-        </div>
   </body>
 
   <script src="js/d3.v3.js"></script>
   <script src="js/app.js"></script>
   <script type="text/javascript">
 
-    window.onload = function() {
+  window.onload = function() {
                 var a = document.getElementById("tdToggle");
                 a.onclick = function() {
-                  if (curView=="2d") {
-                    switchTo3d();
-                    curView = "3d";
-                  }
-                  else {
-                    switchTo2d();
-                    curView = "2d";
-                  }
+
                 }
                 var b = document.getElementById("editToggle");
                 b.onclick = function() {
@@ -214,13 +175,11 @@
                 }
                 var c = document.getElementById("exportToggle");
                 c.onclick = function() {
-                    console.log("export ticksy");
+                    console.log("3d3d3d");
                 }
                 var d = document.getElementById("moreOptions");
                 d.onclick = function() {
-                    //resetGraph();
-                    document.getElementById("popupMenu").style.display = "inline";
-                    menuOpen = true;
+                    resetGraph();
                 }
 
                 //start with 2d
@@ -228,38 +187,7 @@
                 disableEditing();
             }
 
-    function switchTo2d() {
-      document.getElementById("forceToggle").innerHTML = "turn on force";
-    }
-    function switchTo3d() {
-      
-    }
-    function toggleForce() {
-      if (forceOn) {
-        setAllNodesFixed();
-        document.getElementById("forceToggle").innerHTML = "turn on force";
-      }
-      else {
-        resetGraph();
-        document.getElementById("forceToggle").innerHTML = "turn off force";
-      }
-      forceOn = !forceOn;
-    }
-
-    window.addEventListener("mousedown", function(e) {
-      
-      e.preventDefault();
-
-      if (!menuOpen) return;
-
-      var tempMenu = document.getElementById("popupMenu");
-
-      if ( (e.clientX < tempMenu.offsetLeft) || (e.clientY > tempMenu.offsetTop + tempMenu.offsetHeight) ) {
-        document.getElementById("popupMenu").style.display = "none";
-        menuOpen = false;
-      }
-
-    }, false);
+  	
   	window.addEventListener('resize', updateWindowSize2d, false);
   </script>
 </html>

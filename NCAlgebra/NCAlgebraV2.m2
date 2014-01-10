@@ -73,8 +73,8 @@ NCRing ** NCRing := (A,B) -> (
    qTensorProduct(A,B,promote(1,coefficientRing A))
 )
 
-e = method()
-e (NCRing, Symbol) := (A,x) -> (
+envelopingAlgebra = method()
+envelopingAlgebra (NCRing, Symbol) := (A,x) -> (
    --  want to add an option to index op variables by number rather than a ring element?
    R := coefficientRing A;
    Aop := oppositeRing A;
@@ -102,7 +102,6 @@ D = C ** B
 e(A,s)
 e(C,t)
 ///
-
 
 subQuotientAsCokernel = method()
 subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
@@ -258,6 +257,14 @@ zeroMap (List, List, NCRing) := (tar,src,B) -> (
    myZero
 )
 
+matrixInDegDOnLeft := (M,d) -> (
+   entryTable := apply(#(M.target), i -> apply(#(M.source), j -> (i,j)));
+   multTable := applyTable(entryTable, e -> leftMultiplicationMap(M#(e#0)#(e#1), 
+	                                                d - (M.source)#(e#1),
+                                                        d - (M.target)#(e#0)));
+   matrix multTable
+)
+
 Hom (NCMatrix,NCMatrix,ZZ) := (M,N,d) -> (
    B := ring M;
    Nsyz := rightKernelBergman N;  -- be careful if Nsyz is zero!
@@ -323,6 +330,46 @@ M = ncMatrix {{x,y,0},{0,y,z}}
 N = ncMatrix {{x,y},{x,y}}
 Hom(M,N,2)
 ///
+
+-------------------------------------------
+--- Anick Resolution Methods --------------
+-------------------------------------------
+debug needsPackage "Graphs"
+
+digraph NCGroebnerBasis := G -> (
+    obstructions := (keys G.generators) / first ;
+    prevert1 := gens (ncIdeal gens G).ring / (i -> (first keys i.terms).monList);
+    premons := apply (keys G.generators / first, m -> m.monList);
+    suffixes := select( 
+    apply (premons, m -> elements set subsets drop(m,1)) // flatten // set // elements,
+    i -> i != {}
+    );
+    select(suffixes, i -> i != {});
+    prevert2 := suffixes;
+    vertset := unique (prevert1 | prevert2);
+    findSuffix := (t,O) -> (
+    select (O, o -> if #(o.monList) > #t then false else
+	 t_(
+	     toList(0..(#o.monList-1)) / (i -> i + #t -(#o.monList))) == o.monList
+	 )
+     );
+    childrens := (t,V,O) -> select(V, v -> #(findSuffix(t|v,O)) == 1);
+    edgeset :=  {{1,prevert1}} | apply(vertset, v -> {v,childrens(v,vertset,obstructions)});
+    digraph(edgeset)   
+)
+
+TEST ///
+restart
+needsPackage "NCAlgebraV2"
+needsPackage "NCAlgebra"
+needsPackage "Graphs"
+A = QQ{x,y}
+I = ncIdeal(x^2 - y^2)
+G = twoSidedNCGroebnerBasisBergman(I)
+
+digraph(G)
+///
+
 
 end
 

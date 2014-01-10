@@ -58,13 +58,8 @@ liftModuleMap (Module, Module, Matrix) := (N,M,A) -> (
      tempLift
      )
 
---version 0.2 of the construction, taking into account the new version of
---lift module map, and the sticky issue involved in lifting (and even
---composing module maps, namely that the source/target of the maps to
---be composed must be ===, that is, stored in the same place in memory.
---there is a way around this issue in the case that (at least one of?)
---the modules (is/)are free, but we can't count on that to occur in
---practice
+--version 3 is below, implementing a better way of constructing
+--the final chain complex map from the constructed pieces.
 
 -- example for testing constructionV2
 R = QQ[x,y,z]/ideal(x*y*z)
@@ -72,11 +67,11 @@ M = coker map(R^1,,{gens R})
 g=3
 n=5
 
-constructionV2 = 
+constructionV3 = 
 method(TypicalValue => ChainComplex
      , Options => {LengthLimit => 2}
      )
-constructionV2 (ZZ,Module):= 
+constructionV3 (ZZ,Module):= 
      opts -> 
      (g,M) -> (
      if g <= 0
@@ -93,9 +88,9 @@ constructionV2 (ZZ,Module):=
      phi := Pd.dd_(-g+1)//h;
      toLiftSecondFactor := map (K, I, phi);
      kappa := toLiftSecondFactor * toLiftFirstFactor;
-     Pt := truncateComplex(g, P);
-     Ptd := dual Pt;
-     Q := Ptd[-(g-1)];
+--     Pt := truncateComplex(g, P);
+--     Ptd := dual Pt;
+--     Q := Ptd[-(g-1)];
      kappaLifted = liftModuleMap(kappa.target,kappa.source,kappa);
      w := map(G, P_g, id_(P_g));
      d := bidualityMap(G);
@@ -103,18 +98,56 @@ constructionV2 (ZZ,Module):=
      L := resolution(Gd, LengthLimit => max(g+2, n));
      Ld := dual L;
 --     L := resolution(Gd, LengthLimit => g+2);
---     lambda := map(HH_0(L), L_0, id_(L_0));
--- L is a resolution of Gd, so that Gd (up to a prune) == the homology
--- in degree 0, but Gd =!== HH_0(L); this could cause problems for the
--- compositions necessary in the j=g case below. Hence lambda as defined above
--- needs to be adjusted
--- is it appropriate to prune Gd first?
     lambda := map(Gd, L_0, id_(L_0));
-    lambdaDual := dual lambda; -- now implement in M2 1.6
---nothing below here has been tested using the example below  
-     
-     cRes := id_(resolution (ring M)^0);
-     
+    lambdaDual := dual lambda; -- now implemented in M2 1.6
+--here are the significant changes to version 3;
+--build the source of the chain complex map
+    S := new ChainComplex;
+    -- put in the ring
+    S.ring = M.ring;
+    --put in the modules
+    for i from (g-1-max(g+2,n)) to g-1 do (
+	S_i = Ld_(-g+1+i); 
+	);
+    for i from g to max(g+2,n) do (
+	S_i = P_i;
+	);
+   -- S_g = P_g;
+    --put in the differentials
+    for i from (g-1-max(g+2,n)) to g-1 do (
+	S.dd_i = Ld.dd_(-g+1+i);
+	);
+--yields:stdio:118:20:(3): error: expected argument 1 to be a hash table    
+    for i from g+1 to max(g+2,n) do (
+    	S.dd_i = P.dd_i;	
+    	);
+    S.dd_g = lambdaDual*d*w;
+ --build the target of the chain complex map
+--actually this is already built as it is P    
+--build the maps between the source and target;
+    --name the maps consistently
+    for i from (g-1-max(g+2,n)) to g-1 do(
+	f_i = dual kappaLifted_(-g+1+i);
+	);
+    for i from g to max(g+2,n) do (
+	f_i = id_(P_i);
+	);
+    --make the chain complex map
+    cRes := map (P,S,i-> f_i); 
+    cRes
+    )
+
+--------Test Code----------
+--This code here checks if the source and target of the f_i maps are what they should be
+for i from (g-1-max(g+2,n)) to max(g+2,n) do (
+      print (i, source f_i === S_i, target f_i === P_i)
+      )
+  
+
+--check that everything is ===
+
+--====== \begin{old stuff}
+     cRes := id_(resolution (ring M)^0);     
      --Jason's portion
      for j from (g-1-max(g+2, n)) to g-1 do (
 --     for j from (g-1-max(g+2)) to g-1 do (
@@ -136,6 +169,8 @@ constructionV2 (ZZ,Module):=
      cRes.target.dd_g=P.dd_g;
      cRes.source.dd_g=lambdaDual*d*w;
 --     cRes_g=id_(P_g);
+--=====\end{old stuff}
+
      cRes
      )
      

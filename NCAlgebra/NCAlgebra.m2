@@ -83,10 +83,10 @@ MAXSIZE = 1000
 -- Andy's bergman path
 -- bergmanPath = "/usr/local/bergman1.001"
 -- Andy's other bergman path
-bergmanPath = "/cygdrive/d/userdata/Desktop/bergman1.001"
---bergmanPath = "/usr/local/bergman1.001"
+-- bergmanPath = "/cygdrive/d/userdata/Desktop/bergman1.001"
+-- bergmanPath = "/usr/local/bergman1.001"
 -- Frank's bergman path
--- bergmanPath = "~/bergman"
+bergmanPath = "~/bergman"
 -- Courtney's bergman path
 --bergmanPath = "/Users/crgibbon/Downloads/bergman1.001"
 
@@ -266,14 +266,14 @@ Ring List := (R, varList) -> (
 
    A + A := (f,g) -> (
       -- new way
-      newHash := merge(f.terms,g.terms,addVals);
+      --newHash := merge(f.terms,g.terms,addVals);
       -- old way
-      --newHash := new MutableHashTable from pairs f.terms;
-      --for s in pairs g.terms do (
-      --   newMon := s#0;
-      --   if newHash#?newMon then newHash#newMon = newHash#newMon + s#1 else newHash#newMon = s#1;
-      --);
-      --newHash = removeZeroes hashTable pairs newHash;
+      newHash := new MutableHashTable from pairs f.terms;
+      for s in pairs g.terms do (
+         newMon := s#0;
+         if newHash#?newMon then newHash#newMon = newHash#newMon + s#1 else newHash#newMon = s#1;
+      );
+      newHash = removeZeroes hashTable pairs newHash;
       new A from hashTable {(symbol ring, f.ring),
 	                    (symbol isReduced, false),
                             (symbol cache, new CacheTable from {}),
@@ -282,17 +282,17 @@ Ring List := (R, varList) -> (
 
    A * A := (f,g) -> (
       -- new way
-      newHash := combine(f.terms,g.terms,multKeys,multVals,addVals);
+      --newHash := removeZeroes combine(f.terms,g.terms,multKeys,multVals,addVals);
       -- old way
-      --newHash := new MutableHashTable;
-      --for t in pairs f.terms do (
-      --   for s in pairs g.terms do (
-      --      newMon := t#0 | s#0;
-      --      newCoeff := (t#1)*(s#1);
-      --      if newHash#?newMon then newHash#newMon = newHash#newMon + newCoeff else newHash#newMon = newCoeff;
-      --   );
-      --);
-      --newHash = removeZeroes hashTable pairs newHash;
+      newHash := new MutableHashTable;
+      for t in pairs f.terms do (
+         for s in pairs g.terms do (
+            newMon := t#0 | s#0;
+            newCoeff := (t#1)*(s#1);
+            if newHash#?newMon then newHash#newMon = newHash#newMon + newCoeff else newHash#newMon = newCoeff;
+         );
+      );
+      newHash = removeZeroes hashTable pairs newHash;
       new A from hashTable {(symbol ring, f.ring),
   	                    (symbol isReduced, false),
                             (symbol cache, new CacheTable from {}),
@@ -710,10 +710,11 @@ newBasis (ZZ,NCIdeal) := NCMatrix => opts -> (n,I) -> (
 	activeGensList = select(activeGensList, g-> degree g <= n - doneToDeg);
    );
 
--- now we need to minimize the spanning set
+   -- now we need to minimize the spanning set
    terms := flatten entries newBasis(n,R,CumulativeBasis=>opts#CumulativeBasis);
    asCoeffs := sparseCoeffs(doneBasis, Monomials=>terms);  
    minGens := mingens image asCoeffs;
+   error "err";
    ncMatrix{terms}*minGens
 )
 
@@ -1925,9 +1926,41 @@ leftMultiplicationMap(NCRingElement,ZZ,ZZ) := (f,n,m) -> (
 )
 
 leftMultiplicationMap(NCRingElement,List,List) := (f,fromBasis,toBasis) -> (
+   local retVal;
    if not isHomogeneous f then error "Expected a homogeneous element.";
-   sparseCoeffs(f*fromBasis, Monomials=>toBasis)
+   if fromBasis == {} and toBasis == {} then (
+      retVal = ncMatrix {};
+      retVal
+   )
+   else if fromBasis == {} then (
+      retVal = ncMatrix {{}:(#toBasis)};
+      assignDegrees(retVal,apply(toBasis, b -> degree b), {});
+      retVal
+   )
+   else if toBasis == {} then (
+      retVal = ncMatrix {};
+      assignDegrees(retVal,{},apply(fromBasis, b -> degree b));
+      retVal
+   )
+   else sparseCoeffs(f*fromBasis, Monomials=>toBasis)
 )
+
+{*
+TEST ///
+restart
+needsPackage "NCAlgebra"
+A = QQ{a,b}
+I = ncIdeal {a*a*a,a*a*b,a*b*a,a*b*b,b*a*a,b*a*b,b*b*a,b*b*b}
+B = A/I
+basis(0,B)
+basis(1,B)
+basis(2,B)
+basis(3,B)
+leftMultiplicationMap(a,-1,0)
+leftMultiplicationMap(a,-1,0)
+leftMultiplicationMap(a,-1,0)
+///
+*}
 
 rightMultiplicationMap = method()
 rightMultiplicationMap(NCRingElement,ZZ) := (f,n) -> (
@@ -2206,7 +2239,6 @@ ncMap (NCRing,NCRing,List) := opts -> (B,C,imageList) -> (
 				 (symbol Derivation) => opts#Derivation}
 )
 
-
 source NCRingMap := f -> f.source
 target NCRingMap := f -> f.target
 matrix NCRingMap := opts -> f -> (
@@ -2216,7 +2248,6 @@ matrix NCRingMap := opts -> f -> (
         matrix {(gens source f) / f}
 )
 --id _ NCRing := B -> ncMap(B,B,gens B)
-
 
 NCRingMap NCRingElement := (f,x) -> (
    if x == 0 then return promote(0, target f);
@@ -2750,7 +2781,7 @@ NCMatrix // NCMatrix := (N,M) -> (
    -- handle trivial cases now:
    
    -------------------------------
-   gbDegree := max N.source;   -- is this high enough of a degree to factor?
+   gbDegree := max N.source + 1;   -- what is the right degree here?
    matrixRelsM := buildMatrixRelations M;
    CM := ring first matrixRelsM;
    matrixRelsN := buildMatrixRelations N;
