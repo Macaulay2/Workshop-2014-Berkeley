@@ -134,7 +134,7 @@ reduce (RingElement,List) := o -> (f,F) -> (
 --    n, an integer
 --Out: a polynomial ring over K with variable indices determined by s.
 --     All "infinite" indices are included up to n-1. 
-buildERing = method(Options=>{MonomialOrder=>Lex,Diagonal=>false})
+buildERing = method(Options=>{MonomialOrder=>Lex,Diagonal=>true})
 buildERing (Ring,ZZ) := o -> (R,n) -> buildERing(R.symbols, R.semigroup, coefficientRing R, n, MonomialOrder=>R.MonomialOrder)
 buildERing (List,List,Ring,ZZ) := o -> (X,s,K,n) -> (
      variableIndices := s / (b->(toList ((b:0)..(b:n-1))));
@@ -158,7 +158,7 @@ buildERing (List,List,Ring,ZZ) := o -> (X,s,K,n) -> (
 		    )), MonomialOrder => moList];
      R.symbols = X;
      R.varIndices = variableIndices;
-     R.varTable = new HashTable from apply(#(R.varIndices), n->(R.varIndices#n => (gens R)#n));
+     R.varTable = new HashTable from apply(#(R.varIndices), n->(R.varIndices#n => R_n));
      R.varPosTable = new HashTable from apply(#(R.varIndices), n->(R.varIndices#n => n));
      R.semigroup = s;
      R.indexBound = n;
@@ -439,10 +439,11 @@ egbToric = M -> (
      r := R.semigroup;
      F := apply(#r, p -> M(R.varTable#((1:p)|0..(r#p-1))));
      k := R.indexBound;
-     lastNew := k;
+     lastNewk := k;
      T := buildEMonomialMap(S,R,F);
      G := transpose toricGroebner matrixFromMap T;
-     while 2*lastNew > k+1 do (
+     lastNewG := G;
+     while 2*lastNewk > k+1 do (
 	  collectGarbage();
 	  k = k+1;
 	  print k;
@@ -454,21 +455,34 @@ egbToric = M -> (
 		    m := shiftMap(Rnew,s)*ringMap(Rnew,R);
 		    matrixFromMap m
 		    ));
-	  L1 := (sList#0)*G;
-	  time for i from 1 to #sList-1 do L1 = L1|((sList#i)*G);
+	  L1 := matrix{apply(sList, s->s*G)};
 	  L1 = time sort L1;
 	  uniqueCols := time select(numgens source L1, i->(i == 0 or L1_{i} != L1_{i-1}));
 	  L1 = L1_uniqueCols;
 	  print numgens target Gnew;
 	  print numgens source Gnew;
 	  L2 := time sort Gnew;
-	  bool := time(L1 != L2);
-	  if bool then (print "new stuff found"; lastNew = k);
+	  if L1 != L2 then (print "new stuff found"; lastNewk = k; lastNewG = Gnew);
 	  R = Rnew;
 	  T = Tnew;
 	  G = Gnew;
 	  );
-     gens toBinomial(transpose G, R)
+     k = lastNewk;
+     R = buildERing(R,lastNewk);
+     GBtrad := flatten entries sort gens toBinomial(transpose lastNewG, R);
+     seen := new MutableHashTable;
+     GB := select(GBtrad, g -> (
+	       if not seen#?g then (
+	       	    n := maxIndex{g}+1;
+	       	    shifts := subsets(k,n);
+		    shifts = apply(shifts, s->(s|(toList ((k-n):(-1)))));
+		    --print shiftMap(R,shifts#0);
+	       	    for s in shifts do seen#((shiftMap(R,s))g) = true;
+		    true
+		    )
+	       else false
+	       ));
+     GB
      )
 
 beginDocumentation()
