@@ -3,7 +3,7 @@ newPackage(
 	Version => "0.0.1",
 	Date => "3-5-2012",
 	Authors => {
-		{  Name => "Augustine O'Keefe", Email => "???" },
+		{  Name => "Augustine O'Keefe", Email => "augustine.okeefe@gmail.com" },
 		{  Name => "Nicholas Armenoff", Email => "nicholas.armenoff@uky.edu" },
 	},
 	DebuggingMode => true,
