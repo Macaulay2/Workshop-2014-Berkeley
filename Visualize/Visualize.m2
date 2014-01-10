@@ -313,7 +313,7 @@ copyJS(String) := dst -> (
 
 beginDocumentation()
 needsPackage "SimpleDoc"
---debug SimpleDoc
+debug SimpleDoc
 
 doc ///
      Key
@@ -501,6 +501,12 @@ loadPackage "Visualize"
 "TEST" << "let" << close
 replaceInFile("e", "i", "TEST")
 
+-- doc testing
+
+restart
+uninstallPackage"Visualize"
+installPackage"Visualize"
+viewHelp Visualize
 
 -----------------------------
 -- end Julio's Test
