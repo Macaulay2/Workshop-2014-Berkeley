@@ -40,11 +40,7 @@ function initializeBuilder() {
     .append('svg')
     .attr('width', width)
     .attr('height', height)
-<<<<<<< HEAD
     .attr('id', 'canvasElement2d');
-=======
-    .attr('id', 'canvasElement');
->>>>>>> 6a2814f51ee0d042c7cfe772ca30b0fcee9d0fdf
 
   // set up initial nodes and links
   //  - nodes are known by 'id', not by index in array.
@@ -69,17 +65,14 @@ function initializeBuilder() {
       }
   }
 
-<<<<<<< HEAD
-=======
   var maxLength = d3.max(nodes, function(d) {
     return d.name.length;
   });
 
   if(maxLength < 4){
-    d3.selectAll("text").classed("fill", #FEFCFF);
+    d3.selectAll("text").classed("fill", 0xfefcff);
   }
 
->>>>>>> 6a2814f51ee0d042c7cfe772ca30b0fcee9d0fdf
   constrString = graph2M2Constructor(nodes,links);
   incMatrix = getIncidenceMatrix(nodes,links);
   adjMatrix = getAdjacencyMatrix(nodes,links);
@@ -568,11 +561,7 @@ function setAllNodesFixed() {
 
 function updateWindowSize2d() {
 
-<<<<<<< HEAD
         var svg = document.getElementById("canvasElement2d");
-=======
-        var svg = document.getElementById("canvasElement");
->>>>>>> 6a2814f51ee0d042c7cfe772ca30b0fcee9d0fdf
         svg.style.width = window.innerWidth;
         svg.style.height = window.innerHeight - 150;
         svg.width = window.innerWidth;
@@ -663,8 +652,6 @@ function getIncidenceMatrix (nodeSet, edgeSet){
   for(var i = 0;i < nodeSet.length; i++){
     incMatrix[i] = [];
 
-    console.log("nodeID: " + nodeSet[i].id + "\n");
-
     for(var j = 0; j < edgeSet.length; j++){
       incMatrix[i][j] = 0;
     }
@@ -722,6 +709,6 @@ function exportTikz() {
   alert("export tikkkzzz");
 }
 
-function forceStop() {
+function stopForce() {
   force.stop();
 }

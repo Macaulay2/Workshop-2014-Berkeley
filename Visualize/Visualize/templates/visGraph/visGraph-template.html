@@ -153,6 +153,7 @@
       #canvasElement3d {
         background-color: #FFF;
         cursor: default;
+        display:none;
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         -khtml-user-select: none;
@@ -185,20 +186,19 @@
   </body>
 
   <script src="js/d3.v3.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/visGraph2d.js"></script>
   <script src="js/three.min.js"></script>
   <script src="js/Detectors.js"></script>
-  <script src="js/Stats.js"></script>
   <script src="js/OrbitControls.js"></script>
   <script src="js/THREEx.KeyboardState.js"></script>
   <script src="js/THREEx.FullScreen.js"></script>
   <script src="js/THREEx.WindowResize.js"></script>
   <script src="js/RequestAnimationFrame.js"></script>
-  <script src="js/GraphBuilder.js"></script>
-  <script src="js/visGraph2d.js"></script>
+  <script src="js/GraphBuilder3d.js"></script>
+
   <script type="text/javascript">
-    window.getElementById("canvasElement3d").style.width = window.innerWidth;
-    window.getElementById("canvasElement3d").style.width = window.innerHeight - 125;
+    document.getElementById("canvasElement3d").style.width = window.innerWidth;
+    document.getElementById("canvasElement3d").style.width = window.innerHeight - 125;
     window.onload = function() {
                 var a = document.getElementById("tdToggle");
                 a.onclick = function() {
@@ -213,7 +213,6 @@
                 }
                 var b = document.getElementById("editToggle");
                 b.onclick = function() {
-                	console.log(curEdit);
 
                 	if (curEdit) {
                 		b.innerHTML = "enable editing";
@@ -245,6 +244,11 @@
     function switchTo3d() {
 
       stopForce();
+      document.getElementById("canvasElement2d").style.display = "none";
+      document.getElementById("canvasElement3d").style.display = "inline";
+
+      initializeBuilder3d();
+      generateGraph();
 
       
     }
