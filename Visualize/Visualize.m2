@@ -49,7 +49,8 @@ export {
      "runServer",
      "toArray", 
      "getCurrPath", 
-     "copyTemplate"     
+     "copyTemplate",
+     "replaceInFile"     
 
 }
 
@@ -94,7 +95,28 @@ runServer(String) := opts -> (visPath) -> (
 --- add methods for output here:
 --
 
+--replaceInFile
+--	replaces a given pattern by a given patter in a file
+--	input: string containing the pattern
+--	       string containing the replacement
+--	       string containing the file name, 
+replaceInFile = method()
+replaceInFile(String, String, String) := (patt, repl, fileName) -> (
+		local currFile; 
+		local currStr; 
+		
+		currFile = openIn fileName; 
+		currStr = get currFile;
+	      
+		
+		currStr = replace(patt, repl, currStr);
 
+		currFile = openOut fileName; 
+
+		currFile << currStr << close;
+		
+		return fileName;
+)	
 
 
 
@@ -211,6 +233,7 @@ visIdeal(Ideal) := opts -> J -> (
 visGraph = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
     local A; local arrayString; local vertexString; local visTemp;
+    local keyPosition; local vertexSet;
     
     A = adjacencyMatrix G;
     arrayString = toString toArray entries A; -- Turn the adjacency matrix into a nested array (as a string) to copy to the template html file.
@@ -221,7 +244,16 @@ visGraph(Graph) := opts -> G -> (
     if value((options Graphs).Version) == 0.1 then (
 	 vertexString = toString new Array from apply(keys(G#graph), i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the older Graphs package.
     ) else (
-         vertexString = toString new Array from apply((values G)#0, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+    
+    	 -- This is a workaround for finding and referring to the key vertexSet in the hash table for G.
+         -- Would be better to be able to refer to G.vertexSet, but the package
+	 -- seems not to load if we try this.
+	 keyPosition = position(values G, i -> i == symbol vertexSet);
+	 vertexString = toString new Array from apply((values G)#keyPosition, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+	 
+	 --vertexSet = symbol vertexSet;
+	 --vertexString = toString new Array from apply(G.vertexSet, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+	 -- vertexString = toString new Array from apply((values G)#0, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
     );
     
     visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visGraph/visGraph-template.html"); -- Copy the visGraph template to a temporary directory.
@@ -281,7 +313,7 @@ copyJS(String) := dst -> (
 
 beginDocumentation()
 needsPackage "SimpleDoc"
---debug SimpleDoc
+debug SimpleDoc
 
 doc ///
      Key
@@ -463,8 +495,18 @@ yes
 -----------------------------
 -- Julio's tests
 -----------------------------
+restart
+path = append(path, "/home/esmeralda/Workshop-2014-Berkeley/Visualize")
+loadPackage "Visualize"
+"TEST" << "let" << close
+replaceInFile("e", "i", "TEST")
 
+-- doc testing
 
+restart
+uninstallPackage"Visualize"
+installPackage"Visualize"
+viewHelp Visualize
 
 -----------------------------
 -- end Julio's Test
@@ -484,7 +526,7 @@ loadPackage"Visualize"
 
 -- Old Graphs
 G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
-visGraph G
+visGraph Gp
 H = graph({{Y,c},{1, 0}, {3, 0}, {3, 1}, {4, 0}}, Singletons => {A, x_5, 6, cat_sandwich})
 visGraph H
 
