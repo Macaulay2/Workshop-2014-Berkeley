@@ -263,7 +263,7 @@ visIdeal(Ideal) := opts -> J -> (
 --input: A graph
 --output: the graph in the browswer
 --
-visGraph = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html"})
+visGraph = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html", Warning => true})
 visGraph(Graph) := opts -> G -> (
     local A; local arrayString; local vertexString; local visTemp;
     local keyPosition; local vertexSet;
@@ -288,13 +288,24 @@ visGraph(Graph) := opts -> G -> (
 	 --vertexString = toString new Array from apply(G.vertexSet, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
 	 -- vertexString = toString new Array from apply((values G)#0, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
     );
+
+    if opts.VisPath =!= null 
+    then (
+	visTemp = copyTemplate(opts.VisTemplate, opts.VisPath); -- Copy the visGraph template to a temporary directory.
+    	copyJS(opts.VisPath, Warning => opts.Warning); -- Copy the javascript libraries to the temp folder.
+--	visTemp = copyTemplate(opts.VisTemplate|"3D.html",opts.VisPath);
+--	copyJS(opts.VisPath, Warning => opts.Warning);	    
+      )
+    else (
+	visTemp = copyTemplate(opts.VisTemplate); -- Copy the visGraph template to a temporary directory.
+    	copyJS(replace(baseFilename visTemp, "", visTemp), Warning => opts.Warning); -- Copy the javascript libraries to the temp folder.
+      );
     
-    visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visGraph/visGraph-template.html"); -- Copy the visGraph template to a temporary directory.
     
     searchReplace("visArray",arrayString, visTemp); -- Replace visArray in the visGraph html file by the adjacency matrix.
     searchReplace("visLabels",vertexString, visTemp); -- Replace visLabels in the visGraph html file by the ordered list of vertices.
 
-    copyJS(replace(baseFilename visTemp, "", visTemp)); -- Copy the javascript libraries to the temp folder.
+
     
     show new URL from { "file://"|visTemp };
     
@@ -302,7 +313,7 @@ visGraph(Graph) := opts -> G -> (
 )
 
 
-visDigraph = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html"})
+visDigraph = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory()|"Visualize/templates/visDigraph/visDigraph-template.html", Warning => true})
 visDigraph(Digraph) := opts -> G -> (
     local A; local arrayString; local vertexString; local visTemp;
     local keyPosition; local vertexSet;
@@ -328,12 +339,25 @@ visDigraph(Digraph) := opts -> G -> (
 	 -- vertexString = toString new Array from apply((values G)#0, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
     );
     
-    visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visDigraph/visDigraph-template.html"); -- Copy the visDigraph template to a temporary directory.
+--    visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visDigraph/visDigraph-template.html"); -- Copy the visDigraph template to a temporary directory.
+--    copyJS(replace(baseFilename visTemp, "", visTemp)); -- Copy the javascript libraries to the temp folder.    
+
+    if opts.VisPath =!= null 
+    then (
+	visTemp = copyTemplate(opts.VisTemplate, opts.VisPath); -- Copy the visGraph template to a temporary directory.
+    	copyJS(opts.VisPath, Warning => opts.Warning); -- Copy the javascript libraries to the temp folder.
+--	visTemp = copyTemplate(opts.VisTemplate|"3D.html",opts.VisPath);
+--	copyJS(opts.VisPath, Warning => opts.Warning);	    
+      )
+    else (
+	visTemp = copyTemplate(opts.VisTemplate); -- Copy the visGraph template to a temporary directory.
+    	copyJS(replace(baseFilename visTemp, "", visTemp), Warning => opts.Warning); -- Copy the javascript libraries to the temp folder.
+      );
     
+
+
     searchReplace("visArray",arrayString, visTemp); -- Replace visArray in the visGraph html file by the adjacency matrix.
     searchReplace("visLabels",vertexString, visTemp); -- Replace visLabels in the visGraph html file by the ordered list of vertices.
-
-    copyJS(replace(baseFilename visTemp, "", visTemp)); -- Copy the javascript libraries to the temp folder.
     
     show new URL from { "file://"|visTemp };
     
@@ -506,6 +530,9 @@ G = graph(toList(0..5),{{0,1},{0,3},{0,4},{1,3},{2,3}},Singletons => {5},EntryMo
 G = graph(toList(0..5),{0,{1,2,3,4}},Singletons => {5})--,EntryMode => "edges")
 visGraph G
 visGraph( G, VisPath => "/Users/bstone/Desktop/Test/")
+y
+visGraph( G, VisPath => "/Users/bstone/Desktop/Test/", Warning => false)
+y
 S = G.vertexSet
 toString S
 

@@ -35,7 +35,7 @@ function initializeBuilder3d() {
 
 
     renderer.setSize(windowWidth, windowHeight);
-    renderer.setClearColor(0xffffff, 1);
+    renderer.setClearColorHex(0xffffff);
 
     container.appendChild( renderer.domElement );
 
@@ -95,14 +95,14 @@ function initializeBuilder3d() {
 
 function generateGraph() {
     //takes an ajacency matrix representation of a graph g and draws it in Three dimensional space
-    renderer.setClearColor(0xffffff, 1);
+
     var size = dataData[0].length;
     var numRows = Math.floor(size / 4);
     var curNode = null;
     for (var i = 0; i<size; i++) {
         curNode = new node(labelData[i], getRandomColor());
         curNode.initialize();
-        curNode.setCoords((i*40) - 280, (i % numRows)*80 - 160, Math.floor(Math.random()*600) - 300 );
+        curNode.setCoords((Math.random() * 400) - 200, (Math.random() * 400) - 200, (Math.random() * 400) - 200);
         //console.log("x:" + (-240 + i*80)+ "   y:" + (((i % numRows) * 160)  + "   z:" + (Math.floor(Math.random()*480) - 240) );
         nodes3d.push(curNode);
     }
@@ -314,6 +314,8 @@ function onMouseDown(event)
 {
     event.preventDefault();
     isMouseDown = true;
+
+    /*
     var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
     projector.unprojectVector( vector, camera );
 
@@ -339,13 +341,14 @@ function onMouseDown(event)
         }
 
         container.style.cursor = 'move';
+        */
 
-    }
+    
     
 }   
 function onMouseUp (event) {
     event.preventDefault();
-
+    /*
     controls.enabled = true;
 
     if ( objectIntersected ) {
@@ -358,6 +361,7 @@ function onMouseUp (event) {
 
     container.style.cursor = 'auto';
     isMouseDown = false;
+    */
 
 }
 
@@ -367,7 +371,7 @@ function onMouseMove( event ) {
     if (isMouseDown) {
         updateLabels();
     }
-
+    /*
     mouse.x = ( event.clientX / window.innerWidth  ) * 2 - 1;
     mouse.y = - ( event.clientY / (window.innerHeight - 125) ) * 2 + 1;
 
@@ -417,6 +421,7 @@ function onMouseMove( event ) {
         container.style.cursor = 'auto';
 
     }
+    */
 }
 
 
