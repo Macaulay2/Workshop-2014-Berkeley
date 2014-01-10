@@ -38,7 +38,7 @@ hypergraph(List, List) := Hypergraph => opts -> (V, E) -> (
     V = unique join(V, if instance(opts.Singletons, List) then opts.Singletons else {});
     A := if #V == 0 then map(ZZ^0,ZZ^0,0) else matrix apply(#V, i -> apply(#E, j -> if member(V_i, E_j) then 1 else 0));
     vContainments := for v in V list ( v => for i from 0 to #E-1 list ( if member(v, E#i) then i else continue ) );
-	nbors := for c in vContainments list ( unique sort delete(c#0, flatten E_(c#1)) );
+	nbors := for c in vContainments list ( c#0 => unique sort delete(c#0, flatten E_(c#1)) );
     
     return new Hypergraph from hashTable {
 		edges => E,
