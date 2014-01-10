@@ -212,9 +212,16 @@ visIdeal(Ideal) := opts -> J -> (
     
     if numVar == 2 
     then (
-	visTemp = copyTemplate(opts.VisTemplate|"2D.html");
-	copyJS(replace(baseFilename visTemp, "", visTemp), Warning => opts.Warning);
-
+	if opts.VisPath =!= null 
+	then (
+	    	visTemp = copyTemplate(opts.VisTemplate|"2D.html",opts.VisPath);
+	    	copyJS(opts.VisPath, Warning => opts.Warning);	    
+	    )
+	else (
+	    	visTemp = copyTemplate(opts.VisTemplate|"2D.html");
+	    	copyJS(replace(baseFilename visTemp, "", visTemp), Warning => opts.Warning);	    
+	    );
+	
 	arrayList = apply( flatten entries gens J, m -> flatten exponents m);	
 	arrayList = toArray arrayList;
 	arrayString = toString arrayList;
@@ -535,6 +542,7 @@ I = ideal"a2,ab,b2c,c5,b4"
 -- I = ideal"x4,xyz3,yz,xz,z6,y5"
 visIdeal I
 visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/", Warning => false)
+visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 y
 copyTemplate(currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html", "/Users/bstone/Desktop/Test/")
 
