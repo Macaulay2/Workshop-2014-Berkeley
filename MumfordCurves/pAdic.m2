@@ -29,35 +29,26 @@ export {PAdicField,
      henselApproximation
      }
 
-PAdicFields = new MutableHashTable
+PAdicFields = new MutableHashTable -- save created PAdicFields here
+
+---------------------------------------------
+-- New types
+---------------------------------------------
 
 PAdicField = new Type of InexactField
 PAdicFieldElement = new Type of HashTable
+PAdicMatrix = new Type of MutableHashTable
 
-net PAdicFieldElement := a->(expans:=a#"expansion";
-  p:=(class a)#prime;
-  keylist:=expans_0;
-  ((horizontalJoin apply(#keylist,i->
-  net(expans_1_i)|"*"|net p|
-  (net keylist_i)^1|"+"))
-|"O("|net p|(net(precision a))^1|")"))
-
-toString PAdicFieldElement := a->(expans:=a#"expansion";
-  p:=(class a)#prime;
-  keylist:=expans_0;
-  ((concatenate apply(#keylist,i->
-  toString(expans_1_i)|"*"|toString p|"^"|
-  (toString keylist_i)|"+"))
-|"O("|toString p|"^"|(toString(precision a))|")"))
-
-
+---------------------------------------------
+-- Creating PAdicFields
+---------------------------------------------
 
 new PAdicField from List := (PAdicField, inits) -> new PAdicField of PAdicFieldElement from new HashTable from inits
 
 net PAdicField := A->"QQQ_"|toString(A#prime)
 
-valuation = method()
-relativePrecision = method()
+QQQ=new ScriptedFunctor
+QQQ#subscript=i->(pAdicField i)
 
 pAdicField = method()
 pAdicField ZZ:=(p)->(
@@ -69,11 +60,9 @@ pAdicField ZZ:=(p)->(
      A
 )
 
-precision PAdicFieldElement := a->a#"precision";
-valuation PAdicFieldElement := a->(if #(a#"expansion"_0)>0 then return min a#"expansion"_0;
-	  infinity);
-relativePrecision PAdicFieldElement:= a -> (
-	  if #(a#"expansion"_0)==0 then 0 else (precision a)-(valuation a));
+---------------------------------------------
+-- non-exported auxilliary functions
+---------------------------------------------
 
 computeCarryingOver := (aKeys,aValues,prec,A) -> (
      	  p:=A#prime;
@@ -106,10 +95,39 @@ computeCarryingOver := (aKeys,aValues,prec,A) -> (
 	       "expansion"=>{toList deepSplice newKeys,
 		    toList deepSplice newValues}}
 	  )
-   
---new PAdicFieldElement from Sequence := (A',a) -> (
---	  computeCarryingOver(a#0,a#1,a#2)
---	  )
+
+---------------------------------------------
+-- Methods for PAdicFieldElements
+---------------------------------------------
+
+
+net PAdicFieldElement := a->(expans:=a#"expansion";
+  p:=(class a)#prime;
+  keylist:=expans_0;
+  ((horizontalJoin apply(#keylist,i->
+  net(expans_1_i)|"*"|net p|
+  (net keylist_i)^1|"+"))
+|"O("|net p|(net(precision a))^1|")"))
+
+toString PAdicFieldElement := a->(expans:=a#"expansion";
+  p:=(class a)#prime;
+  keylist:=expans_0;
+  ((concatenate apply(#keylist,i->
+  toString(expans_1_i)|"*"|toString p|"^"|
+  (toString keylist_i)|"+"))
+|"O("|toString p|"^"|(toString(precision a))|")"))
+
+
+precision PAdicFieldElement := a->a#"precision";
+
+valuation = method()
+valuation PAdicFieldElement := a->(if #(a#"expansion"_0)>0 then return min a#"expansion"_0;
+	  infinity);
+
+relativePrecision = method()
+relativePrecision PAdicFieldElement:= a -> (
+	  if #(a#"expansion"_0)==0 then 0 else (precision a)-(valuation a));
+
 
 PAdicFieldElement + PAdicFieldElement := (a,b) -> (
 	  if not (class b)===(class a) then error "Elements must be in same PAdicField";
@@ -149,7 +167,6 @@ PAdicFieldElement * PAdicFieldElement := (a,b)->(
   )
 
 
-
 toPAdicInverse = method ()
 toPAdicInverse(List,PAdicField):= (L,A) -> (
      	  p:=A#prime;
@@ -166,7 +183,7 @@ toPAdicInverse(List,PAdicField):= (L,A) -> (
 	  S
 	  )
 
- inverse PAdicFieldElement := a->(
+inverse PAdicFieldElement := a->(
       A:=class a;
       if valuation(a)==infinity then (
 	   error "You cannot divide by 0!";
@@ -299,16 +316,6 @@ PAdicFieldElement << ZZ := (a,n) -> (
 	  "expansion"=>{newKeys,a#"expansion"_1}}
      )
 
-
-QQQ=new ScriptedFunctor
-QQQ#subscript=i->(pAdicField i)
-
-
-
--- PAdicField Elements are hashtables with following keys:
--- precision (value ZZ)
--- expansion (hashtable, two entries: exponents, coefficients)
-
 pValuation = method()
 pValuation(ZZ,ZZ) := (n,p)->(
      b := n;
@@ -319,10 +326,10 @@ pValuation(ZZ,ZZ) := (n,p)->(
 	  );
      v
      );
+
 pValuation(QQ,ZZ) := (r,p)->(pValuation(numerator(r),p)-pValuation(denominator(r),p));
 
 toPAdicFieldElement = method()
-
 toPAdicFieldElement (List,PAdicField) := (L,S) -> (
    n:=#L;
    local expans;
@@ -348,7 +355,9 @@ toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
 
 
 
-PAdicMatrix = new Type of MutableHashTable
+---------------------------------------------
+-- Matrix stuff
+---------------------------------------------
 
 pAdicMatrix = method()
 pAdicMatrix List := L -> (
@@ -433,6 +442,113 @@ henselApproximation (RingElement,ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
 	local s; s=toPAdicFieldElement(r,n,QQQ_p); i:=0;
 	while i<n+1 do (s=s-(g(s)/g'(s));i=i+1);
 	s)
+
+----------------------------
+--Package test cases
+----------------------------
+
+TEST ///
+assert(QQQ_3===QQQ_3);
+assert(QQQ_3=!=QQQ_5);
+///
+
+TEST ///
+a := toPAdicFieldElement({1,2,3,4,5},QQQ_7);
+assert(a#"precision"==5);
+assert(a#"expansion"_0=={0,1,2,3,4});
+assert(a#"expansion"_1=={1,2,3,4,5});
+b := toPAdicFieldElement({3,0,0,3,0,0},QQQ_7);
+assert(b#"precision"==6);
+assert(b#"expansion"_0=={0,3});
+assert(b#"expansion"_1=={3,3});
+c := toPAdicFieldElement({0,0,0},QQQ_7);
+assert(c#"precision"==3);
+assert(c#"expansion"_0=={});
+assert(c#"expansion"_1=={});
+///
+
+TEST ///
+a := toPAdicFieldElement({1,2,3,4,5},QQQ_7);
+b := toPAdicFieldElement({1,2,3,4,5},QQQ_7);
+c := toPAdicFieldElement({1,2,3,4,5,0},QQQ_7);
+d := toPAdicFieldElement({1,2,3,4,5,1},QQQ_7);
+assert(a==b);
+assert(a===b);
+assert(a==c);
+assert(a=!=c);
+assert(a==d);
+assert(c!=d);
+assert(not a!=b);
+assert(not a=!=b);
+assert(not a!=c);
+assert(not a===c);
+assert(not a!=d);
+assert(not c==d);
+///
+
+TEST ///
+a := toPAdicFieldElement({1,2,3,4,5},QQQ_7);
+assert(a==1+2*7+3*7^2+4*7^3+5*7^4);
+assert(1+2*7+3*7^2+4*7^3+5*7^4+348*7^23==a);
+assert(a!=1+2*7+3*7^2+4*7^3+4*7^4);
+///
+
+TEST ///
+a := toPAdicFieldElement({1,2,3,4,5},QQQ_7);
+b := toPAdicFieldElement(1+2*7+3*7^2+4*7^3+5*7^4,5,QQQ_7);
+assert(a==b);
+assert(1+2*7+3*7^2+4*7^3+5*7^4==a);
+c := toPAdicFieldElement({0,0,0,0,0},QQQ_7);
+d := toPAdicFieldElement(0,5,QQQ_7);
+assert(c==d);
+assert(0==c);
+e := toPAdicFieldElement({6,6,6,6,6},QQQ_7);
+f := toPAdicFieldElement(-1,5,QQQ_7);
+assert(e==f);
+assert(-1==e);
+///
+
+TEST ///
+a := toPAdicFieldElement(123456789,10,QQQ_7);
+b := toPAdicFieldElement(987654321,15,QQQ_7);
+assert(a+b==123456789+987654321);
+assert((+a)==(+123456789));
+assert((-a)==(-123456789));
+assert(a-b==123456789-987654321);
+assert(a*b==123456789*987654321);
+assert(a^10==123456789^10);
+c := toPAdicFieldElement(0,8,QQQ_7);
+assert(c+c==0);
+assert(c+a==a);
+assert(-c==c);
+assert(a-c==a);
+assert(c-a==-a);
+assert(a*c==0);
+assert(c^10==0);
+///
+
+TEST ///
+a := toPAdicFieldElement(-123,10,QQQ_7);
+b := toPAdicFieldElement(246,15,QQQ_7);
+c := toPAdicFieldElement(0,8,QQQ_7);
+assert(b/a==-2);
+assert(inverse(inverse(b))==b);
+assert(c/a==0);
+///
+
+TEST ///
+a := toPAdicFieldElement(1/2,10,QQQ_7);
+b := toPAdicFieldElement(1/7,15,QQQ_7);
+c := toPAdicFieldElement(0,8,QQQ_7);
+assert(a*2==1);
+assert(b*7==1);
+assert((1/3+a)*6==5);
+assert((a-b)*14==5);
+assert((1/2)*b/a==b);
+assert((1/49)/b/b==1);
+assert((c+1/2)==a);
+assert(c*132*123*134/1234==0);
+///
 
 end
 ----------------------------
