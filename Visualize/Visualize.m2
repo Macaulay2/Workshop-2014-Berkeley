@@ -24,7 +24,8 @@ newPackage(
      	     {Name => "Brett Barwick", Email => "Brett@barwick.edu", HomePage => "http://math.bard.edu/~bstone/"},	     
 	     {Name => "Elliot Korte", Email => "ek2872@bard.edu"},	     
 	     {Name => "Will Smith", Email => "smithw12321@gmail.com"},		
-	     {Name => "Branden Stone", Email => "bstone@bard.edu", HomePage => "http://math.bard.edu/~bstone/"},	     
+	     {Name => "Branden Stone", Email => "bstone@bard.edu", HomePage => "http://math.bard.edu/~bstone/"},
+	     {Name => "Julio Urenda", Email => "jcurenda@nmsu.edu"},	     
 	     {Name => "Jim Vallandingham", Email => "vlandham@gmail.com", HomePage => "http://vallandingham.me/"}
 	     },
     	Headline => "Visualize",
@@ -315,7 +316,8 @@ beginDocumentation()
 needsPackage "SimpleDoc"
 debug SimpleDoc
 
-doc ///
+multidoc ///
+  Node
      Key
      	 Visualize
      Headline 
@@ -323,111 +325,28 @@ doc ///
      Description
        Text
      	 We use really rediculusly cools things to do really cool things.
-///
-
-
---end
-
-doc ///
-  Key
-    (visIdeal, Ideal)
-  Headline
-    Creates staircase diagram for an ideal
-  Usage
-    visIdeal I
-  Inputs
-    I:Ideal
-      An ideal in a ring with 2 or 3 variables.
-  Outputs
-    An interactive html file that is opened in the user's default browser.
-  Description
-    Text
-      We are able to see the interactive staircase diagram. More stuff
-      should be here about the convext hull and other stuff. 
-///
-
-end
-
-
-doc ///
-  Key
-    bigIdeal
-    (bigIdeal,ZZ,List)
-    BaseField
-  Headline
-    Constructs one of the family of ideals with large projective dimension and regularity.
-  Usage
-    bigIdeal(g,L)
-    bigIdeal(g,{2,1,3})
-  Inputs
-    g:ZZ
-      Assumed to be at least 2.
-    L:List
-      List of integers {m_1,...m_n} such that m_n is nonnegative, m_{n-1} > 0 and all other
-      m_i > 1.
-  Outputs
-    I:Ideal
-      An ideal with g+1 generators in degree m_1+...+m_n+1.
-  Description
-   Text
-     The ideal returned has g generators of the form x_i^d and 1 generator using the remaining
-     variables.  Note that the y variables are indexed by matrices with entries prescribed by
-     the entries of L.  The special case where L contains a single integer reverts to the ideals
-     defined by the jasonIdeal command.
-   Example
-     bigIdeal(2,{3,1})
-     bigIdeal(2,{2,1,2})
-     bigIdeal(3,{2})
-///
-
-doc ///
-  Key
-    (jasonIdeal,ZZ,ZZ,ZZ)
-  Headline
-    Constructs one of the family of ideals in "A Family of Ideals with Few Generators in Low Degree and Large Projective Dimension" by Jason McCullough.
-  Usage
-    x = jasonIdeal(m,n,d)
-  Inputs
-    m:ZZ
-      Assumed to be at least 2.
-    n:ZZ
-      Assumed to be at least 1.
-    d:ZZ
-      Assumed to be at least 1.
-  Outputs
-    I:Ideal
-      An ideal with m+n generators in degree d and with pd(R/I) = (m + d - 2)!/((m-1)!(d-1)!).
-  Description
-   Text
-     The ideal returned has m generators of the form x_i^d and n generators each of which
-     are a sum of the y_i variables times each of the degree-(d-1) monomials in the x_is.
-   Example
-     jasonIdeal(3,1,3)
-///
-
-doc ///
-  Key
-    socleCheck
-    (socleCheck,Ideal,RingElement)
-  Headline
-    Checks where a ring element is nonzero is nonzero in socle(R/I) for an ideal I.
-  Usage
-    socleCheck(I,s)
-  Inputs
-    I:Ideal
-    s:RingElement
-  Outputs
-    x:Boolean
-      True if s is in (I:m) - I.  False otherwise.
-  Description
-   Text
-     This function merely checks whether every variable multiplies s into I and that s is not already in I.
-   Example
-     R = QQ[x,y];
-     I = ideal(x^2,y^2);
-     socleCheck(I,x*y);
-     socleCheck(I,x^2);
-     socleCheck(I,x);
+     Caveat
+     	 Let's see.
+  Node
+    Key
+       [visIdeal,VisPath]
+       [visIdeal,VisTemplate]
+       (visIdeal, Ideal)
+       visIdeal
+    Headline
+       Creates staircase diagram for an ideal
+    Usage
+       visIdeal I
+    Inputs
+       I: Ideal
+         An ideal in a ring with 2 or 3 variables.
+    Outputs
+       visTemp: String
+         Path to html containg polytope.
+    Description
+     Text
+       We are able to see the interactive staircase diagram. More stuff
+       should be here about the convext hull and other stuff.	    
 ///
 
 -------------------------------------------------------------------------------------------
@@ -496,7 +415,6 @@ yes
 -- Julio's tests
 -----------------------------
 restart
-path = append(path, "/home/esmeralda/Workshop-2014-Berkeley/Visualize")
 loadPackage "Visualize"
 "TEST" << "let" << close
 replaceInFile("e", "i", "TEST")
