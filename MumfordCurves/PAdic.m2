@@ -1,5 +1,5 @@
 newPackage(
-     "pAdic",
+     "PAdic",
      Version => "0.1", 
      Date => "Jan 9, 2013",
      Authors => {{Name => "Nathan Ilten", 
@@ -15,6 +15,31 @@ newPackage(
      Headline => "a package for p-adic numbers",
      DebuggingMode => true
      )
+
+
+---------------------------------------------------------------------------
+-- COPYRIGHT NOTICE:
+--
+-- Copyright 2014 Nathan Owen Ilten, Ralph Morrison, and Qingchun Ren
+--
+--
+-- This program is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+---------------------------------------------------------------------------
+
+
+
 
 export {PAdicField,
      prime,
@@ -64,6 +89,28 @@ pAdicField ZZ:=(p)->(
 -- non-exported auxilliary functions
 ---------------------------------------------
 
+pValuation := method()
+pValuation(ZZ,ZZ) := (n,p)->(
+     b := n;
+     v := 0;
+     while b%p==0 do (
+	  b = b//p;
+	  v = v+1;
+	  );
+     v
+     );
+
+pValuation(QQ,ZZ) := (r,p)->(pValuation(numerator(r),p)-pValuation(denominator(r),p));
+
+coarse := method();
+coarse(PAdicFieldElement,ZZ) := (a,prec) -> (
+     newPrecision := min(prec,precision a);
+     newKeys := select(a#"expansion"_0,i->(i<newPrecision));
+     newValues := for i in 0..#newKeys-1 list a#"expansion"_1#i;
+     new (class a) from {"precision"=>newPrecision,
+	  "expansion"=>{newKeys,newValues}}
+     )
+
 computeCarryingOver := (aKeys,aValues,prec,A) -> (
      	  p:=A#prime;
 	  newKeys := ();
@@ -95,6 +142,34 @@ computeCarryingOver := (aKeys,aValues,prec,A) -> (
 	       "expansion"=>{toList deepSplice newKeys,
 		    toList deepSplice newValues}}
 	  )
+
+---------------------------------------------
+-- Creating PAdicFieldElements
+---------------------------------------------
+
+toPAdicFieldElement = method()
+toPAdicFieldElement (List,PAdicField) := (L,S) -> (
+   n:=#L;
+   local expans;
+   if all(L,i->i==0) then expans={{},{}}    
+   else expans=entries transpose matrix select(apply(n,i->{i,L_i}),j->not j_1==0);
+   new S from {"precision"=>n,"expansion"=>expans}
+   )
+toPAdicFieldElement(ZZ,ZZ,PAdicField) := (n,prec,S) -> (
+     computeCarryingOver({0},{n},prec,S)
+     );
+toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
+     n := numerator r;
+     d := denominator r;
+     p := S.prime;
+     nVal := pValuation(n,p);
+     dVal := pValuation(d,p);
+     rVal := nVal-dVal;
+     newRelativePrecision := prec-rVal;
+     nPAdic := toPAdicFieldElement(n,nVal+newRelativePrecision,S);
+     dPAdic := toPAdicFieldElement(d,dVal+newRelativePrecision,S);
+     nPAdic/dPAdic
+     );
 
 ---------------------------------------------
 -- Methods for PAdicFieldElements
@@ -281,15 +356,6 @@ PAdicFieldElement / QQ := (a,r)->a/numerator(r)*denominator(r)
 
 QQ / PAdicFieldElement := (r,a)->inverse(a)*numerator(r)/denominator(r)
 
-coarse := method();
-coarse(PAdicFieldElement,ZZ) := (a,prec) -> (
-     newPrecision := min(prec,precision a);
-     newKeys := select(a#"expansion"_0,i->(i<newPrecision));
-     newValues := for i in 0..#newKeys-1 list a#"expansion"_1#i;
-     new (class a) from {"precision"=>newPrecision,
-	  "expansion"=>{newKeys,newValues}}
-     )
-
 PAdicFieldElement == PAdicFieldElement := (a,b) -> (
      if not class a === class b then return false;
      if precision a < precision b then (
@@ -314,45 +380,6 @@ PAdicFieldElement << ZZ := (a,n) -> (
      new (class a) from {"precision"=>newPrecision,
 	  "expansion"=>{newKeys,a#"expansion"_1}}
      )
-
-pValuation = method()
-pValuation(ZZ,ZZ) := (n,p)->(
-     b := n;
-     v := 0;
-     while b%p==0 do (
-	  b = b//p;
-	  v = v+1;
-	  );
-     v
-     );
-
-pValuation(QQ,ZZ) := (r,p)->(pValuation(numerator(r),p)-pValuation(denominator(r),p));
-
-toPAdicFieldElement = method()
-toPAdicFieldElement (List,PAdicField) := (L,S) -> (
-   n:=#L;
-   local expans;
-   if all(L,i->i==0) then expans={{},{}}    
-   else expans=entries transpose matrix select(apply(n,i->{i,L_i}),j->not j_1==0);
-   new S from {"precision"=>n,"expansion"=>expans}
-   )
-toPAdicFieldElement(ZZ,ZZ,PAdicField) := (n,prec,S) -> (
-     computeCarryingOver({0},{n},prec,S)
-     );
-toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
-     n := numerator r;
-     d := denominator r;
-     p := S.prime;
-     nVal := pValuation(n,p);
-     dVal := pValuation(d,p);
-     rVal := nVal-dVal;
-     newRelativePrecision := prec-rVal;
-     nPAdic := toPAdicFieldElement(n,nVal+newRelativePrecision,S);
-     dPAdic := toPAdicFieldElement(d,dVal+newRelativePrecision,S);
-     nPAdic/dPAdic
-     );
-
-
 
 ---------------------------------------------
 -- Matrix stuff
@@ -441,6 +468,28 @@ henselApproximation (RingElement,ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
 	local s; s=toPAdicFieldElement(r,n,QQQ_p); i:=0;
 	while i<n+1 do (s=s-(g(s)/g'(s));i=i+1);
 	s)
+
+---------------------------------------------
+-- Documentation
+---------------------------------------------
+
+beginDocumentation()
+
+document {
+     Key => PAdic,
+     Headline => "a package for p-adic numbers",
+     PARA{
+    "This package facilitates basic computations with p-adic numbers, including
+    arithmetic and a simple form of Hensel lifting."}}
+
+--document {
+  --   Key =>PAdicField,
+    -- }
+
+document {
+     Key =>PAdicFieldElement,
+     }
+
 
 ----------------------------
 --Package test cases
