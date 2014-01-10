@@ -88,9 +88,9 @@ constructionV3 (ZZ,Module):=
      phi := Pd.dd_(-g+1)//h;
      toLiftSecondFactor := map (K, I, phi);
      kappa := toLiftSecondFactor * toLiftFirstFactor;
-     Pt := truncateComplex(g, P);
-     Ptd := dual Pt;
-     Q := Ptd[-(g-1)];
+--     Pt := truncateComplex(g, P);
+--     Ptd := dual Pt;
+--     Q := Ptd[-(g-1)];
      kappaLifted = liftModuleMap(kappa.target,kappa.source,kappa);
      w := map(G, P_g, id_(P_g));
      d := bidualityMap(G);
@@ -133,9 +133,16 @@ constructionV3 (ZZ,Module):=
 	f_i = id_(P_i);
 	);
     --make the chain complex map
-    cRes := map (P,S,i-> f_i);
+    cRes := map (P,S,i-> f_i); 
     cRes
     )
+
+--------Test Code----------
+--This code here checks if the source and target of the f_i maps are what they should be
+for i from (g-1-max(g+2,n)) to max(g+2,n) do (
+      print (i, source f_i === S_i, target f_i === P_i)
+      )
+  
 
 --check that everything is ===
 
