@@ -73,7 +73,7 @@ function initializeBuilder() {
   if(maxLength < 4){
     d3.selectAll("text").classed("fill", 0xfefcff);
   } else { 
-    d3.selectAll("text").classed("fill", #000000);
+    d3.selectAll("text").classed("fill", 0x000000 );
   }
 
   constrString = graph2M2Constructor(nodes,links);
@@ -361,9 +361,9 @@ function restart() {
       });
       
       if(maxLength < 4){
-        d3.selectAll("text").classed("fill", #FEFCFF);
+        d3.selectAll("text").classed("fill", 0xfefcff);
       } else { 
-        d3.selectAll("text").classed("fill", #000000);
+        d3.selectAll("text").classed("fill", 0x000000);
       }
 
     });
