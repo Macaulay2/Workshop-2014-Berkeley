@@ -68,7 +68,7 @@ export {
    "pageMap", 
    "page" ,
   "prunningMaps", "edgeComplex",
-  "filteredHomologyObject", "associatedGradedHomologyObject", "changeOfRingsTor", "pushFwdChainComplex"  --, "xHom", "yHom" --, "xTensor", "yTensor"
+  "filteredHomologyObject", "associatedGradedHomologyObject", "changeOfRingsTor", "pushFwdChainComplex"  
   }
 
 
@@ -438,12 +438,7 @@ yComplex := (T,n) ->
 		    K.dd_i = inducedMap(directSum(ymodules(n,i-1,T)),directSum(ymodules(n,i,T)),T.dd_i));
 	       K
 	       )
---Hom (ChainComplex, FilteredComplex) := FilteredComplex => (C,K) -> ( 
- --   yHom(complete C, K)
-  --  )
 
---yHom = method()
---yHom(ChainComplex, FilteredComplex) := FilteredComplex => (C,K) -> (
   Hom (ChainComplex, FilteredComplex) := FilteredComplex => (D,K) -> (
       C := complete D; 
      supp := support K_infinity;
@@ -4100,7 +4095,7 @@ associatedGradedHomologyObject(10,15,K)
 associatedGradedHomologyObject(-10,-10,K)
 -- so the above seems to be OK.
 
-
+ 
 
 E = spectralSequence(K)
 e = prune E
