@@ -1,4 +1,3 @@
-
 var width  = null,
       height = null,
       colors = null;
@@ -309,7 +308,7 @@ function restart() {
       .attr('x', 0)
       .attr('y', 4)
       .attr('class', 'id')
-      .text(function(d) { return d.id; });
+      .text(function(d) { return d.name; });
 
   // remove old nodes
   circle.exit().remove();
@@ -352,7 +351,7 @@ function mousedown() {
     curName += 'a';
   }
   while (checkName(curName)) {
-    curName = curName.substring(0, curName.length() - 1) + getNextAlpha(curName.slice(-1));
+    curName = curName.substring(0, curName.length - 1) + getNextAlpha(curName.slice(-1));
   }
 
   node = {id: ++lastNodeId, name: curName, reflexive: false};
