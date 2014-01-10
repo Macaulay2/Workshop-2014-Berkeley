@@ -542,7 +542,28 @@ document {
 	  "a^2+1==0"}
      }
 
-
+document {
+     Key =>{toPAdicFieldElement,(toPAdicFieldElement,List,PAdicField),
+     	       (toPAdicFieldElement,QQ,ZZ,PAdicField),
+	       (toPAdicFieldElement,ZZ,ZZ,PAdicField)},
+     Inputs => {"L" => ofClass List,"A" => ofClass PAdicField},
+     Outputs => {"a" => ofClass PAdicFieldElement},
+     Usage => "a=toPAdicFieldElement(L,A)",
+     Headline=> "inputting p-adic integers as lists",
+     PARA{TT "toPAdicFieldElement"," can take various inputs,
+	  and outputs a  a ",TT "p","-adic integer.  If the input
+	  is a list of integers from ",TT "(0,1,...,p)",",
+	  it outputs a ",TT "p","-adic integer with those coefficients,
+	  with precision equal to the length of the list minus one.
+	  If the input is either a rational number or an integer,
+	  it outputs that number as an element of the 
+	  ",TT "p","-adic field, with precision specified
+	  by the second input." },
+     EXAMPLE {"a = toPAdicFieldElement({1,2,3,4,5},QQQ_7)",
+	 "b = toPAdicFieldElement({0,0,3,0,2,0},QQQ_5)",
+	 "c = toPAdicFieldElement(12/35,7,QQQ_3)",
+	 "d = toPAdicFieldElement(5726,7,QQQ_11)"}
+     }
 
 
 document {
@@ -595,6 +616,49 @@ document {
 	   element is a list of the corresponding coefficients."}
      }
 
+
+document {
+     Key=>{
+	  (symbol *,PAdicFieldElement,PAdicFieldElement),
+	  (symbol *,ZZ,PAdicFieldElement),
+	  (symbol *,QQ,PAdicFieldElement),
+	  (symbol *,PAdicFieldElement,QQ),
+	  (symbol *,PAdicFieldElement,ZZ)
+	  },
+     Usage => "x*y",
+     PARA{"Multiplies the two inputs up to the highest possible precision."},
+     EXAMPLE{"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "y=toPAdicFieldElement(3/7,5,QQQ_7)",
+	  "x*y"}
+     }
+
+document {
+     Key=>{
+	  (symbol +,PAdicFieldElement,PAdicFieldElement),
+	  (symbol +,ZZ,PAdicFieldElement),
+	  (symbol +,QQ,PAdicFieldElement),
+	  (symbol +,PAdicFieldElement,QQ),
+	  (symbol +,PAdicFieldElement,ZZ)
+	  },
+     Usage => "x+y",
+     PARA{"Adds the two inputs up to the highest possible precision."},
+     EXAMPLE{"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "y=toPAdicFieldElement(3/7,5,QQQ_7)",
+	  "x+y"}     }
+
+document {
+     Key=>{
+	  (symbol /,PAdicFieldElement,PAdicFieldElement),
+	  (symbol /,ZZ,PAdicFieldElement),
+	  (symbol /,QQ,PAdicFieldElement),
+	  (symbol /,PAdicFieldElement,QQ),
+	  (symbol /,PAdicFieldElement,ZZ)
+	  },
+     Usage => "x/y",
+     PARA{"Divides the two inputs up to the highest possible precision."},
+     EXAMPLE{"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "y=toPAdicFieldElement(3/7,5,QQQ_7)",
+	  "x/y"}     }
 
 ----------------------------
 --Package test cases
