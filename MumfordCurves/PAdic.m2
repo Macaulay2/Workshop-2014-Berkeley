@@ -477,17 +477,18 @@ beginDocumentation()
 
 document {
      Key => PAdic,
-     Headline => "Computations with p-adic numbers",
+     Headline => "a package for p-adic numbers",
      PARA{
-    "Enter text here"
-    
- 
-     
-     
-   
- 
- }
+    "This package facilitates basic computations with p-adic numbers, including
+    arithmetic and a simple form of Hensel lifting."}}
 
+--document {
+  --   Key =>PAdicField,
+    -- }
+
+document {
+     Key =>PAdicFieldElement,
+     }
 
 
 ----------------------------
