@@ -119,6 +119,7 @@ constructionV3 (ZZ,Module):=
     for i from (g-1-max(g+2,n)) to g-1 do (
 	S.dd_i = Ld.dd_(g-1-i);
 	)
+--yields:stdio:118:20:(3): error: expected argument 1 to be a hash table    
     for i from g+1 to max(g+2,n) do (
     	S.dd_i = P.dd_i;	
     	)
