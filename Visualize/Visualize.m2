@@ -176,18 +176,22 @@ visIdeal(Ideal) := opts -> J -> (
 	arrayString = toString arrayList;
     )
     else (
-	visTemp = opts.VisTemplate|"3D.html";
-	copyTemplate(visTemp);
+	visTemp = copyTemplate(opts.VisTemplate|"3D.html");
+	copyJS(replace(baseFilename visTemp, "", visTemp));
+	
 	
     	arrayList = apply(flatten entries basis(0,infinity, R/J), m -> flatten exponents m );
     	arrayList = toArray arrayList;
     	arrayString = toString arrayList;
 	
+	searchReplace("visArray",arrayString, visTemp)
+	
     );
     
-    A = visOutput( "visArray", arrayString, visTemp, VisPath => opts.VisPath );
+    show new URL from { "file://"|visTemp };
+--    A = visOutput( "visArray", arrayString, visTemp, VisPath => opts.VisPath );
     
-    return opts.VisPath|A_1;
+    return visTemp;--opts.VisPath|A_1;
     )
 
 loadPackage"Graphs"
@@ -309,6 +313,7 @@ loadPackage"Graphs"
 loadPackage"Visualize"
 (options Visualize).Configuration
 
+copyJS(replace(baseFilename"/var/folders/41/smyxyt0s5d5_rx02rltn5dl00000gn/T/M2-360-0/0/1389325905.html", "", "/var/folders/41/smyxyt0s5d5_rx02rltn5dl00000gn/T/M2-360-0/0/1389325905.html"))
 
 
 time testFile = copyTemplate(currentDirectory()|"Visualize/templates/visIdeal/visIdeal3d.html")
