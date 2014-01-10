@@ -542,6 +542,14 @@ function enableEditing() {
   svg.classed('shift', false);
 }
 
+function setAllNodesFixed() {
+  for (var i = 0; i<nodes.length; i++) {
+    //d3.select(this).classed(d.fixed = true);
+    nodes[i].fixed = true;
+  }
+
+}
+
 function updateWindowSize2d() {
 
         var svg = document.getElementById("canvasElement");
