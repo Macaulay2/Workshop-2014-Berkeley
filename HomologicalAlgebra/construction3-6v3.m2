@@ -66,11 +66,11 @@ liftModuleMap (Module, Module, Matrix) := (N,M,A) -> (
 
 --version 3 is below, implementing a better way of constructing
 --the final chain complex map from the constructed pieces.
-constructionV3 = 
+buildCR = 
 method(TypicalValue => ChainComplex
      , Options => {LengthLimit => 2}
      )
-constructionV3 (ZZ,Module):= 
+buildCR (ZZ,Module):= 
      opts -> 
      (g,M) -> (
      if g <= 0
@@ -184,16 +184,26 @@ R = QQ[x,y,z]/ideal(x*y*z)
 M = coker vars R
 g = 3
 n = 5
-C = constructionV3(g,M)
---This code here checks if the source and target of the f_i maps are what they should be
+C = buildCR(g,M)
+--for i from (g-1-max(g+2,n)) to max(g+2,n) do (
+--    print(i, C.ff#i)) --checks the syntax for calling the maps f_i
+CR = map(C.target, C.source, i -> C.ff#i)
+--This code here checks if the source and target of the 
+--f_i maps are what they should be; updated to reflect the
+--new output of buildCR as a hash table
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
-      print (i, source f_i === S_i, target f_i === P_i)
+      print (i, source C.ff#i === C.source_i, target C.ff#i === C.target_i)
       )
 --a less strict test;
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
-      print (i, source f_i == S_i, target f_i == P_i)
+      print (i, source C.ff#i == C.source_i, target C.ff#i == C.target_i)
       )  
 
+--a process to test the buildMaps and buildComplex code;
+--designed to create a chain complex using
+--map(ChainComplex,ChainComplex,Matrix) with only one interesteing
+--differential in the hope of narrowing down which differential(s)
+--is(/are) causing problems.
 mapsList = ()
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
     mapsList = append(mapsList,-(sign i)*(id_(R^1))))
