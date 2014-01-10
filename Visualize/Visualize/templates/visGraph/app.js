@@ -31,148 +31,6 @@ var width  = null,
   
   var drag = null;
 
-function resetGraph() {
-  for( var i = 0; i < nodes.length; i++ ){
-    nodes[i].fixed = false;
-  }
-  force.start();
-}
-
-function dragstart(d) {
-  d3.select(this).classed(d.fixed = true);
-}
-
-function graph2M2Constructor( nodeSet, edgeSet ){
-	var strEdges = "";
-	var e = edgeSet.length;
-	for( var i = 0; i < e; i++ ){
-		if(i != (e-1)){
-			strEdges = strEdges + "{x_" + (edgeSet[i].source.id).toString() + ", x_" + (edgeSet[i].target.id).toString() + "}, ";
-		}
-		else{
-			strEdges = strEdges + "{x_" + (edgeSet[i].source.id).toString() + ", x_" + (edgeSet[i].target.id).toString() + "}";
-		}	
-	}
-	// determine if the singleton set is empty
-        var card = 0
-	var singSet = singletons(nodeSet, edgeSet);
-	card = singSet.length; // cardinality of singleton set
-	if ( card != 0 ){
-		var strSingSet = "{";
-		for(var i = 0; i < card; i++ ){
-			if(i != (card - 1) ){
-				strSingSet = strSingSet + "x_" + (singSet[i]).toString() + ", ";
-			}
-			else{
-				strSingSet = strSingSet + "x_" + (singSet[i]).toString();
-			}
-		}
-		strSingSet = strSingSet + "}";
-		return "graph(" + strEdges + ", Singletons => "+ strSingSet + ")";
-	}
-	else{
-		return "graph(" + strEdges + ")";
-	}
-
-}
-
-// determines if a graph contains singletons, if it does it returns an array containing their id, if not returns empty array
-function singletons(nodeSet, edgeSet){
-	
-	var singSet = [];
-	var n = nodeSet.length;
-        var e = edgeSet.length;
-	var currNodeId = -1;
-	var occur = 0;
-	for( var i = 0; i < n; i++){
-		currNodeId = (nodeSet[i]).id;
-		for( var j = 0; j < e; j++ ){
-			if ( (edgeSet[j].source.id == currNodeId) || (edgeSet[j].target.id == currNodeId) ){
-				occur++;
-			}
-		}//end for
-		if (occur == 0){
-			singSet.push(currNodeId); // add node id to singleton set
-		}
-		occur = 0; //reset occurrences for next node id			
-	} 
-	return singSet;
-}
-
-// Brett working code - figuring out data loops in JS - ignore this
-
-// d3.select("body").selectAll("p").data(links).enter().append("p").text(function(d) {return [d.source.id,d.target.id]});
-
-// var vertices = [];
-// var edges = [];
-
-// for (var i = 0; i < nodes.length; i++) {
-//     vertices.push(nodes[i].id);          //Add new node to 'vertices' array
-// }
-
-// for (var i = 0; i < links.length; i++) {
-//     edges.push({source: links[i].source.id , target: links[i].target.id});      //Add new edge pair to 'edges' array
-// }
-
-// Constructs the incidence matrix for a graph as a multidimensional array.
-function getIncidenceMatrix (nodeSet, edgeSet){
-	var incMatrix = []; // The next two loops create an initial (nodes.length) x (links.length) matrix of zeros.
-
-	for(var i = 0;i < nodes.length; i++){
-	  incMatrix[i] = [];
-	  for(var j = 0; j < links.length; j++){
-	    incMatrix[i][j] = 0;
-	  }
-	}
-
-	for (var i = 0; i < links.length; i++) {
-		incMatrix[links[i].source.id][i] = 1; // Set matrix entries corresponding to incidences to 1.
-		incMatrix[links[i].target.id][i] = 1;
-	}
-
-	return incMatrix;
-}
-
-// Constructs the adjacency matrix for a graph as a multidimensional array.
-function getAdjacencyMatrix (nodeSet, edgeSet){
-	var adjMatrix = []; // The next two loops create an initial (nodes.length) x (nodes.length) matrix of zeros.
-	for(var i = 0; i < nodes.length; i++){
-	  adjMatrix[i] = [];
-	  for(var j = 0; j < nodes.length; j++){
-	    adjMatrix[i][j] = 0;
-	  }
-	}
-
-	for (var i = 0; i < links.length; i++) {
-		adjMatrix[links[i].source.id][links[i].target.id] = 1; // Set matrix entries corresponding to adjacencies to 1.
-		adjMatrix[links[i].target.id][links[i].source.id] = 1;
-	}
-
-	return adjMatrix;
-}
-
-// Takes a rectangular array of arrays and returns a string which can be copy/pasted into M2.
-function arraytoM2Matrix (arr){
-	var str = "matrix{{";
-	for(var i = 0; i < arr.length; i++){
-	  for(var j = 0; j < arr[i].length; j++){
-	    str = str + arr[i][j].toString();
-	    if(j == arr[i].length - 1){
-	      str = str + "}";
-            } else {
-	      str = str + ",";
-	    }
-	  }
-	  if(i < arr.length-1){
-	    str = str + ",{";
-	  } else {
-	    str = str + "}";
-	  }
-	}
-	
-	return str;
-}
-
 function initializeBuilder() {
   // set up SVG for D3
   width  = window.innerWidth;
@@ -189,16 +47,26 @@ function initializeBuilder() {
   //  - nodes are known by 'id', not by index in array.
   //  - reflexive edges are indicated on the node (as a bold black circle).
   //  - links are always source < target; edge directions are set by 'left' and 'right'.
-  nodes = [
-      {id: 0, reflexive: false, call: drag},
-      {id: 1, reflexive: true, call: drag},
-      {id: 2, reflexive: false, call: drag}
-    ];
-    lastNodeId = 2;
-    links = [
-      {source: nodes[0], target: nodes[1], left: false, right: false },
-      {source: nodes[1], target: nodes[2], left: false, right: false }
-    ];
+  var data = dataData;
+  var names = labelData;
+
+  lastNodeId = data.length;
+  nodes = [];
+  links = [];
+  for (var i = 0; i<data.length; i++) {
+
+      nodes.push( {name: names[i], id: i, reflexive:false } );
+      //console.log("I " + i);
+
+  }
+  for (var i = 0; i<data.length; i++) {
+      for (var j = 0; j < i ; j++) {
+          if (data[i][j] != 0) {
+              links.push( { source: nodes[i], target: nodes[j], left: false, right: false} );
+              //console.log("I " + i + "  J " + j);
+          }    
+      }
+  }
 
   constrString = graph2M2Constructor(nodes,links);
   incMatrix = getIncidenceMatrix(nodes,links);
@@ -254,6 +122,18 @@ function initializeBuilder() {
     .on('keyup', keyup);
   restart();
 }
+
+function resetGraph() {
+  for( var i = 0; i < nodes.length; i++ ){
+    nodes[i].fixed = false;
+  }
+  restart();
+}
+
+function dragstart(d) {
+  d3.select(this).classed(d.fixed = true);
+}
+
 function resetMouseVars() {
   mousedown_node = null;
   mouseup_node = null;
@@ -406,6 +286,22 @@ function restart() {
       selected_link = link;
       selected_node = null;
       restart();
+    })
+  .on('dblclick', function(d) {
+      name = "";
+      while (name=="") {
+        name = prompt('enter new label name', d.name);
+        if (name==d.name) {
+          return;
+        }
+        else if (checkName(name)) {
+          alert('sorry a node with that name already exists')
+          name = "";
+        }
+      }
+      d.name = name;
+      d3.select(this.parentNode).select("text").text(function(d) {return d.name});
+
     });
 
   // show node IDs
@@ -426,6 +322,19 @@ function restart() {
   document.getElementById("adjString").innerHTML = "Adjacency Matrix: " + arraytoM2Matrix(getAdjacencyMatrix(nodes,links));
 }
 
+function checkName(name) {
+  for (var i = 0; i<nodes.length; i++) {
+    if (nodes[i].name == name) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function getNextAlpha(alpha) {
+  return String.fromCharCode(alpha.charCodeAt(0) + 1);
+}
+
 function mousedown() {
   // prevent I-bar on drag
   //d3.event.preventDefault();
@@ -433,11 +342,20 @@ function mousedown() {
   // because :active only works in WebKit?
   svg.classed('active', true);
 
-  if(d3.event.shiftKey || mousedown_node || mousedown_link) return;
+  if(!curEdit || d3.event.shiftKey || mousedown_node || mousedown_link) return;
 
   // insert new node at point
-  var point = d3.mouse(this),
-      node = {id: ++lastNodeId, reflexive: false};
+
+  var point = d3.mouse(this);
+  var curName = lastNodeId.toString();
+  if (checkName(curName)) {
+    curName += 'a';
+  }
+  while (checkName(curName)) {
+    curName = curName.substring(0, curName.length() - 1) + getNextAlpha(curName.slice(-1));
+  }
+
+  node = {id: ++lastNodeId, name: curName, reflexive: false};
   node.x = point[0];
   node.y = point[1];
   nodes.push(node);
@@ -501,6 +419,7 @@ function keydown() {
         nodes.splice(nodes.indexOf(selected_node), 1);
         spliceLinksForNode(selected_node);
       } else if(selected_link) {
+
         links.splice(links.indexOf(selected_link), 1);
       }
       selected_link = null;
@@ -553,6 +472,7 @@ function disableEditing() {
   circle.call(drag);
   svg.classed('shift', true);
 }
+
 function enableEditing() {
   circle
       .on('mousedown.drag', null)
@@ -567,8 +487,138 @@ function updateWindowSize2d() {
         svg.style.height = window.innerHeight - 150;
         svg.width = window.innerWidth;
         svg.height = window.innerHeight - 150;
-    
+}
+
+// Functions to construct M2 constructors for graph, incidence matrix, and adjacency matrix.
+
+function graph2M2Constructor( nodeSet, edgeSet ){
+  var strEdges = "";
+  var e = edgeSet.length;
+  for( var i = 0; i < e; i++ ){
+    if(i != (e-1)){
+      strEdges = strEdges + "{" + (edgeSet[i].source.name).toString() + ", " + (edgeSet[i].target.name).toString() + "}, ";
+    }
+    else{
+      strEdges = strEdges + "{" + (edgeSet[i].source.name).toString() + ", " + (edgeSet[i].target.name).toString() + "}";
+    } 
+  }
+  // determine if the singleton set is empty
+        var card = 0
+  var singSet = singletons(nodeSet, edgeSet);
+  card = singSet.length; // cardinality of singleton set
+  if ( card != 0 ){
+    var strSingSet = "{";
+    for(var i = 0; i < card; i++ ){
+      if(i != (card - 1) ){
+        strSingSet = strSingSet + "" + (singSet[i]).toString() + ", ";
+      }
+      else{
+        strSingSet = strSingSet + "" + (singSet[i]).toString();
+      }
+    }
+    strSingSet = strSingSet + "}";
+    return "graph(" + strEdges + ", Singletons => "+ strSingSet + ")";
+  }
+  else{
+    return "graph(" + strEdges + ")";
+  }
 
 }
 
+// determines if a graph contains singletons, if it does it returns an array containing their id, if not returns empty array
+function singletons(nodeSet, edgeSet){
+  
+  var singSet = [];
+  var n = nodeSet.length;
+        var e = edgeSet.length;
+  var curNodeName = -1;
+  var occur = 0;
+  for( var i = 0; i < n; i++){
+    curNodeName = (nodeSet[i]).name;
+    for( var j = 0; j < e; j++ ){
+      if ( (edgeSet[j].source.name == curNodeName) || (edgeSet[j].target.name == curNodeName) ){
+        occur=1;
+        break;
+      }
+    }//end for
+    if (occur == 0){
+      singSet.push(curNodeName); // add node id to singleton set
+    }
+    occur = 0; //reset occurrences for next node id     
+  } 
+  return singSet;
+}
 
+// Brett working code - figuring out data loops in JS - ignore this
+
+// d3.select("body").selectAll("p").data(links).enter().append("p").text(function(d) {return [d.source.id,d.target.id]});
+
+// var vertices = [];
+// var edges = [];
+
+// for (var i = 0; i < nodes.length; i++) {
+//     vertices.push(nodes[i].id);          //Add new node to 'vertices' array
+// }
+
+// for (var i = 0; i < links.length; i++) {
+//     edges.push({source: links[i].source.id , target: links[i].target.id});      //Add new edge pair to 'edges' array
+// }
+
+// Constructs the incidence matrix for a graph as a multidimensional array.
+function getIncidenceMatrix (nodeSet, edgeSet){
+  var incMatrix = []; // The next two loops create an initial (nodes.length) x (links.length) matrix of zeros.
+
+  for(var i = 0;i < nodes.length; i++){
+    incMatrix[i] = [];
+    for(var j = 0; j < links.length; j++){
+      incMatrix[i][j] = 0;
+    }
+  }
+
+  for (var i = 0; i < links.length; i++) {
+    incMatrix[links[i].source.id][i] = 1; // Set matrix entries corresponding to incidences to 1.
+    incMatrix[links[i].target.id][i] = 1;
+  }
+
+  return incMatrix;
+}
+
+// Constructs the adjacency matrix for a graph as a multidimensional array.
+function getAdjacencyMatrix (nodeSet, edgeSet){
+  var adjMatrix = []; // The next two loops create an initial (nodes.length) x (nodes.length) matrix of zeros.
+  for(var i = 0; i < nodes.length; i++){
+    adjMatrix[i] = [];
+    for(var j = 0; j < nodes.length; j++){
+      adjMatrix[i][j] = 0;
+    }
+  }
+
+  for (var i = 0; i < links.length; i++) {
+    adjMatrix[links[i].source.id][links[i].target.id] = 1; // Set matrix entries corresponding to adjacencies to 1.
+    adjMatrix[links[i].target.id][links[i].source.id] = 1;
+  }
+
+  return adjMatrix;
+}
+
+// Takes a rectangular array of arrays and returns a string which can be copy/pasted into M2.
+function arraytoM2Matrix (arr){
+  var str = "matrix{{";
+  for(var i = 0; i < arr.length; i++){
+    for(var j = 0; j < arr[i].length; j++){
+      str = str + arr[i][j].toString();
+      if(j == arr[i].length - 1){
+        str = str + "}";
+            } else {
+        str = str + ",";
+      }
+    }
+    if(i < arr.length-1){
+      str = str + ",{";
+    } else {
+      str = str + "}";
+    }
+  }
+  
+  return str;
+}
