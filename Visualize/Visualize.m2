@@ -326,7 +326,7 @@ doc ///
 ///
 
 
---end
+end
 
 doc ///
   Key
@@ -335,9 +335,9 @@ doc ///
     Creates staircase diagram for an ideal
   Usage
     visIdeal I
-  Inputs
-    I:Ideal
-      An ideal in a ring with 2 or 3 variables.
+--  Inputs
+--    I:Ideal
+--      An ideal in a ring with 2 or 3 variables.
   Outputs
     An interactive html file that is opened in the user's default browser.
   Description
@@ -452,6 +452,7 @@ restart
 loadPackage"Graphs"
 uninstallPackage"Visualize"
 installPackage"Visualize"
+loadPackage"Visualize"
 viewHelp Visualize
 
 (options Visualize).Configuration
