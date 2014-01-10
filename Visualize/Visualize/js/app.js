@@ -217,7 +217,7 @@ function restart() {
     .style('marker-start', function(d) { return d.left ? 'url(#start-arrow)' : ''; })
     .style('marker-end', function(d) { return d.right ? 'url(#end-arrow)' : ''; })
     .on('mousedown', function(d) {
-      if(d3.event.shiftKey) return;
+      if(d3.event.shiftKey || !curEdit) return;
 
       // select link
       mousedown_link = d;
@@ -260,7 +260,7 @@ function restart() {
       d3.select(this).attr('transform', '');
     })
     .on('mousedown', function(d) {
-      if(d3.event.shiftKey) return;
+      if(d3.event.shiftKey || !curEdit) return;
 
       // select node
       mousedown_node = d;
