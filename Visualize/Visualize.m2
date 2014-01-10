@@ -49,7 +49,8 @@ export {
      "runServer",
      "toArray", 
      "getCurrPath", 
-     "copyTemplate"     
+     "copyTemplate",
+     "replaceInFile"     
 
 }
 
@@ -94,7 +95,28 @@ runServer(String) := opts -> (visPath) -> (
 --- add methods for output here:
 --
 
+--replaceInFile
+--	replaces a given pattern by a given patter in a file
+--	input: string containing the pattern
+--	       string containing the replacement
+--	       string containing the file name, 
+replaceInFile = method()
+replaceInFile(String, String, String) := (patt, repl, fileName) -> (
+		local currFile; 
+		local currStr; 
+		
+		currFile = openIn fileName; 
+		currStr = get currFile;
+	      
+		
+		currStr = replace(patt, repl, currStr);
 
+		currFile = openOut fileName; 
+
+		currFile << currStr << close;
+		
+		return fileName;
+)	
 
 
 
@@ -473,7 +495,11 @@ yes
 -----------------------------
 -- Julio's tests
 -----------------------------
-
+restart
+path = append(path, "/home/esmeralda/Workshop-2014-Berkeley/Visualize")
+loadPackage "Visualize"
+"TEST" << "let" << close
+replaceInFile("e", "i", "TEST")
 
 
 -----------------------------
