@@ -501,3 +501,13 @@ b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->a_j*b_(i-j)),S)/sub(a_0,S),R)+p)%p;i=i+1)
 			i=i+1);
 	       S
 	       )
+--Hensel code rough draft
+henselApproximation = method()
+henselApproximation (ZZ[x],ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
+	x:=(ring f)_0;
+	f':=diff(x,f); print f';
+	g:= a->sum(0..(degree(f))_0, j->coefficient(x^j,f)*a^j);
+	g':= a->sum(0..(degree(f'))_0, j->coefficient(x^j,f')*a^j);
+	local s; s=toPAdicFieldElement(r,n,QQQ_p); i=0;
+	while i<n+1 do ( print i; s=s-(g(s)/g'(s));i=i+1);
+	r)
