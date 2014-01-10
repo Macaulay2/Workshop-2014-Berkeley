@@ -49,7 +49,8 @@ export {
      "runServer",
      "toArray", 
      "getCurrPath", 
-     "copyTemplate"     
+     "copyTemplate",
+     "replaceInFile"     
 
 }
 
@@ -94,7 +95,28 @@ runServer(String) := opts -> (visPath) -> (
 --- add methods for output here:
 --
 
+--replaceInFile
+--	replaces a given pattern by a given patter in a file
+--	input: string containing the pattern
+--	       string containing the replacement
+--	       string containing the file name, 
+replaceInFile = method()
+replaceInFile(String, String, String) := (patt, repl, fileName) -> (
+		local currFile; 
+		local currStr; 
+		
+		currFile = openIn fileName; 
+		currStr = get currFile;
+	      
+		
+		currStr = replace(patt, repl, currStr);
 
+		currFile = openOut fileName; 
+
+		currFile << currStr << close;
+		
+		return fileName;
+)	
 
 
 
@@ -211,6 +233,7 @@ visIdeal(Ideal) := opts -> J -> (
 visGraph = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
     local A; local arrayString; local vertexString; local visTemp;
+    local keyPosition; local vertexSet;
     
     A = adjacencyMatrix G;
     arrayString = toString toArray entries A; -- Turn the adjacency matrix into a nested array (as a string) to copy to the template html file.
@@ -221,7 +244,16 @@ visGraph(Graph) := opts -> G -> (
     if value((options Graphs).Version) == 0.1 then (
 	 vertexString = toString new Array from apply(keys(G#graph), i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the older Graphs package.
     ) else (
-         vertexString = toString new Array from apply((values G)#0, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+    
+    	 -- This is a workaround for finding and referring to the key vertexSet in the hash table for G.
+         -- Would be better to be able to refer to G.vertexSet, but the package
+	 -- seems not to load if we try this.
+	 keyPosition = position(values G, i -> i == symbol vertexSet);
+	 vertexString = toString new Array from apply((values G)#keyPosition, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+	 
+	 --vertexSet = symbol vertexSet;
+	 --vertexString = toString new Array from apply(G.vertexSet, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+	 -- vertexString = toString new Array from apply((values G)#0, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
     );
     
     visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visGraph/visGraph-template.html"); -- Copy the visGraph template to a temporary directory.
@@ -281,7 +313,7 @@ copyJS(String) := dst -> (
 
 beginDocumentation()
 needsPackage "SimpleDoc"
---debug SimpleDoc
+debug SimpleDoc
 
 doc ///
      Key
@@ -294,7 +326,7 @@ doc ///
 ///
 
 
-end
+--end
 
 doc ///
   Key
@@ -419,10 +451,8 @@ end
 restart
 loadPackage"Graphs"
 uninstallPackage"Visualize"
-restart
 installPackage"Visualize"
 viewHelp Visualize
-
 
 (options Visualize).Configuration
 
@@ -436,8 +466,6 @@ G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5
 visGraph G
 H = graph({{x_1, x_0}, {x_3, x_0}, {x_3, x_1}, {x_4, x_0}}, Singletons => {x_2, x_5, 6, cat_sandwich})
 visGraph H
-
-apply(keys(G), i -> class i)
 
 -- New Graphs
 G = graph(toList(0..5),{{0,1},{0,3},{0,4},{1,3},{2,3}},Singletons => {5},EntryMode => "edges")
@@ -461,14 +489,24 @@ visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
 copyJS "/Users/bstone/Desktop/Test/"
 yes
-copyJS ( currentDirectory()|"temp
+
 
 
 -----------------------------
 -- Julio's tests
 -----------------------------
+restart
+path = append(path, "/home/esmeralda/Workshop-2014-Berkeley/Visualize")
+loadPackage "Visualize"
+"TEST" << "let" << close
+replaceInFile("e", "i", "TEST")
 
+-- doc testing
 
+restart
+uninstallPackage"Visualize"
+installPackage"Visualize"
+viewHelp Visualize
 
 -----------------------------
 -- end Julio's Test
@@ -482,8 +520,58 @@ copyJS ( currentDirectory()|"temp
 -----------------------------
 -----------------------------
 
+restart
+loadPackage"Graphs"
+loadPackage"Visualize"
+
+-- Old Graphs
+G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
+visGraph Gp
+H = graph({{Y,c},{1, 0}, {3, 0}, {3, 1}, {4, 0}}, Singletons => {A, x_5, 6, cat_sandwich})
+visGraph H
 
 restart
+loadPackage"Graphs"
+loadPackage"Visualize"
+-- New Graphs
+G = graph(toList(0..5),{{0,1},{0,3},{0,4},{1,3},{2,3}},Singletons => {5},EntryMode => "edges")
+visGraph G
+cycleGraph 9
+visGraph oo
+wheelGraph 8
+visGraph oo
+generalizedPetersenGraph(3,4)
+visGraph oo
+completeGraph(70)
+visGraph oo
+cocktailParty(70)
+visGraph oo
+
+
+R = QQ[a,b,c]
+I = ideal"a2,ab,b2c,c5,b4"
+I = ideal"x4,xyz3,yz,xz,z6,y5"
+visIdeal I
+copyJS "/Users/bstone/Desktop/Test/"
+yes
+visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
+
+S = QQ[x,y]
+I = ideal"x4,xy3,y5"
+visIdeal I
+visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
+
+
+copyJS "/Users/bstone/Desktop/Test/"
+yes
+
+
+
+
+restart
+uninstallPackage"Graphs"
+loadPackage"Graphs"
+peek Graphs
 loadPackage"Visualize"
 
 -- Creates staircase diagram 

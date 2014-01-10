@@ -6,12 +6,12 @@
     <style>
       #tdToggle
       {
-      color:#0000FF;
-      vertical-align: middle;
-      position:relative;
-      left:15%;
-      top:0px;
-      z-index:1;
+        color:#0000FF;
+        vertical-align: middle;
+        position:relative;
+        left:15%;
+        top:0px;
+        z-index:1;
       }
       #tdToggle:hover {
           text-decoration:underline;
@@ -23,12 +23,12 @@
 
       #editToggle
       {
-      color:#0000FF;
-      vertical-align: middle;
-      position:relative;
-      left:25%;
-      top:0px;
-      z-index:1;
+        color:#0000FF;
+        vertical-align: middle;
+        position:relative;
+        left:35%;
+        top:0px;
+        z-index:1;
       }
       #editToggle:hover {
           text-decoration:underline;
@@ -38,31 +38,14 @@
           color:#800080;
       }
 
-      #exportToggle
-      {
-      color:#0000FF;
-      vertical-align: middle;
-      position:relative;
-      left:40%;
-      top:0px;
-      z-index:1;
-      }
-      #exportToggle:hover {
-          text-decoration:underline;
-      }
-      #exportToggle:active {
-          text-decoration:underline;
-          color:#800080;
-      }
-
       #moreOptions
       {
-      color:#0000FF;
-      vertical-align: middle;
-      position:relative;
-      left:50%;
-      top:0px;
-      z-index:1;
+        color:#0000FF;
+        vertical-align: middle;
+        position:relative;
+        left:50%;
+        top:0px;
+        z-index:1;
       }
       #moreOptions:hover {
           text-decoration:underline;
@@ -73,6 +56,40 @@
       }
 
       a { cursor: pointer; cursor: hand; }
+
+
+      #popupMenu {
+        display:none;
+        position:absolute;
+        left:69%;
+        top:4%;
+        width:135px;
+        height:220px;
+        background-color:#000000;
+        opacity:.6;
+        z-index: 5;
+
+      }
+
+      #resetButton {
+        position:relative;
+        vertical-align: middle;
+        left: 5%;
+        top: 5%;
+      }
+      #forceToggle {
+        position:relative;
+        vertical-align: middle;
+        left: 5%;
+        top: 15%;
+      }
+      #exportToggle
+      {
+        vertical-align: middle;
+        position:relative;
+        left:5%;
+        top:25%;
+      }
 
 
       #canvasElement {
@@ -136,26 +153,39 @@
     <script type="text/javascript">
       curEdit = false;
   	  curView = "2d";
+      menuOpen = false;
       dataData = visArray;
       labelData = visLabels;
+      forceOn = true;
     </script>
   </head>
   
   <body>
   	    <a id= "tdToggle"> switch to 3d</a>
         <a id= "editToggle"> enable editing</a>
-        <a id= "exportToggle"> export</a>
         <a id= "moreOptions"> more</a>
+        <div id="popupMenu"> 
+          <button id = "resetButton" onclick="resetGraph();">reset nodes</button>
+          <button id = "forceToggle" onclick="toggleForce();">turn off force</button>
+          <button id = "exportToggle" onclick="exportTicksy();">export ticksy</button>
+        </div>
   </body>
 
   <script src="js/d3.v3.js"></script>
   <script src="js/app.js"></script>
   <script type="text/javascript">
 
-  window.onload = function() {
+    window.onload = function() {
                 var a = document.getElementById("tdToggle");
                 a.onclick = function() {
-
+                  if (curView=="2d") {
+                    switchTo3d();
+                    curView = "3d";
+                  }
+                  else {
+                    switchTo2d();
+                    curView = "2d";
+                  }
                 }
                 var b = document.getElementById("editToggle");
                 b.onclick = function() {
@@ -173,13 +203,11 @@
                 	}
                     
                 }
-                var c = document.getElementById("exportToggle");
+                var c = document.getElementById("moreOptions");
                 c.onclick = function() {
-                    console.log("3d3d3d");
-                }
-                var d = document.getElementById("moreOptions");
-                d.onclick = function() {
-                    resetGraph();
+                    //resetGraph();
+                    document.getElementById("popupMenu").style.display = "inline";
+                    menuOpen = true;
                 }
 
                 //start with 2d
@@ -187,7 +215,41 @@
                 disableEditing();
             }
 
-  	
+    function switchTo2d() {
+
+    }
+    function switchTo3d() {
+      
+    }
+    function toggleForce() {
+      if (forceOn) {
+        setAllNodesFixed();
+        document.getElementById("forceToggle").innerHTML = "turn on force";
+      }
+      else {
+        resetGraph();
+        document.getElementById("forceToggle").innerHTML = "turn off force";
+      }
+      forceOn = !forceOn;
+    }
+    function exportTicksy() {
+
+    }
+
+    window.addEventListener("mousedown", function(e) {
+      
+      e.preventDefault();
+
+      if (!menuOpen) return;
+
+      var tempMenu = document.getElementById("popupMenu");
+
+      if ( (e.clientX < tempMenu.offsetLeft) || (e.clientY > tempMenu.offsetTop + tempMenu.offsetHeight) ) {
+        document.getElementById("popupMenu").style.display = "none";
+        menuOpen = false;
+      }
+
+    }, false);
   	window.addEventListener('resize', updateWindowSize2d, false);
   </script>
 </html>
