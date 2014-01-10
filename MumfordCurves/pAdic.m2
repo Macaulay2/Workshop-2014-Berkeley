@@ -213,6 +213,84 @@ toPAdicFieldElement(ZZ,ZZ,PAdicField) := (n,prec,S) -> (
      new S from ({0},{n},prec)
      );
 
+
+
+PAdicMatrix = new Type of MutableHashTable
+
+pAdicMatrix = method()
+pAdicMatrix List := L -> (
+   if #L == 0 then error "Expected a nonempty list.";
+   if not isTable L then error "Expected a rectangular matrix.";
+   rows := #L;
+   cols := #(L#0);
+   -- all entries must be in same pAdic field
+   types := L // flatten / class // unique;
+   if #types != 1 then error "Expected a table of either PAdicFieldElements over the same ring or PAdicMatrices.";
+   local retVal;
+   if ancestor(PAdicFieldElement,types#0) then (
+      retVal = new PAdicMatrix from hashTable {
+                                            (symbol matrix, L),
+                                   	    (symbol cache, new CacheTable from {})};
+    
+   )
+   else if types#0 === PAdicMatrix then (
+      -- this block of code handles a matrix of matrices and creates a large matrix from that
+      blockEntries := applyTable(L, entries);
+      -- this is a hash table with the sizes of the matrices in the matrix
+      sizeHash := new HashTable from flatten apply(rows, i -> apply(cols, j -> (i,j) => (#(blockEntries#i#j), #(blockEntries#i#j#0))));
+      -- make sure the blocks are of the right size, and all matrices are defined over same ring.
+      if not all(rows, i -> #(unique apply(select(pairs sizeHash, (e,m) -> e#0 == i), (e,m) -> m#0)) == 1) then
+         error "Expected all matrices in a row to have the same number of rows.";
+      if not all(cols, j -> #(unique apply(select(pairs sizeHash, (e,m) -> e#1 == j), (e,m) -> m#1)) == 1) then
+         error "Expected all matrices in a column to have the same number of columns.";
+      -- now we may perform the conversion.
+      newEntries := flatten for i from 0 to rows-1 list
+                            for k from 0 to (sizeHash#(i,0))#0-1 list (
+                               flatten for j from 0 to cols-1 list
+                                       for l from 0 to (sizeHash#(0,j))#1-1 list blockEntries#i#j#k#l
+                            );
+      retVal = new PAdicMatrix from hashTable {
+	                                    (symbol matrix, newEntries),
+                                   	    (symbol cache, new CacheTable from {})};
+   );
+   retVal
+)
+
+
+PAdicMatrix * PAdicMatrix := (M,N) -> (
+   colsM := length first M.matrix;
+   rowsN := length N.matrix;
+   if colsM != rowsN then error "Maps not composable.";
+   rowsM := length M.matrix;
+   colsN := length first N.matrix;
+   local prod;
+   prod = pAdicMatrix table(toList (0..(rowsM-1)), toList (0..(colsN-1)), (i,j) -> sum(0..(colsM-1), k -> ((M.matrix)#i#k)*((N.matrix)#k#j)));
+   prod
+   )
+
+
+PAdicMatrix ^ ZZ := (M,n) -> product toList (n:M)
+
+PAdicMatrix + PAdicMatrix := (M,N) -> (
+   colsM := length first M.matrix;
+   rowsN := length N.matrix;
+   rowsM := length M.matrix;
+   colsN := length first N.matrix;
+   if colsM != colsN or rowsM != rowsN then error "Matrices not the same shape.";
+   MpN := pAdicMatrix apply(toList(0..(rowsM-1)), i -> apply(toList(0..(colsM-1)), j -> M.matrix#i#j + N.matrix#i#j));
+   MpN
+)
+
+
+entries PAdicMatrix := M -> M.matrix
+transpose PAdicMatrix := M -> (
+    Mtrans := pAdicMatrix transpose M.matrix;
+    Mtrans
+)
+
+net PAdicMatrix := M -> net expression M
+expression PAdicMatrix := M -> MatrixExpression applyTable(M.matrix, expression)
+
 end
 ----------------------------
 --Qingchun's testing area
@@ -241,10 +319,16 @@ end
 ----------------------------
 restart
 load "~/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
-QQQ_3
 
-Q3=QQQ_3
 x=toPAdicFieldElement({1,2,2,2},QQQ_3)
+
+A=pAdicMatrix {{x,x}}
+B=pAdicMatrix {{x},{x}}
+C=pAdicMatrix {{A},{A}}
+C^2
+
+peek (A*B)
+peek oo
 class x
 QQQ_3
 
