@@ -1,21 +1,19 @@
 -- -*- coding: utf-8 -*-
 newPackage(
 	"PointsNew",
-    	Version => "1.0", 
-    	Date => "12 August 2010",
+    	Version => "1.9", 
+    	Date => "9 January 2014",
     	Authors => {
-	     {Name => "Mike Stillman", Email => "mike@math.cornell.edu", HomePage => "http://www.math.uiuc.edu/Macaulay2/"},
-     	     {Name => "Gregory G. Smith", Email => "ggsmith@mast.queensu.ca"},
-	     {Name => "Stein A. Strømme", Email => "stromme@math.uib.no"},
-	     {Name => "Samuel Lundqvist", Email => "samuel@math.su.se"}
+	     {Name => "Samuel Lundqvist", Email => "samuel@math.su.se", HomePage => "http://www.math.su.se/~samuel"}
 	     },
     	Headline => "Computing with sets of affine points and functionals (i.e. FGLM conversion)",
     	DebuggingMode => true
     	)
--- Current developers
--- Past developers
--- Contributors
--- Acknowledgements
+-- Current developers Samuel Lundqvist
+-- Past developers Gregory G. Smith, Mike Stillman, Stein A. Strømme
+-- Contributors 
+-- Acknowledgements Based upon the old Points package by the three past developers above.
+-- Especially, the code for reduceColumn and part of "Points" is taken from there. 
 export {
      pointsMat,
      points,
@@ -25,7 +23,11 @@ export {
      separators,
      FGLM,
      stdmons,
-     borderBasisNaive
+     multmatrices,
+     multmatricesGB,
+     FGLMnew,
+     pointsNew,
+     getEssGens
      }
 
 
@@ -38,7 +40,7 @@ makeRingMaps (Matrix, Ring) := List => (M,R) -> (
      apply(pts, p -> map(K, R, p))
      )
 
-reduceColumn = (M,Mchange,H,c) -> (
+reduceColumn := (M,Mchange,H,c) -> (
      -- M is a mutable matrix
      -- Mchange is either null, or a matrix with same number of columns as M
      -- H is a hash table: H#r == c if column c has pivot for row r 
@@ -68,47 +70,10 @@ reduceColumn = (M,Mchange,H,c) -> (
      )
 
 
---x_i e_j = e_h OK
---x_i e_j = lm(g_k) OK
---x_i e_j multiple of an element in ini. Pick any x_k with e_j = e_j' x_k 
---such that (x_i e_j') is not a basis element. This one has already been
---computed since it is less than x_i e_j, so x_i e_j' = c_1 e_1 + ... + c_s e_s.
--- Every x_k e_i *with* c_i != 0 has been computed before!
 
---Even better, order the elements (x_i_1, e_j_1), ..., (x_i_k, e_j_k) with
---respect to \mult. For the elements of which equality holds, i.e., 
--- x_i e_j = x_i_1 e_j_1 = x_i_2 e_j_2 = ..., we only need to pick one of 
--- the elements.
--- Any of the elements in supp(x_i e_j) \cap (x_i_1, ..., x_i_k)^c has the
--- property of the element x_k on the third line (x_ie_j = x_ie_j' x_k and 
--- x_i e_j' is not a basis element. Pick such k and compute.
-
--- Konstruera listan (eventuell, lagra index på e_i?
--- for i from 0 to s-1 do (
---     for j from 0 to #gens-1 do (
---     	    newlist = apply(...)
----    )
---       mergePairs (l, newList, union av supp)
---  )
--- Bygg upp multiplikationsmatriserna
--- for i from 0 to #l-1 do (
---     supp = support (l#0)#0;
---     monset = (l#0)#1.
---     x_k \in supp - monset.
---     x_i = first monset;
---     cv = getCoefficientVector(x_k, (l#0)/x_i)
---      for j from 0 to #cv-1 do (
---     	  v = v+cv#j * getCoefficientVector(i,j)
---       )
---     insertintomatrix(i, e, v);
---     for j from 1 to #monset do (
---          insertintomatrix(monset#j, e, v);
---     )
---)
-
-borderBasisNaive = method (TypicalValue => List)
-borderBasisNaive (List, List, Ring) := (std, gblist, R) -> (
-     Gb := forceGB matrix {gblist};
+multmatrices = method (TypicalValue => List)
+multmatrices (List, GroebnerBasis, Ring) := (std, Gb, R) -> (
+     --Gb := forceGB matrix {gblist};
      K := coefficientRing R;
      s := #std;
      --print s;
@@ -127,31 +92,31 @@ borderBasisNaive (List, List, Ring) := (std, gblist, R) -> (
      return bb;
 )
 	       
-    -- Samuel Lundqvist aug 2010
-     getCoefficientVector = (varIndex, cv, K, multMatrix, s) -> (
+
+getCoefficientVector := (varIndex, cv, K, multMatrix, s, connectionvector) -> (
      -- varIndex is the index of the variable we are multiplying with monomial with.
      -- cv is coefficient vector of the monomial.
      -- K is the field that we are performing computations over. 
      -- multMatrix is the multiplication matrix with respect to the variable.
      -- s is the k-dimension of the ring.
      -- returns the coefficientvector of variable*monomial from multMatrix.
-
+     -- varIndex = - 1 represents the unit
      if (varIndex == -1) then (
-	 l := matrix {flatten ({1_K,toList((s-1):0_K)})};
-	  return l
+	 --l := matrix {flatten ({1_K,toList((s-1):0_K)})};
+	 -- return l	
+	  return matrix {connectionvector};
 	  );
-     -- The above is not a good soluion, fix it
-     return cv * multMatrix;
+       return cv * multMatrix;
      )
 	       
 	       
-addNewMonomial = (M,col,monom,maps) -> (
+addNewMonomial := (M,col,monom,maps) -> (
      -- M is an s by s+1 matrix, s=#points
      -- monom is a monomial
      -- maps is a list of s ring maps, which will give the values
      --  of the monom at the points
      -- replaces the 'col' column of M with the values of monom
-     --    at the s points.vi
+     --    at the s points.
      scan(#maps, i -> M_(i,col) = maps#i monom)
      )
 
@@ -160,16 +125,14 @@ pointsByIntersection (Matrix,Ring) := (M,R) -> (
      flatten entries gens gb intersect apply (
        entries transpose M, p -> ideal apply(#p, i -> R_i - p#i)))
 
--- Mike/Stein 2008? 
--- Bugfix: All variables are now local, Samuel, Aug 2010.
--- Return the *inverse* of the stds evaluated at points, Samuel, 2010.
--- Returns the stds as a list instead of as matrix, Samuel, Jan 2011.
-
+-- Changes from the old code (2008): 
+-- Bugfix: All variables are now local.
+-- Returns the *inverse* of the stds evaluated at points.
+-- Returns the stds as a list instead of as matrix.
 pointsMat = method()
 pointsMat(Matrix,Ring) := (M,R) -> (
      -- The columns of M form the points.  M should be a matrix of size
      -- n by s, where n is the number of variables of R
-     --
      K := coefficientRing R;
      s := numgens source M;
      -- The local data structures:
@@ -224,9 +187,9 @@ pointsMat(Matrix,Ring) := (M,R) -> (
      A := inverse transpose matrix{apply(Fs, f -> f stds)};
      (A, Q)
      )
-
--- Stein/Mike 2008?
--- Bugfix: All variables are now local, Samuel, aug 2010.
+ 
+-- Changes from the old code (2008): 
+-- Bugfix: All variables are now local.
 points = method()
 points (Matrix,Ring) := (M,R) -> (
      -- The columns of M form the points.  M should be a matrix of size
@@ -250,7 +213,7 @@ points (Matrix,Ring) := (M,R) -> (
      H := new MutableHashTable; -- used in the column reduction step
      Lhash := new MutableHashTable; -- used to determine which monomials come next
      L := 1_R;
-     Lhash#L = 0; -- start with multiplication by R_0
+     Lhash#L = 0; -- start with multiplication by 1_R
      thiscol := 0;
      G := {};
      inG := trim ideal(0_R);
@@ -289,13 +252,145 @@ points (Matrix,Ring) := (M,R) -> (
 --     print("number of monomials considered = "|nL);
      (Q,inG,G)
      )
+ 
+getEssGens = method()
+getEssGens (Matrix, Ring) := (M,R) -> (
+       K := coefficientRing R;
+     s := numgens source M;
+     Fs := makeRingMaps(M,R);
+     P := mutableMatrix map(K^s, K^(s+1), 0);
+     PC := mutableMatrix map(K^(s+1), K^(s+1), 0);
+     for i from 0 to s-1 do PC_(i,i) = 1_K;
+     H := new MutableHashTable; -- used in the column reduction step
+     thiscol := 0;
+     esslist := {};   
+     nonesspoly := 0_K;
+     l := sum(apply(toList(0 .. numgens R - 1),i-> R_i));
+     m := 0;
+	 while l != 0 do (
+	     m = someTerms(l,-1,1);
+    	     l = l - m;
+             addNewMonomial(P,thiscol,m,Fs);
+	     rawMatrixColumnScale(raw PC, raw(0_K), thiscol, false);
+	     PC_(thiscol,thiscol) = 1_K;
+	     isLT := reduceColumn(P,PC,H,thiscol);
+	     if isLT then (
+		 nonesspoly = nonesspoly + m;
+	     --do nothing;
+	     ) else (
+	       -- we modify L, Lhash, thiscol, and also PC
+	       esslist = append(esslist, m);
+	      if (#esslist == s-1) then (
+		  --print "*";
+		  --print (esslist, flatten entries (monomials (nonesspoly + l)));
+		  return (esslist, flatten entries (monomials (nonesspoly + l)));
+		  );
+	      -- l = l + m;
+	       thiscol = thiscol + 1;
+	       );
+	);
+  --  print (esslist, flatten entries (monomials (nonesspoly)));
+  if (nonesspoly == 0) then (
+      return (esslist, {});
+      );
+  return (esslist, flatten entries (monomials (nonesspoly)));
+  )
+  
 
+
+pointsNew = method()
+pointsNew (Matrix,Ring) := (M,R) -> (
+     -- The columns of M form the points.  M should be a matrix of size
+     -- n by s, where n is the number of variables of R
+     K := coefficientRing R;
+     s := numgens source M;
+     -- The local data structures:
+     -- (P,PC) is the matrix which contains the elements to be reduced
+     -- Fs is used to evaluate monomials at the points
+     -- H is a hash table used in Gaussian elimination: it contains the
+     --    pivot columns for each row
+     -- L is the sum of monomials which is still to be done
+     -- Lhash is a hashtable: Lhash#monom = i means that only 
+     --    R_i*monom, ..., R_n*monom should be considered WRONG
+     -- G is a list of GB elements
+     -- inG is the ideal of initial monomials for the GB
+     (essgens,nonessgens) := getEssGens(M,R);
+     Fs := makeRingMaps(M,R);
+     P := mutableMatrix map(K^s, K^(s+1), 0);
+     PC := mutableMatrix map(K^(s+1), K^(s+1), 0);
+     for i from 0 to s-1 do PC_(i,i) = 1_K;
+     H := new MutableHashTable; -- used in the column reduction step
+     Lhash := new MutableHashTable; -- used to determine which monomials come next
+     L := 1_R;
+     Lhash#L = 0; -- start with multiplication by R_0
+     thiscol := 0;
+     G := {};
+     inG := trim ideal(0_R);
+     inGB := forceGB gens inG;
+     Q := {}; -- the list of standard monomials
+     nL := 1;
+     monom :=0;
+     g := 0;
+     isLT := 0;
+     f:=0;
+   -- print "*";
+     while L != 0 do (
+	  -- First step: get the monomial to consider
+	  L = L % inGB;
+	  monom = someTerms(L,-1,1);
+	  L = L - monom;
+	  -- Now fix up the matrices P, PC
+          addNewMonomial(P,thiscol,monom,Fs);
+	  rawMatrixColumnScale(raw PC, raw(0_K), thiscol, false);
+	  PC_(thiscol,thiscol) = 1_K;
+          isLT = reduceColumn(P,PC,H,thiscol);
+	  if isLT then (
+	       -- we add to G, inG	  
+	       inG = inG + ideal(monom);
+	       inGB = forceGB gens inG;
+	       g = sum apply(toList(0..thiscol-1), i -> PC_(i,thiscol) * Q_i);
+	       G = append(G, PC_(thiscol,thiscol) * monom + g);
+	       --print G;
+	       )
+	  else (
+	       -- we modify L, Lhash, thiscol, and also PC
+	       Q = append(Q, monom);
+	       f = sum apply(toList(Lhash#monom .. #essgens - 1), i -> (
+			 newmon := monom * essgens_i;
+			 Lhash#newmon = i;
+			 newmon));
+	       nL = nL + size(f);
+	       L = L + f;
+	       thiscol = thiscol + 1;
+	       )
+	  );
+      --We end up by computing the Groebner basis elements with leadterm
+      --in nonessgen. For efficiency purposes, they were not added to L in the
+      --first step. 
+      L = sum apply(toList(0..#nonessgens -1), i-> (nonessgens_i));
+      --print L;	      
+         while (L != 0 ) do (
+	--     print L;
+	     monom = someTerms(L,-1,1);
+	     L = L - monom;
+	     addNewMonomial(P,thiscol,monom,Fs);
+	     rawMatrixColumnScale(raw PC, raw(0_K), thiscol, false);
+	     PC_(thiscol,thiscol) = 1_K;
+             reduceColumn(P,PC,H,thiscol);	  
+	     inG = inG + ideal(monom);
+	     inGB = forceGB gens inG;
+	     g = sum apply(toList(0..thiscol-1), i -> PC_(i,thiscol) * Q_i);
+	     G = append(G, PC_(thiscol,thiscol) * monom + g);
+      );
+      
+--     print("number of monomials considered = "|nL);
+     (Q,inG,G)
+     )
 
 
 -- The separators of the points as linear combinations of the standard monomials
 -- stds are the standard monomials returned by pointsMat
 -- Ainv is the inverse of the matrix returned by pointsMat
--- Samuel Lundqvist, jan 2010
 separators = method()
 separators (Matrix, Matrix) := (stds, Ainv) -> (
      transpose (Ainv) * (matrix entries stds)
@@ -307,8 +402,6 @@ separators (Matrix, Matrix) := (stds, Ainv) -> (
 -- phi are the ring maps returned from makeRingMaps 
 -- stds are the standard monomials returned by pointsMat
 -- Ainv is the inverse of the matrix returned by pointsMat
--- Samuel Lundqvist jan 2010
-
 nfPoints = method()
 nfPoints (RingElement, List, List, Matrix) := (p, phi, stds, Ainv) -> (
      --Evaluate the vector on the points
@@ -323,7 +416,7 @@ nfPoints (RingElement, List, List, Matrix) := (p, phi, stds, Ainv) -> (
      first (first entries (stdsniceform*w))
      )
 
--- Samuel Lundqvist aug 2010
+
 -- Return the stdmons as a list
 stdmons = method()
 stdmons(PolynomialRing, GroebnerBasis) := (S,Gb) -> (
@@ -336,6 +429,101 @@ stdmons(PolynomialRing, GroebnerBasis) := (S,Gb) -> (
 
 --getEssGens = method() ->
 
+FGLMnew = method()
+FGLMnew (GroebnerBasis, PolynomialRing, Option) := (GS,S,monOrd) -> (   
+     basisS := stdmons (S,GS);
+     s := length basisS;
+      K := coefficientRing S;
+      connectionvector := flatten toList (1_K,toList(s-1:0_K));
+    return multmatricesGB(multmatrices(basisS, GS, S), 
+	connectionvector, S, monOrd); --ok even if s-2<0
+    )
+
+
+--multmatricesGB = method()
+--multmatricesGB (List,Number, PolynomialRing, Option) := (mm,s,S,monOrd) -> (
+multmatricesGB = method()
+multmatricesGB (List, List, PolynomialRing, Option) := 
+(mm,connectionvector,S,monOrd) -> (
+      --Determine the standard monomials.
+     --GSl :=  flatten entries gens GS;
+     --from now on, we will compute over the ring R;
+     s := length connectionvector;
+     R := newRing(S, monOrd);
+     --RtoS := map(S,R);
+     K := coefficientRing R;
+     StoK := map(K,S);
+     -- The local data structures:
+     -- (P,PC) is the matrix which contains the elements to be reduced
+     -- Fs is used to evaluate monomials at the points
+     -- H is a hash table used in Gaussian elimination: it contains the
+     --    pivot columns for each row
+     -- L is the monomials to be done. An element in L is of the form
+     -- (monom, (variable, coefflist, i)), where monom and variable is in R and
+     -- the coefficientlist is the coefficient of (monom/variable) in basisS and
+     -- i is the number of copies of the element in L.
+     -- monom is only used for keeping L sorted and to be able to use MergePairs.
+     
+     -- G is a list of GB elements
+     -- inG is the ideal of initial monomials for the GB
+     --Fs := makeRingMaps(M,R);
+     P := mutableMatrix map(K^s, K^(s+1), 0);
+     PC := mutableMatrix map(K^(s+1), K^(s+1), 0);
+     for i from 0 to s-1 do PC_(i,i) = 1_K;
+     H := new MutableHashTable; -- used in the column reduction step     
+     -- essgens := getEss(gens R);
+     essgens := gens R; --When removing this, the list below must also be changed 
+     -- i.e. All noness should be inserted into L.
+     L := {(1_R, (-1, {1},1))}; -- the list of potential elements. The list {1} is dummy.  
+     Q := {}; -- the list of standard monomials
+     thiscol := 0;
+     G := {}; -- the list of Groebner basis elements to return
+     numList := 1;
+    Lleast := 0;
+    cv := 0;
+    monom := 0;
+    while L != {} do (
+	  -- First step: get the monomial to consider
+	  --print "L equals";
+	  --print L;
+	  Lleast = L#0;
+	  L = drop(L,1);
+	   --Pick the minimal elementet in L.
+	  -- Now fix up the matrices P, PC
+	  -- We are multiplying with (Lleast#1)#0;
+          cv = getCoefficientVector(
+	       (Lleast#1)#0, (Lleast#1)#1, K, mm#((Lleast#1)#0),s,connectionvector);	  
+	  scan(s, i -> P_(i,thiscol) = cv_(0,i)); --add the column to P
+	  rawMatrixColumnScale(raw PC, raw(0_K), thiscol, false);
+	  PC_(thiscol,thiscol) = 1_K;
+          isLT := reduceColumn(P,PC,H,thiscol);
+	  monom = (Lleast#0);
+	  if isLT then (
+	       -- we add to G
+	 --      print monom;
+	   --    print (Lleast#1)#2;
+	       g := sum apply(toList(0..thiscol-1), i -> PC_(i,thiscol) * Q_i);
+	       G = append(G, PC_(thiscol,thiscol) * monom + g);
+	       )
+	  else (
+	       -- we modify L and thiscol
+	       Q = append(Q, monom);	  
+	       newList := {};
+	       for i from 0 to #essgens - 1 do (
+	       	  numList = numList + 1;
+	       	  newList = prepend((monom * essgens_i, (i, cv,1)),newList);
+		  --print newList;
+		  );
+--	       print newList;
+	       L = mergePairs(L,newList, (v,w)->(v#0,v#1,v#2 + w#2));
+
+	       thiscol = thiscol + 1;
+	       );
+	  L = removeElements(L);
+	  );
+     --print("number of monomials considered = " numList);
+     (R,G,Q)
+     )
 
 -- Samuel Lundqvist jan 2010, aug 2010
 FGLM = method() 
@@ -345,7 +533,7 @@ FGLM (GroebnerBasis, PolynomialRing, Option) := (GS,S,monOrd) -> (
      s := length basisS;   
      inGSl := flatten entries leadTerm GS;
      GSl :=  flatten entries gens GS;
-     print timing(bb := borderBasisNaive(basisS, GSl, S););
+     mm := multmatrices(basisS, GS, S);
      --from now on, we will compute over the ring R.
      R := newRing(S, monOrd);
      RtoS := map(S,R);
@@ -377,6 +565,9 @@ FGLM (GroebnerBasis, PolynomialRing, Option) := (GS,S,monOrd) -> (
      thiscol := 0;
      G := {}; -- the list of Groebner basis elements to return
      numList := 1;
+    Lleast := 0;
+    cv := 0;
+    monom := 0;
     while L != {} do (
      --@print (#L);
 	  -- First step: get the monomial to consider
@@ -388,8 +579,9 @@ FGLM (GroebnerBasis, PolynomialRing, Option) := (GS,S,monOrd) -> (
 	  -- Now fix up the matrices P, PC
 	  --use S;
 	  --We are multiplying with (Lleast#1)#0;
+	  --Warning, last argument should not be empty list
           cv = getCoefficientVector(
-	       (Lleast#1)#0, (Lleast#1)#1, K, bb#((Lleast#1)#0),s);
+	       (Lleast#1)#0, (Lleast#1)#1, K, mm#((Lleast#1)#0),s,{});
 	  scan(s, i -> P_(i,thiscol) = cv_(0,i)); --add the column to P
 	  --use R;
 	  rawMatrixColumnScale(raw PC, raw(0_K), thiscol, false);
@@ -414,9 +606,7 @@ FGLM (GroebnerBasis, PolynomialRing, Option) := (GS,S,monOrd) -> (
 		  );
 --	       print newList;
 	       L = mergePairs(L,newList, (v,w)->(v#0,v#1,v#2 + w#2));
-	       --print L;
-	       
-	       --print L;
+
 	       thiscol = thiscol + 1;
 	       );
 	  L = removeElements(L);
@@ -428,7 +618,8 @@ FGLM (GroebnerBasis, PolynomialRing, Option) := (GS,S,monOrd) -> (
 --Removes elements at the end of the list for which supp(m) > #copies.
 --These elements are multiplies of ini(I) and should not be considered, cf the
 --trick in the FGLM-paper.
-removeElements = (L) -> (
+removeElements := (L) -> (
+    Lleast := 0;
      while L != {} do (
 	  Lleast = first(L);
        if (#support(Lleast#0) > (Lleast#1)#2) then (
@@ -453,7 +644,7 @@ document {
      *}
      }
 document {
-     Key => {nfPoints, (nfPoints,RingElement,List,Matrix,Matrix)},
+     Key => {nfPoints, (nfPoints,RingElement,List,List,Matrix)},
      Headline => "Normal form wrt standard monomials using linear algebra",
      Usage => "makeRingMaps(p,phi,std,Ainv)",
      Inputs => {

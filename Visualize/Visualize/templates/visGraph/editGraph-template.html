@@ -5,8 +5,10 @@
     <title>Macaulay2: editGraph</title>
     <link rel="stylesheet" href="app.css">
     <script type="text/javascript">
-      curEdit = true;
+      curEdit = false;
   	  curView = "2d";
+      dataData = visArray;
+      labelData = ["x_1","x_2","x_3","a","b","7"];
     </script>
   </head>
   
@@ -14,7 +16,7 @@
   	    <a id= "tdToggle"> switch to 3d</a>
         <a id= "editToggle"> disable editing</a>
         <a id= "exportToggle"> export</a>
-
+        <a id= "resetToggle"> reset graph</a>
   </body>
 
   <script src="d3/d3.v3.js"></script>
@@ -46,9 +48,14 @@
                 c.onclick = function() {
                     console.log("3d3d3d");
                 }
+                var d = document.getElementById("resetToggle");
+                d.onclick = function() {
+                    resetGraph();
+                }
 
                 //start with 2d
                 initializeBuilder();
+                disableEditing();
             }
 
   	

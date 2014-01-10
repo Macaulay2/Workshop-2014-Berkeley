@@ -20,7 +20,7 @@ z-index:1;
 color:#0000FF;
 vertical-align: middle;
 position:relative;
-left:40%;
+left:25%;
 top:0px;
 z-index:1;
 }
@@ -37,7 +37,7 @@ z-index:1;
 color:#0000FF;
 vertical-align: middle;
 position:relative;
-left:65%;
+left:40%;
 top:0px;
 z-index:1;
 }
@@ -45,6 +45,23 @@ z-index:1;
     text-decoration:underline;
 }
 #exportToggle:active {
+    text-decoration:underline;
+    color:#800080;
+}
+
+#moreOptions
+{
+color:#0000FF;
+vertical-align: middle;
+position:relative;
+left:50%;
+top:0px;
+z-index:1;
+}
+#moreOptions:hover {
+    text-decoration:underline;
+}
+#moreOptions:active {
     text-decoration:underline;
     color:#800080;
 }
