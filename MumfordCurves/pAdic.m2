@@ -61,6 +61,42 @@ pAdicField ZZ:=(p)->(
 )
 
 ---------------------------------------------
+-- non-exported auxilliary functions
+---------------------------------------------
+
+computeCarryingOver := (aKeys,aValues,prec,A) -> (
+     	  p:=A#prime;
+	  newKeys := ();
+	  newValues := ();
+	  carryingOver := 0_ZZ;
+	  aPointer := 0;
+	  while (aPointer<#aKeys and aKeys#aPointer<=prec) do (
+	       currentKey := aKeys#aPointer;
+	       currentValue := aValues#aPointer+carryingOver;
+	       carryingOver = 0_ZZ;
+	       while currentValue!=0 do (
+	     	    q := currentValue%p;
+		    currentValue = (currentValue-q)//p;
+		    if q!=0 then (
+		         newKeys = (newKeys,currentKey);
+		         newValues = (newValues,q);
+		         );
+		    currentKey = currentKey+1;
+		    if (currentKey>=prec or 
+		         ((aPointer+1<#aKeys) and 
+                              (currentKey>=aKeys#(aPointer+1)))) then (
+		         carryingOver = currentValue;
+		         break;
+		         );
+	     	    );
+	       aPointer = aPointer+1;
+	       );
+	  new A from {"precision"=>prec,
+	       "expansion"=>{toList deepSplice newKeys,
+		    toList deepSplice newValues}}
+	  )
+
+---------------------------------------------
 -- Methods for PAdicFieldElements
 ---------------------------------------------
 
@@ -317,41 +353,6 @@ toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
      nPAdic/dPAdic
      );
 
----------------------------------------------
--- non-exported auxilliary functions
----------------------------------------------
-
-computeCarryingOver := (aKeys,aValues,prec,A) -> (
-     	  p:=A#prime;
-	  newKeys := ();
-	  newValues := ();
-	  carryingOver := 0_ZZ;
-	  aPointer := 0;
-	  while (aPointer<#aKeys and aKeys#aPointer<=prec) do (
-	       currentKey := aKeys#aPointer;
-	       currentValue := aValues#aPointer+carryingOver;
-	       carryingOver = 0_ZZ;
-	       while currentValue!=0 do (
-	     	    q := currentValue%p;
-		    currentValue = (currentValue-q)//p;
-		    if q!=0 then (
-		         newKeys = (newKeys,currentKey);
-		         newValues = (newValues,q);
-		         );
-		    currentKey = currentKey+1;
-		    if (currentKey>=prec or 
-		         ((aPointer+1<#aKeys) and 
-                              (currentKey>=aKeys#(aPointer+1)))) then (
-		         carryingOver = currentValue;
-		         break;
-		         );
-	     	    );
-	       aPointer = aPointer+1;
-	       );
-	  new A from {"precision"=>prec,
-	       "expansion"=>{toList deepSplice newKeys,
-		    toList deepSplice newValues}}
-	  )
 
 
 ---------------------------------------------
