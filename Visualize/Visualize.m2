@@ -203,19 +203,21 @@ visIdeal(Ideal) := opts -> J -> (
 --
 visGraph = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
-    local A; local arrayString; local vertexString; local visTemp; local graph;
+    local A; local arrayString; local vertexString; local visTemp;
     
     A = adjacencyMatrix G;
     arrayString = toString toArray entries A; -- Turn the adjacency matrix into a nested array (as a string) to copy to the template html file.
     
+    -- Add this back in when we figure out how to deal with the old
+    -- Graphs package not knowing what G.vertexSet means.
+    
     --if (options Graphs).Version != 0.1 then (
---	 vertexString = toString(toArray(apply(G.vertexSet, i -> "i"))); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+--	 vertexString = toString(toArray(apply(G.vertexSet, i -> toString i))); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
   --  ) else (
-    	 vertexString = toString(toArray(apply(keys(G#graph), i -> "i"))); -- Create a string containing an ordered list of the vertices in the older Graphs package.
+         vertexString = toString new Array from apply(keys(G#graph), i -> "\""|toString(i)|"\"");
+       	 --vertexString = toString(toArray(apply(keys(G#graph), i -> toString i))); -- Create a string containing an ordered list of the vertices in the older Graphs package.
     --);
     
-    print vertexString;
-        
     visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visGraph/visGraph-template.html"); -- Copy the visGraph template to a temporary directory.
     
     searchReplace("visArray",arrayString, visTemp); -- Replace visArray in the visGraph html file by the adjacency matrix.
@@ -319,6 +321,8 @@ searchReplace("ZZZ","kickass string", testFile)
 -- Old Graphs
 G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
 visGraph G
+H = graph({{x_1, x_0}, {x_3, x_0}, {x_3, x_1}, {x_4, x_0}}, Singletons => {x_2, x_5, 6, cat_sandwich})
+visGraph H
 
 -- New Graphs
 G = graph(toList(x_0..x_5),{{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5},EntryMode => "edges")

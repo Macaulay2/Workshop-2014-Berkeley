@@ -491,14 +491,14 @@ function updateWindowSize2d() {
 // Functions to construct M2 constructors for graph, incidence matrix, and adjacency matrix.
 
 function graph2M2Constructor( nodeSet, edgeSet ){
-  var strEdges = "";
+  var strEdges = "{";
   var e = edgeSet.length;
   for( var i = 0; i < e; i++ ){
     if(i != (e-1)){
       strEdges = strEdges + "{" + (edgeSet[i].source.name).toString() + ", " + (edgeSet[i].target.name).toString() + "}, ";
     }
     else{
-      strEdges = strEdges + "{" + (edgeSet[i].source.name).toString() + ", " + (edgeSet[i].target.name).toString() + "}";
+      strEdges = strEdges + "{" + (edgeSet[i].source.name).toString() + ", " + (edgeSet[i].target.name).toString() + "}}";
     } 
   }
   // determine if the singleton set is empty
@@ -620,4 +620,13 @@ function arraytoM2Matrix (arr){
   }
   
   return str;
+}
+
+function exportTikz() {
+
+
+
+
+
+
 }
