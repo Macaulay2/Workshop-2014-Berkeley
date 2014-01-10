@@ -167,7 +167,7 @@
         <div id="popupMenu"> 
           <button id = "resetButton" onclick="resetGraph();">reset nodes</button>
           <button id = "forceToggle" onclick="toggleForce();">turn off force</button>
-          <button id = "exportToggle" onclick="exportTicksy();">export ticksy</button>
+          <button id = "exportToggle" onclick="exportTikz();">export ticksy</button>
         </div>
   </body>
 
@@ -219,6 +219,8 @@
 
     }
     function switchTo3d() {
+
+      force.stop();
       
     }
     function toggleForce() {
@@ -232,7 +234,7 @@
       }
       forceOn = !forceOn;
     }
-    function exportTicksy() {
+    function exportTikz() {
 
     }
 
