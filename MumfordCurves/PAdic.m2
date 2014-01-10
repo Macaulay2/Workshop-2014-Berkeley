@@ -514,6 +514,21 @@ document {
      EXAMPLE {"pAdicField(7)"}
      }
 
+document {
+     Key =>henselApproximation,
+     Inputs => {"f" => ofClass RingElement,"r" => ofClass ZZ,"n" => ofClass ZZ,"p" => ofClass ZZ},
+     Outputs => {"s" => ofClass PAdicFieldElement},
+     Usage => "s=henselApproximation(f,r,n,p)",
+     Headline=> "a method for approximating p-adic roots",
+     PARA{TT "henselApproximation"," approximates to precision ",TT "n"," a ",TT "p","-adic root of a polynomial
+	  ",TT "f"," congruent to ",TT "r mod p",".  The polynomial must have integer coefficients,and ",TT "r"," 
+	  must be a simple root of ",TT "f mod p","." },
+     EXAMPLE {"ZZ[x]",
+	  "henselApproximation(x^2+1,3,6,5)"}
+     }
+
+
+
 
 document {
      Key =>valuation,

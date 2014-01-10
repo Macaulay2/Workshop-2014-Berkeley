@@ -249,8 +249,8 @@ visGraph(Graph) := opts -> G -> (
     	 -- This is a workaround for finding and referring to the key vertexSet in the hash table for G.
          -- Would be better to be able to refer to G.vertexSet, but the package
 	 -- seems not to load if we try this.
-	 keyPosition = position(values G, i -> i == symbol vertexSet);
-	 vertexString = toString new Array from apply((values G)#keyPosition, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+	 keyPosition = position(keys G, i -> toString i == "vertexSet");
+	 vertexString = toString new Array from apply((values G)#keyPosition, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package
 	 
 	 --vertexSet = symbol vertexSet;
 	 --vertexString = toString new Array from apply(G.vertexSet, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
@@ -503,9 +503,17 @@ visGraph( G, VisPath => "/Users/bstone/Desktop/Test/")
 S = G.vertexSet
 toString S
 
+(keys G)#0 == A
+A = symbol vertexSet
+"vertexSet" == toString((keys G)#0)
+
+
+viewHelp ideal
+
+
 R = QQ[a,b,c]
 I = ideal"a2,ab,b2c,c5,b4"
-I = ideal"x4,xyz3,yz,xz,z6,y5"
+-- I = ideal"x4,xyz3,yz,xz,z6,y5"
 visIdeal I
 visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
