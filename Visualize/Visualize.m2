@@ -172,10 +172,17 @@ visIdeal(Ideal) := opts -> J -> (
     
     if numVar == 2 
     then (
-    	visTemp = opts.VisTemplate|"2D.html";
+	visTemp = copyTemplate(opts.VisTemplate|"2D.html");
+	copyJS(replace(baseFilename visTemp, "", visTemp));
+
 	arrayList = apply( flatten entries gens J, m -> flatten exponents m);	
 	arrayList = toArray arrayList;
 	arrayString = toString arrayList;
+	
+	searchReplace("visArray",arrayString, visTemp);
+--	searchReplace("XXX",toString(varList_0), visTemp);
+--	searchReplace("YYY",toString(varList_1), visTemp);
+--	searchReplace("ZZZ",toString(varList_2), visTemp)
     )
     else (
 	visTemp = copyTemplate(opts.VisTemplate|"3D.html");
@@ -338,7 +345,7 @@ visIdeal I
 visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
 S = QQ[x,y]
-I = ideal"x4,xy3,y50"
+I = ideal"x4,xy3,y5"
 visIdeal I
 visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
