@@ -31,7 +31,7 @@ newPackage(
     	Headline => "Visualize",
     	DebuggingMode => true,
 	AuxiliaryFiles => true,
-	Configuration => {"DefaultPath" => concatenate(currentDirectory(),"temp-files/") } 
+	Configuration => {"DefaultPath" => null } 
     	)
 
 export {
@@ -39,6 +39,7 @@ export {
     -- Options
      "VisPath",
      "VisTemplate",
+     "Warning",
     
     -- Methods
      "visIntegralClosure",
@@ -141,7 +142,7 @@ visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
     return (show new URL from { "file://"|PATH }, fileName);
     )
 
--- input: path to ah html file
+-- input: path to an html file
 -- output: a copy of the input file in a temporary folder
 --
 copyTemplate = method()
@@ -159,6 +160,22 @@ copyTemplate String := src -> (
     return dirPath;
 )
 
+-- input: A source path to an html file and a destination directory
+-- output: a copy of the source file in the destination directory
+--
+copyTemplate(String,String) := (src,dst) -> (
+    local fileName; local dirPath;
+    
+    fileName = (toString currentTime() )|".html";
+    
+--    dirPath = temporaryFileName();
+--    makeDirectory dirPath;
+    dirPath = concatenate(dst,fileName);
+    
+    copyFile( src, dirPath);
+    
+    return dirPath;
+)
 
 -- input:
 -- output:
@@ -181,7 +198,7 @@ searchReplace(String,String,String) := opts -> (oldString,newString,visSrc) -> (
 --input: A monomial ideal of a polynomial ring in 2 or 3 variables.
 --output: The newton polytope of the of the ideal.
 --
-visIdeal = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() |"Visualize/templates/visIdeal/visIdeal"})
+visIdeal = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() |"Visualize/templates/visIdeal/visIdeal", Warning => true})
 visIdeal(Ideal) := opts -> J -> (
     local R; local arrayList; local arrayString; local numVar; local visTemp;
     local varList;
@@ -196,7 +213,7 @@ visIdeal(Ideal) := opts -> J -> (
     if numVar == 2 
     then (
 	visTemp = copyTemplate(opts.VisTemplate|"2D.html");
-	copyJS(replace(baseFilename visTemp, "", visTemp));
+	copyJS(replace(baseFilename visTemp, "", visTemp), Warning => opts.Warning);
 
 	arrayList = apply( flatten entries gens J, m -> flatten exponents m);	
 	arrayList = toArray arrayList;
@@ -208,10 +225,17 @@ visIdeal(Ideal) := opts -> J -> (
 --	searchReplace("ZZZ",toString(varList_2), visTemp)
     )
     else (
-	visTemp = copyTemplate(opts.VisTemplate|"3D.html");
-	copyJS(replace(baseFilename visTemp, "", visTemp));
 	
-	
+	if opts.VisPath =!= null 
+	then (
+	    	visTemp = copyTemplate(opts.VisTemplate|"3D.html",opts.VisPath);
+	    	copyJS(opts.VisPath, Warning => opts.Warning);	    
+	    )
+	else (
+	    	visTemp = copyTemplate(opts.VisTemplate|"3D.html");
+	    	copyJS(replace(baseFilename visTemp, "", visTemp), Warning => opts.Warning);	    
+	    );
+	    
     	arrayList = apply(flatten entries basis(0,infinity, R/J), m -> flatten exponents m );
     	arrayList = toArray arrayList;
     	arrayString = toString arrayList;
@@ -276,8 +300,8 @@ visGraph(Graph) := opts -> G -> (
 --caveat: Checks to see if files exist. If they do exist, the user
 --        must give permission to continue. Continuing will overwrite
 --        current files and cannont be undone.
-copyJS = method()
-copyJS(String) := dst -> (
+copyJS = method(Options => {Warning => true} )
+copyJS(String) := opts -> dst -> (
     local jsdir; local ans; local quest;
     
     dst = dst|"js/";    
@@ -287,19 +311,22 @@ copyJS(String) := dst -> (
 	    readDirectory(currentDirectory()|"Visualize/js/")
 	    ));
     
+    if opts.Warning == true
+    then(
     -- test to see if files exist in target
     if (scan(jsdir, j -> if fileExists(concatenate(dst,j)) then break true) === true)
     then (
     	   quest = concatenate(" -- Some files in ",dst," will be overwritten.\n -- This action cannot be undone.");
 	   print quest;
-	   ans = read "Would you like to continue? (yes or no):  ";
-	   while (ans != "yes" and ans != "no") do (
-	       ans = read "Would you like to continue? (yes or no):  ";
+	   ans = read "Would you like to continue? (y or n):  ";
+	   while (ans != "y" and ans != "n") do (
+	       ans = read "Would you like to continue? (y or n):  ";
 	       );  
-	   if ans == "no" then (
+	   if ans == "n" then (
 	       error "Process was aborted."
 	       );
     	);
+    );
     
     copyDirectory(currentDirectory()|"Visualize/js/",dst);
     
@@ -474,18 +501,10 @@ end
 -- branden
 restart
 loadPackage"Graphs"
-uninstallPackage"Visualize"
-installPackage"Visualize"
 loadPackage"Visualize"
-viewHelp Visualize
 
 (options Visualize).Configuration
-
-searchReplace("visArray","kickass string", testFile)
-searchReplace("XXX","kickass string", testFile)
-searchReplace("YYY","kickass string", testFile)
-searchReplace("ZZZ","kickass string", testFile)
-
+defualtPath
 -- Old Graphs
 restart
 loadPackage"Graphs"
@@ -515,7 +534,9 @@ R = QQ[a,b,c]
 I = ideal"a2,ab,b2c,c5,b4"
 -- I = ideal"x4,xyz3,yz,xz,z6,y5"
 visIdeal I
-visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
+visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/", Warning => false)
+y
+copyTemplate(currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html", "/Users/bstone/Desktop/Test/")
 
 S = QQ[x,y]
 I = ideal"x4,xy3,y5"
@@ -523,8 +544,8 @@ visIdeal I
 visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
 
-copyJS "/Users/bstone/Desktop/Test/"
-yes
+copyJS("/Users/bstone/Desktop/Test/", Warning => false)
+n
 
 
 
