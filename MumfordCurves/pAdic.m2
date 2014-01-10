@@ -1,3 +1,33 @@
+newPackage(
+     "pAdic",
+     Version => "0.1", 
+     Date => "Jan 9, 2013",
+     Authors => {{Name => "Nathan Ilten", 
+	       Email => "nilten@math.berkeley.edu", 
+	       HomePage => "http://http://math.berkeley.edu/~nilten/"},
+          {Name => "Ralph Morrison",
+	       Email => "morrison@math.berkeley.edu",
+	       HomePage => "http://math.berkeley.edu/~ralph42/"},
+	  {Name => "Qingchun Ren",
+	       Email => "qingchun.ren@gmail.com",
+	       HomePage => "http://math.berkeley.edu/~qingchun/"}
+          },
+     Headline => "a package for p-adic numbers",
+     DebuggingMode => false
+     )
+
+export {PAdicField,
+     prime,
+     PAdicFieldElement,
+     valuation,
+     relativePrecision,
+     pAdicField,
+     QQQ,
+     toPAdicFieldElement,
+     PAdicMatrix,
+     pAdicMatrix
+     }
+
 PAdicFields = new MutableHashTable
 
 PAdicField = new Type of InexactField

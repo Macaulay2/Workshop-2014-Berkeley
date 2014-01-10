@@ -35,7 +35,7 @@ export{
   	 "divideFraction",
   	 "estFPT",
      "ethRoot",
----     "ethRootSafe", 		MK
+     "ethRootSafe", 		--MK
 ---     "fancyEthRoot",		MK
      "fastExp",
      "findGeneratingMorphisms",     --MK
@@ -85,7 +85,7 @@ export{
 --This file has "finished" functions from the Macaulay2 workshop at Wake Forest
 --August 2012.  Sara Malec, Karl Schwede and Emily Witt contributed to it.
 --Some functions, are based on code written by Eric Canton and Moty Katzman
-
+--UPDATE January 2014.  Daniel Hernandez, Moty Katzman, Karl Schwede, Pedro Teixeira, Emily Witt added more functionality.
 
 ----------------------------------------------------------------
 --************************************************************--
@@ -1206,7 +1206,7 @@ ascendIdealSafe = (Jk, hk, ak, ek) -> (
      while (isSubset(IN, IP) == false) do(
      	  IP = IN;
 --	  error "help";
-	  IN = ethRootSafe(hk, IP, ak, ek)+IP
+	  	IN = ethRootSafe(hk, IP, ak, ek)+IP
      );
 
      --trim the output
