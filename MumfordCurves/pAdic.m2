@@ -1,3 +1,33 @@
+newPackage(
+     "pAdic",
+     Version => "0.1", 
+     Date => "Jan 9, 2013",
+     Authors => {{Name => "Nathan Ilten", 
+	       Email => "nilten@math.berkeley.edu", 
+	       HomePage => "http://http://math.berkeley.edu/~nilten/"},
+          {Name => "Ralph Morrison",
+	       Email => "morrison@math.berkeley.edu",
+	       HomePage => "http://math.berkeley.edu/~ralph42/"},
+	  {Name => "Qingchun Ren",
+	       Email => "qingchun.ren@gmail.com",
+	       HomePage => "http://math.berkeley.edu/~qingchun/"}
+          },
+     Headline => "a package for p-adic numbers",
+     DebuggingMode => false
+     )
+
+export {PAdicField,
+     prime,
+     PAdicFieldElement,
+     valuation,
+     relativePrecision,
+     pAdicField,
+     QQQ,
+     toPAdicFieldElement,
+     PAdicMatrix,
+     pAdicMatrix
+     }
+
 PAdicFields = new MutableHashTable
 
 PAdicField = new Type of InexactField
@@ -340,8 +370,54 @@ expression PAdicMatrix := M -> MatrixExpression applyTable(M.matrix, expression)
 
 end
 ----------------------------
+--Friday Demonstration
+----------------------------
+restart
+load "~/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
+
+--for any p have field QQQ_p
+
+QQQ_23
+
+--can make p-adics from rationals:
+x=toPAdicFieldElement(1,100,QQQ_23)
+y=toPAdicFieldElement(-345,5,QQQ_23)
+z=toPAdicFieldElement(-345,6,QQQ_23)
+
+y==z
+y===z
+
+
+w=toPAdicFieldElement(17/(4*23^5),30,QQQ_23)
+precision w
+valuation w
+
+
+--addition, subtraction, multiplication, and division
+y*w
+y*z
+y-w
+y/w
+
+--QQQ_23 only gets created once!
+ZZ[s]===ZZ[s]
+QQQ_27===QQQ_27
+
+--basic matrix operations
+M=pAdicMatrix {{x,y},{z,w*z}}
+M+M
+M*M
+M^5
+
+
+
+
+
+
+----------------------------
 --Qingchun's testing area
 ----------------------------
+
 restart
 load "/Users/qingchun/Desktop/M2Berkeley/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
 Q3 = pAdicField(3)

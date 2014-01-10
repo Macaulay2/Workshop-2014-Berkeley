@@ -129,12 +129,29 @@ copyTemplate String := src -> (
     
     dirPath = temporaryFileName();
     makeDirectory dirPath;
-    dirPath = dirPath|"/";
+    dirPath = concatenate(dirPath,"/",fileName);
     
-    copyFile( src, concatenate (dirPath,fileName));
+    copyFile( src, dirPath);
     
     return dirPath;
 )
+
+
+-- input:
+-- output:
+searchReplace = method(Options => {VisPath => currentDirectory()})
+searchReplace(String,String,String) := opts -> (oldString,newString,visSrc) -> (
+    local visFilePathTemp;
+    
+    visFilePathTemp = temporaryFileName();
+    copyFile(visSrc,visFilePathTemp);
+    openOut visSrc << 
+    	replace(oldString, newString , get visFilePathTemp) << 
+	close;
+	
+    return visSrc;
+    )
+
 
 
 
@@ -270,12 +287,6 @@ loadPackage"Visualize"
 (options Visualize).Configuration
 
 
-searchReplace method(Options => {VisPath => currentDirectory()})
-searchReplace(String,String,String) := opts -> (oldString,newString,tempSrc) -> (
-            
-    )
-
-
 
 
 
@@ -292,12 +303,32 @@ visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
     return (show new URL from { "file://"|PATH }, fileName);
     )
 
+searchReplace = method(Options => {VisPath => currentDirectory()})
+searchReplace(String,String,String) := opts -> (oldString,newString,visSrc) -> (
+    local visFilePathTemp;
+    
+    visFilePathTemp = temporaryFileName();
+    copyFile(visSrc,visFilePathTemp);
+    openOut visSrc << 
+    	replace(oldString, newString , get visFilePathTemp) << 
+	close;
+	
+    return visSrc;
+    )
 
-copyTemplate(currentDirectory()|"Visualize/templates/visIdeal/visIdeal3d.html")
+testFile = copyTemplate(currentDirectory()|"Visualize/templates/visIdeal/visIdeal3d.html")
+searchReplace("visArray","kickass string", testFile)
+searchReplace("XXX","kickass string", testFile)
+searchReplace("YYY","kickass string", testFile)
+searchReplace("ZZZ","kickass string", testFile)
 
+	
+visFilePath = 
+replace("XXX", "visString" , get visFilePath)
 
-
-
+viewHelp replace
+viewHelp get
+viewHelp openOut
 
 -- Old Graphs
 G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})

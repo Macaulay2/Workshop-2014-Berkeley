@@ -73,8 +73,8 @@ NCRing ** NCRing := (A,B) -> (
    qTensorProduct(A,B,promote(1,coefficientRing A))
 )
 
-e = method()
-e (NCRing, Symbol) := (A,x) -> (
+envelopingAlgebra = method()
+envelopingAlgebra (NCRing, Symbol) := (A,x) -> (
    --  want to add an option to index op variables by number rather than a ring element?
    R := coefficientRing A;
    Aop := oppositeRing A;
@@ -102,7 +102,6 @@ D = C ** B
 e(A,s)
 e(C,t)
 ///
-
 
 subQuotientAsCokernel = method()
 subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
@@ -272,6 +271,14 @@ zeroMap (List, List, NCRing) := (tar,src,B) -> (
    myZero := ncMatrix applyTable(entries map(R^#tar,R^#src,0), e -> promote(e,B));
    assignDegrees(myZero,tar,src);
    myZero
+)
+
+matrixInDegDOnLeft := (M,d) -> (
+   entryTable := apply(#(M.target), i -> apply(#(M.source), j -> (i,j)));
+   multTable := applyTable(entryTable, e -> leftMultiplicationMap(M#(e#0)#(e#1), 
+	                                                d - (M.source)#(e#1),
+                                                        d - (M.target)#(e#0)));
+   matrix multTable
 )
 
 Hom (NCMatrix,NCMatrix,ZZ) := (M,N,d) -> (
