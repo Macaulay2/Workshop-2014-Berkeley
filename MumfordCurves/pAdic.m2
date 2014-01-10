@@ -42,6 +42,7 @@ relativePrecision = method()
 
 pAdicField = method()
 pAdicField ZZ:=(p)->(
+     if not isPrime p then error(toString(p)|" is not a prime!");
      if PAdicFields#?p then return PAdicFields#p;
      R := ZZ;
      A := new PAdicField from {(symbol prime) => p};
@@ -437,7 +438,8 @@ end
 --Nathan's testing area
 ----------------------------
 restart
-load "~/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
+loadPackage "pAdic"
+
 
 x=toPAdicFieldElement({1,2,2,2},QQQ_3)
 
