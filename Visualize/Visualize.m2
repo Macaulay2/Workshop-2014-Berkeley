@@ -297,7 +297,7 @@ visDigraph(Digraph) := opts -> G -> (
 	 -- vertexString = toString new Array from apply((values G)#0, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
     );
     
-    visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visGraph/visGraph-template.html"); -- Copy the visGraph template to a temporary directory.
+    visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visDigraph/visDigraph-template.html"); -- Copy the visDigraph template to a temporary directory.
     
     searchReplace("visArray",arrayString, visTemp); -- Replace visArray in the visGraph html file by the adjacency matrix.
     searchReplace("visLabels",vertexString, visTemp); -- Replace visLabels in the visGraph html file by the ordered list of vertices.
@@ -511,6 +511,20 @@ end
 -- Stable Tests
 -----------------------------
 -----------------------------
+
+-- brett
+
+-- Digraphs
+restart
+loadPackage"Graphs"
+loadPackage"Visualize"
+G = digraph({ {1,{2,3}} , {2,{3}} , {3,{1}}})
+A = adjacencyMatrix G
+keys(G#graph)
+visGraph G
+
+----------------
+
 -- branden
 restart
 loadPackage"Graphs"
@@ -525,15 +539,6 @@ searchReplace("visArray","kickass string", testFile)
 searchReplace("XXX","kickass string", testFile)
 searchReplace("YYY","kickass string", testFile)
 searchReplace("ZZZ","kickass string", testFile)
-
--- Digraphs
-restart
-loadPackage"Graphs"
-loadPackage"Visualize"
-G = digraph({ {1,{2,3}} , {2,{3}} , {3,{1}}})
-A = adjacencyMatrix G
-keys(G#graph)
-visGraph G
 
 -- Old Graphs
 restart
