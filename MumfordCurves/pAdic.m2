@@ -64,6 +64,28 @@ pAdicField ZZ:=(p)->(
 -- non-exported auxilliary functions
 ---------------------------------------------
 
+pValuation := method()
+pValuation(ZZ,ZZ) := (n,p)->(
+     b := n;
+     v := 0;
+     while b%p==0 do (
+	  b = b//p;
+	  v = v+1;
+	  );
+     v
+     );
+
+pValuation(QQ,ZZ) := (r,p)->(pValuation(numerator(r),p)-pValuation(denominator(r),p));
+
+coarse := method();
+coarse(PAdicFieldElement,ZZ) := (a,prec) -> (
+     newPrecision := min(prec,precision a);
+     newKeys := select(a#"expansion"_0,i->(i<newPrecision));
+     newValues := for i in 0..#newKeys-1 list a#"expansion"_1#i;
+     new (class a) from {"precision"=>newPrecision,
+	  "expansion"=>{newKeys,newValues}}
+     )
+
 computeCarryingOver := (aKeys,aValues,prec,A) -> (
      	  p:=A#prime;
 	  newKeys := ();
@@ -95,6 +117,34 @@ computeCarryingOver := (aKeys,aValues,prec,A) -> (
 	       "expansion"=>{toList deepSplice newKeys,
 		    toList deepSplice newValues}}
 	  )
+
+---------------------------------------------
+-- Creating PAdicFieldElements
+---------------------------------------------
+
+toPAdicFieldElement = method()
+toPAdicFieldElement (List,PAdicField) := (L,S) -> (
+   n:=#L;
+   local expans;
+   if all(L,i->i==0) then expans={{},{}}    
+   else expans=entries transpose matrix select(apply(n,i->{i,L_i}),j->not j_1==0);
+   new S from {"precision"=>n,"expansion"=>expans}
+   )
+toPAdicFieldElement(ZZ,ZZ,PAdicField) := (n,prec,S) -> (
+     computeCarryingOver({0},{n},prec,S)
+     );
+toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
+     n := numerator r;
+     d := denominator r;
+     p := S.prime;
+     nVal := pValuation(n,p);
+     dVal := pValuation(d,p);
+     rVal := nVal-dVal;
+     newRelativePrecision := prec-rVal;
+     nPAdic := toPAdicFieldElement(n,nVal+newRelativePrecision,S);
+     dPAdic := toPAdicFieldElement(d,dVal+newRelativePrecision,S);
+     nPAdic/dPAdic
+     );
 
 ---------------------------------------------
 -- Methods for PAdicFieldElements
@@ -281,15 +331,6 @@ PAdicFieldElement / QQ := (a,r)->a/numerator(r)*denominator(r)
 
 QQ / PAdicFieldElement := (r,a)->inverse(a)*numerator(r)/denominator(r)
 
-coarse := method();
-coarse(PAdicFieldElement,ZZ) := (a,prec) -> (
-     newPrecision := min(prec,precision a);
-     newKeys := select(a#"expansion"_0,i->(i<newPrecision));
-     newValues := for i in 0..#newKeys-1 list a#"expansion"_1#i;
-     new (class a) from {"precision"=>newPrecision,
-	  "expansion"=>{newKeys,newValues}}
-     )
-
 PAdicFieldElement == PAdicFieldElement := (a,b) -> (
      if not class a === class b then return false;
      if precision a < precision b then (
@@ -314,45 +355,6 @@ PAdicFieldElement << ZZ := (a,n) -> (
      new (class a) from {"precision"=>newPrecision,
 	  "expansion"=>{newKeys,a#"expansion"_1}}
      )
-
-pValuation = method()
-pValuation(ZZ,ZZ) := (n,p)->(
-     b := n;
-     v := 0;
-     while b%p==0 do (
-	  b = b//p;
-	  v = v+1;
-	  );
-     v
-     );
-
-pValuation(QQ,ZZ) := (r,p)->(pValuation(numerator(r),p)-pValuation(denominator(r),p));
-
-toPAdicFieldElement = method()
-toPAdicFieldElement (List,PAdicField) := (L,S) -> (
-   n:=#L;
-   local expans;
-   if all(L,i->i==0) then expans={{},{}}    
-   else expans=entries transpose matrix select(apply(n,i->{i,L_i}),j->not j_1==0);
-   new S from {"precision"=>n,"expansion"=>expans}
-   )
-toPAdicFieldElement(ZZ,ZZ,PAdicField) := (n,prec,S) -> (
-     computeCarryingOver({0},{n},prec,S)
-     );
-toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
-     n := numerator r;
-     d := denominator r;
-     p := S.prime;
-     nVal := pValuation(n,p);
-     dVal := pValuation(d,p);
-     rVal := nVal-dVal;
-     newRelativePrecision := prec-rVal;
-     nPAdic := toPAdicFieldElement(n,nVal+newRelativePrecision,S);
-     dPAdic := toPAdicFieldElement(d,dVal+newRelativePrecision,S);
-     nPAdic/dPAdic
-     );
-
-
 
 ---------------------------------------------
 -- Matrix stuff
