@@ -198,27 +198,21 @@ visIdeal(Ideal) := opts -> J -> (
     return visTemp;--opts.VisPath|A_1;
     )
 
-loadPackage"Graphs"
-peek Graphs
-(options Graphs).Version
-
-peek OptionTable
-
 --input: A graph
 --output: the graph in the browswer
 --
 visGraph = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
-    local A; local arrayString; local vertexString; local visTemp;
+    local A; local arrayString; local vertexString; local visTemp; local graph;
     
     A = adjacencyMatrix G;
     arrayString = toString toArray entries A; -- Turn the adjacency matrix into a nested array (as a string) to copy to the template html file.
     
-    if (options Graphs).Version != 0.1 then (
-	 vertexString = toString(toArray(apply(G.vertexSet, i -> "i"))); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
-    ) else (
+    --if (options Graphs).Version != 0.1 then (
+--	 vertexString = toString(toArray(apply(G.vertexSet, i -> "i"))); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+  --  ) else (
     	 vertexString = toString(toArray(apply(keys(G#graph), i -> "i"))); -- Create a string containing an ordered list of the vertices in the older Graphs package.
-    );
+    --);
     
     print vertexString;
         
@@ -333,7 +327,8 @@ visGraph( G, VisPath => "/Users/bstone/Desktop/Test/")
 S = G.vertexSet
 toString S
 
-R = QQ[x,y,z]
+R = QQ[a,b,c]
+I = ideal"a2,ab,b2c,c5,b4"
 I = ideal"x4,xyz3,yz,xz,z6,y5"
 visIdeal I
 visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
