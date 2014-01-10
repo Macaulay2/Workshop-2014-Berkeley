@@ -1337,8 +1337,8 @@ doc ///
 	    two chain complex maps, $d : D \rightarrow C$ 
 	    and $e : E \rightarrow C$, and then
 	    compute the resulting filtration of $C$.
-	    When then consider a boundary case by considering the filtered complex obtained
-	    from a single chain complex map, that is the identity of $C$.
+--	    When then consider a boundary case by considering the filtered complex obtained
+--	    from a single chain complex map, that is the identity of $C$.
      	  Text
 	     Let's make our chain complexes $C$, $D$, and $E$.	     
      	  Example	       	 
@@ -1370,16 +1370,16 @@ doc ///
      	  Example	       	       
 	       K = filteredComplex({d,e})
 	  Text
-	     If we want to specify a specify minimum filtration degree
+	     If we want to specify a minimum filtration degree
              we can use the Shift option.
       	  Example	       	     
 	       L = filteredComplex({d,e},Shift =>1)
 	       M = filteredComplex({d,e},Shift =>-1)
-	  Text
-	     We now explain a boundary case in which the list consists of a single map $\{\phi_0\}$.
-	  Example
-	      P = filteredComplex {id_C}   
-    	      P_1	  
+--	  Text
+--	     We now explain a boundary case in which the list consists of a single map $\{\phi_0\}$.
+--	  Example
+--	      P = filteredComplex {id_C}   
+--    	      P_1	  
 ///	  
 
 ---
@@ -1465,7 +1465,7 @@ doc ///
 	      S = ZZ[v1,v2,v3,v4,v5,v6,v15,v12,v36,v34,v46,v25];
 	      twoSphere = simplicialComplex {v3*v4*v5, v5*v4*v15, v15*v34*v4, v15*v34*v1, v34*v1*v6, v34*v46*v6, v36*v46*v6, v3*v4*v46, v4*v46*v34, v3*v46*v36, v1*v6*v2, v6*v2*v36, v2*v36*v12,v36*v12*v3, v12*v3*v5, v12*v5*v25, v25*v5*v15, v2*v12*v25, v1*v2*v25, v1*v25*v15};	   
 	  Text
-	     We can check that the homology of the simplicial compllex twoSphere agrees with that of $\mathbb{S}^2$.
+	     We can check that the homology of the simplicial complex twoSphere agrees with that of $\mathbb{S}^2$.
 	  Example
 	      C = truncate(chainComplex twoSphere,1)	
 	      prune HH C

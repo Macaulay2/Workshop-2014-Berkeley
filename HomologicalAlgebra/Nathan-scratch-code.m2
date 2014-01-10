@@ -289,15 +289,112 @@ Extension = constructRandomExtensions(6,5,3)
 
 prune HH Extension
 
+-- scratch extension code --
 
--- try to generalize the above...
---constructExtensions = method()
---constructExtensions(Module,Module, Module, Matrix) := (A,B, MA, Zeta) -> (
---    F := complete res A;
---    MA := ker (inducedMap(A,F_0, id_(F_0)));
---    j := inducedMap(F_0,MA,id_(F_0));
---    coker( map(F_0 ++ B, j || (- homomorphism Zeta)   )
---    )
---)
+constructExtensions = method()
 
 
+
+---- COR scratch
+restart
+needsPackage "SpectralSequences"
+Q = QQ[a,b,c]
+K = koszul vars Q
+K' = koszul matrix {{a^3,b^3,c^3}}
+Rmod = coker matrix {{a^3,b^3,c^3}}
+R = Q/ideal{a^3,b^3,c^3}
+KR = koszul vars R
+M = coker matrix {{a,b,0},{0,b,c}}
+pfM = pushForward(phi,M)
+res pfM
+Mres = res(M,LengthLimit=>7)
+phi = map(R,Q)
+pfMres = chainComplex apply(drop(spots Mres,1), i -> map(pushForward(phi,target Mres.dd_i),
+	                   pushForward(phi,source Mres.dd_i),
+			   matrix applyTable(entries Mres.dd_i, f -> sub(f,Q))));
+filtCOR = (filteredComplex pfMres) ** (Rmod ** K);
+filtCOR = (filteredComplex pfMres) ** KR;
+ssCOR = prune spectralSequence filtCOR
+ssCOR^0
+ssCOR2 = ssCOR^2;
+support ssCOR^2
+
+help "spots"
+keys ssCOR^2
+select(spots ssCOR^3 .dd, l -> ssCOR^3 .dd_l != 0) 
+X = ssCOR^3 .dd_{5,0}
+ssCOR^3 .dd.degree
+source X
+target X
+select(spots ssCOR^5.dd, l -> true) 
+
+---
+---
+
+A = QQ[x,y,z]
+
+M = coker vars A
+
+F = res M
+
+N = coker matrix(A,{{x^2,y,z}})
+
+G = res N
+
+H = Hom(F_1,G_0)
+
+ourMap = Hom(F_1, inducedMap(N, G_0, id_(G_0)))
+
+source ourMap == H
+
+L = target ourMap
+
+(ourMap) * (H_0)
+(ourMap) * (H_1)
+(ourMap) * (H_2)
+
+mPrime = (ourMap) * (H_0) + (ourMap) * (H_1) + (ourMap) * (H_2)
+
+ourMap*(H_0 + H_1 + H_2)
+
+H_0 + H_1 + H_2
+-- mPrime is an element of L
+-- How to check if mPrime is zero??
+ourMap
+
+mPrime 
+mPrime == 0_L
+
+H
+help"genericMatrix"
+vars A
+
+ring L
+
+lre = flatten(entries mm)
+lre 
+numgens H
+
+lre#1
+
+ourMap*(sum apply(numgens H , i-> (lre#i) * H_i)) 
+
+-- something like this will work.
+-- assume given m \in Hom(F_1,G_0) which is a cycle
+-- are we assuming that m is a matrix of an appropriate size??
+-- and defines an extension 0 --> N --> ? --> M --> 0
+isExtTrivial = (m, M, N) -> (
+    ourMap := Hom( )
+    )
+
+
+flatten mm
+flatten entries mm
+# (gens L)
+
+L
+
+l = sum apply(flatten entries mm, i -> (ourMap) * i)
+l == 0_L
+
+ker relations M
