@@ -49,7 +49,15 @@ hypergraph(List, List) := Hypergraph => opts -> (V, E) -> (
 	};
 )
 
+hypergraph(List) := Hypergraph => opts -> E -> (
+    V := unique flatten E;
+    return hypergraph(V,E);
+    )
+
+hypergraph(Matrix)
+
 isHypergraphSimple = method(TypicalValue => Boolean);
 isHypergraphSimple(Hypergraph) := Boolean => H -> (
     if any(0 .. #H#edges-1, I -> any(0 .. I-1, J -> isSubset(H#edges#I, H#edges#J) or isSubset(H#edges#J, H#edges#I))) then return false else return true;
 )
+
