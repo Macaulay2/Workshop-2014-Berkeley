@@ -24,7 +24,8 @@ newPackage(
      	     {Name => "Brett Barwick", Email => "Brett@barwick.edu", HomePage => "http://math.bard.edu/~bstone/"},	     
 	     {Name => "Elliot Korte", Email => "ek2872@bard.edu"},	     
 	     {Name => "Will Smith", Email => "smithw12321@gmail.com"},		
-	     {Name => "Branden Stone", Email => "bstone@bard.edu", HomePage => "http://math.bard.edu/~bstone/"},	     
+	     {Name => "Branden Stone", Email => "bstone@bard.edu", HomePage => "http://math.bard.edu/~bstone/"},
+	     {Name => "Julio Urenda", Email => "jcurenda@nmsu.edu"},	     
 	     {Name => "Jim Vallandingham", Email => "vlandham@gmail.com", HomePage => "http://vallandingham.me/"}
 	     },
     	Headline => "Visualize",
@@ -315,7 +316,8 @@ beginDocumentation()
 needsPackage "SimpleDoc"
 debug SimpleDoc
 
-doc ///
+multidoc ///
+  Node
      Key
      	 Visualize
      Headline 
@@ -323,6 +325,30 @@ doc ///
      Description
        Text
      	 We use really rediculusly cools things to do really cool things.
+<<<<<<< HEAD
+     Caveat
+     	 Let's see.
+  Node
+    Key
+       [visIdeal,VisPath]
+       [visIdeal,VisTemplate]
+       (visIdeal, Ideal)
+       visIdeal
+    Headline
+       Creates staircase diagram for an ideal
+    Usage
+       visIdeal I
+    Inputs
+       I: Ideal
+         An ideal in a ring with 2 or 3 variables.
+    Outputs
+       visTemp: String
+         Path to html containg polytope.
+    Description
+     Text
+       We are able to see the interactive staircase diagram. More stuff
+       should be here about the convext hull and other stuff.	    
+=======
 ///
 
 
@@ -428,6 +454,7 @@ doc ///
      socleCheck(I,x*y);
      socleCheck(I,x^2);
      socleCheck(I,x);
+>>>>>>> 8daa13ad0347ad3cc4aa1fecec3eefb2d5879bd3
 ///
 
 -------------------------------------------------------------------------------------------
@@ -463,6 +490,9 @@ searchReplace("YYY","kickass string", testFile)
 searchReplace("ZZZ","kickass string", testFile)
 
 -- Old Graphs
+restart
+loadPackage"Graphs"
+loadPackage"Visualize"
 G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
 visGraph G
 H = graph({{x_1, x_0}, {x_3, x_0}, {x_3, x_1}, {x_4, x_0}}, Singletons => {x_2, x_5, 6, cat_sandwich})
@@ -497,7 +527,6 @@ yes
 -- Julio's tests
 -----------------------------
 restart
-path = append(path, "/home/esmeralda/Workshop-2014-Berkeley/Visualize")
 loadPackage "Visualize"
 "TEST" << "let" << close
 replaceInFile("e", "i", "TEST")
