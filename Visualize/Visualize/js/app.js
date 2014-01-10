@@ -40,7 +40,7 @@ function initializeBuilder() {
     .append('svg')
     .attr('width', width)
     .attr('height', height)
-    .attr('id', 'canvasElement');
+    .attr('id', 'canvasElement2d');
 
   // set up initial nodes and links
   //  - nodes are known by 'id', not by index in array.
@@ -553,7 +553,7 @@ function setAllNodesFixed() {
 
 function updateWindowSize2d() {
 
-        var svg = document.getElementById("canvasElement");
+        var svg = document.getElementById("canvasElement2d");
         svg.style.width = window.innerWidth;
         svg.style.height = window.innerHeight - 150;
         svg.width = window.innerWidth;
