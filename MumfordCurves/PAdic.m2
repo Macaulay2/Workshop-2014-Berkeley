@@ -516,6 +516,45 @@ document {
 
 
 document {
+     Key =>valuation,
+     Inputs => {"x" => ofClass PAdicFieldElement},
+     Outputs => {"n" => ofClass ZZ},
+     Usage => "n=valuation(x)",
+     Headline=> "calculates the valuation of a p-adic number",
+     PARA{TT "valuation"," returns the exponent of the smallest
+	  power of p in the p-adic representation of ",TT "x"," for
+	  which the coefficient is non-zero."},
+     EXAMPLE {"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "valuation x"}
+     }
+
+document {
+     Key =>relativePrecision,
+     Inputs => {"x" => ofClass PAdicFieldElement},
+     Outputs => {"n" => ofClass ZZ},
+     Usage => "n=valuation(x)",
+     Headline=> "calculates the valuation of a p-adic number",
+     PARA{TT "relativePrecision"," returns the difference of the
+	   ",TO precision," and the ",TO valuation," of ",TT "x",", unless
+	   all coefficients are zero, in which case zero is returned."},
+     EXAMPLE {"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "relativePrecision x"} 
+     }
+
+document {
+     Key =>(precision,PAdicFieldElement),
+     Inputs => {"x" => ofClass PAdicFieldElement},
+     Outputs => {"n" => ofClass ZZ},
+     Usage => "n=precision(x)",
+     Headline=> "calculates the precision of a p-adic number",
+     PARA{TT "precision"," returns the exponent of the smallest
+	  power of p in the p-adic representation of ",TT "x"," for
+	  which the coefficient is unknown."},
+     EXAMPLE {"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "precision x"}           
+     }
+
+document {
      Key =>PAdicFieldElement,
      }
 
