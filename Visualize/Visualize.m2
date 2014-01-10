@@ -161,11 +161,13 @@ searchReplace(String,String,String) := opts -> (oldString,newString,visSrc) -> (
 visIdeal = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() |"Visualize/templates/visIdeal/visIdeal"})
 visIdeal(Ideal) := opts -> J -> (
     local R; local arrayList; local arrayString; local numVar; local visTemp;
-    local A;
+    local varList;
+    -- local A;
     
     R = ring J;
     numVar = rank source vars R;
-    
+    varList = flatten entries vars R;
+        
     if ((numVar != 2) and (numVar != 3)) then (error "Ring needs to have either 2 or 3 variables.");
     
     if numVar == 2 
@@ -184,8 +186,10 @@ visIdeal(Ideal) := opts -> J -> (
     	arrayList = toArray arrayList;
     	arrayString = toString arrayList;
 	
-	searchReplace("visArray",arrayString, visTemp)
-	
+	searchReplace("visArray",arrayString, visTemp);
+	searchReplace("XXX",toString(varList_0), visTemp);
+	searchReplace("YYY",toString(varList_1), visTemp);
+	searchReplace("ZZZ",toString(varList_2), visTemp)
     );
     
     show new URL from { "file://"|visTemp };
@@ -313,24 +317,10 @@ loadPackage"Graphs"
 loadPackage"Visualize"
 (options Visualize).Configuration
 
-copyJS(replace(baseFilename"/var/folders/41/smyxyt0s5d5_rx02rltn5dl00000gn/T/M2-360-0/0/1389325905.html", "", "/var/folders/41/smyxyt0s5d5_rx02rltn5dl00000gn/T/M2-360-0/0/1389325905.html"))
-
-
-time testFile = copyTemplate(currentDirectory()|"Visualize/templates/visIdeal/visIdeal3d.html")
-/var/folders/41/smyxyt0s5d5_rx02rltn5dl00000gn/T/M2-363-0/1/1389324560.html
-
 searchReplace("visArray","kickass string", testFile)
 searchReplace("XXX","kickass string", testFile)
 searchReplace("YYY","kickass string", testFile)
 searchReplace("ZZZ","kickass string", testFile)
-
-
-visFilePath = 
-replace("XXX", "visString" , get visFilePath)
-
-viewHelp replace
-viewHelp get
-viewHelp openOut
 
 -- Old Graphs
 G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
