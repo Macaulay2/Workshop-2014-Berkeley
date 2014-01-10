@@ -11,59 +11,60 @@ newPackage(
 )
 
 export {
+	-- Hypergraph class and hypergraph properties
 	"Hypergraph",
 	"hypergraph",
 	"Singletons",
-	"isHypergraphSimple",
 	"edges",
 	"vertices",
 	"incidenceMatrix",
 	"vertexContainments",
 	"neighbors",
+
+	-- Functions accepting a hypergraph as input
+	"isHypergraphSimple",
 	"inducedSubhypergraph"
 }
 
---to do:
--- 1 - add a net function for the Hypergraph class
--- 2 - add various other constructors (contructors accepting incidence matrix, list of edges (done))
--- 3 - add function for hypergraph dual
--- 4 - add function for induced subhypergraph
-
 {*
-Functions We Might Want to Include
+	To do:
+	- add various other constructors (contructors accepting incidence matrix (done), list of edges (done))
+	- overload the net function for the Hypergraph class
 
-From EdgeIdeals:
-chromaticNumber
-complementGraph
-connectedComponents
-numberConnectedComponents
-hypergraphToSimplicialComplex
-coverIdeal (This should maybe be of class MonomialIdeal?
-edgeIdeal (Also MonomialIdeal?)
-deleteEdges
-independenceComplex
-lineGraph
-simplicialComplexToHypergraph
-vertexCovers
-vertexCoverNumber
-isGraph
-isCM
-isSCM
-isConnected
-isForest
-isLeaf
+	Functions We Might Want to Include:
+	From EdgeIdeals:
+	- chromaticNumber
+	- complementGraph
+	- connectedComponents
+	- numberConnectedComponents
+	- hypergraphToSimplicialComplex
+	- coverIdeal (This should maybe be of class MonomialIdeal?
+	- edgeIdeal (Also MonomialIdeal?)
+	- deleteEdges
+	- independenceComplex
+	- lineGraph
+	- simplicialComplexToHypergraph
+	- vertexCovers
+	- vertexCoverNumber
+	- isGraph
+	- isCM
+	- isSCM
+	- isConnected
+	- isForest
+	- isLeaf
 
-From Nauty:
-areIsomorphic
-addEdges
-generateHypergraphs
-
+	From Nauty:
+	- areIsomorphic
+	- addEdges
+	- generateHypergraphs
 *}
+
+--------------------------------------------
 
 --the classes defined in this package
 Hypergraph = new Type of HashTable;
 
---constructor for Hypergraph class
+--constructors for Hypergraph class
 hypergraph = method(TypicalValue => Hypergraph, Options => {Singletons => null});
 hypergraph(List, List) := Hypergraph => opts -> (V, E) -> (
     E = toList \ E; --force E to be a list of lists
@@ -79,15 +80,14 @@ hypergraph(List, List) := Hypergraph => opts -> (V, E) -> (
 		edges => E,
 		vertices => V,
 		incidenceMatrix => A,
-		vertexContainments => hashTable vContainments,
-		    --keys are vertices and values are lists of edges numbered 0 through #E-1
+		vertexContainments => hashTable vContainments, --keys are vertices and values are lists of edges numbered 0 through #E-1
 		neighbors => nbors
 	};
 )
 
 hypergraph(List) := Hypergraph => opts -> E -> (
 	V := unique flatten E;
-	return hypergraph(V,E);
+	return hypergraph(V, E, opts);
 )
 
 --Output: returns a Hypergraph given an incidence matrix.  The vertices are 0 .. numRows(incMatrix)-1.
@@ -103,13 +103,14 @@ hypergraph(Matrix) := Hypergraph => opts -> (incMatrix) -> (
 	return hypergraph(V, E, opts);
 )
 
+--------------------------------------------
+
 inducedSubhypergraph = method(TypicalValue => Hypergraph);
 inducedSubhypergraph(List,Hypergraph) := Hypergraph => (V,H) -> (
     vComplement := select (H.vertices, x -> not member(x,V));
     eComplement := unique flatten apply (vComplement, v -> H.vertexContainments#v); --returns the indices of the edges to delete
     E := H.edges_(select(toList(0 .. #H.edges-1), e -> not member (e, eComplement)));
-    G := hypergraph(V,E); 
-    return G;
+    return hypergraph(V, E);
 )
 
 hypergraphDual = method(TypicalValue => Hypergraph);
