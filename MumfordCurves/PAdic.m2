@@ -181,20 +181,18 @@ toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
 
 
 net PAdicFieldElement := a->(expans:=a#"expansion";
-  p:=(class a)#prime;
   keylist:=expans_0;
   ((horizontalJoin apply(#keylist,i->
-  net(expans_1_i)|"*"|net p|
+  net(expans_1_i)|"*"|"p"|
   (net keylist_i)^1|"+"))
-|"O("|net p|(net(precision a))^1|")"))
+|"O("|"p"|(net(precision a))^1|")"))
 
 toString PAdicFieldElement := a->(expans:=a#"expansion";
-  p:=(class a)#prime;
   keylist:=expans_0;
   ((concatenate apply(#keylist,i->
-  toString(expans_1_i)|"*"|toString p|"^"|
+  toString(expans_1_i)|"*p^"|
   (toString keylist_i)|"+"))
-|"O("|toString p|"^"|(toString(precision a))|")"))
+|"O(p^"|(toString(precision a))|")"))
 
 
 precision PAdicFieldElement := a->a#"precision";
