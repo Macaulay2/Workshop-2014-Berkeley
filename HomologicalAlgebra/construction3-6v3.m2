@@ -133,7 +133,7 @@ constructionV3 (ZZ,Module):=
 	f_i = id_(P_i);
 	);
     --make the chain complex map
-    cRes := map (P,S,i-> f_i) 
+    cRes := map (P,S,i-> f_i);
     cRes
     )
 
