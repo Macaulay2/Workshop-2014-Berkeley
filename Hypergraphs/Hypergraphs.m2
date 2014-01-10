@@ -80,15 +80,14 @@ hypergraph(List, List) := Hypergraph => opts -> (V, E) -> (
 		edges => E,
 		vertices => V,
 		incidenceMatrix => A,
-		vertexContainments => hashTable vContainments,
-		    --keys are vertices and values are lists of edges numbered 0 through #E-1
+		vertexContainments => hashTable vContainments, --keys are vertices and values are lists of edges numbered 0 through #E-1
 		neighbors => nbors
 	};
 )
 
 hypergraph(List) := Hypergraph => opts -> E -> (
 	V := unique flatten E;
-	return hypergraph(V,E);
+	return hypergraph(V, E, opts);
 )
 
 --Output: returns a Hypergraph given an incidence matrix.  The vertices are 0 .. numRows(incMatrix)-1.
@@ -111,8 +110,7 @@ inducedSubhypergraph(List,Hypergraph) := Hypergraph => (V,H) -> (
     vComplement := select (H.vertices, x -> not member(x,V));
     eComplement := unique flatten apply (vComplement, v -> H.vertexContainments#v); --returns the indices of the edges to delete
     E := H.edges_(select(toList(0 .. #H.edges-1), e -> not member (e, eComplement)));
-    G := hypergraph(V,E); 
-    return G;
+    return hypergraph(V, E);
 )
 
 hypergraphDual = method(TypicalValue => Hypergraph);
