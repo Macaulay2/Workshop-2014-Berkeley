@@ -465,6 +465,8 @@ henselApproximation (RingElement,ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
 	f':=diff(x,f);
 	g:= a->sum(0..(degree(f))_0, j->coefficient(x^j,f)*a^j);
 	g':= a->sum(0..(degree(f'))_0, j->coefficient(x^j,f')*a^j);
+	if not sub(g(r),ZZ/p) == sub(0,ZZ/p) then error "The starting value is not a root";
+	if sub(g'(r),ZZ/p) == sub(0,ZZ/p) then error "This is a double root";
 	local s; s=toPAdicFieldElement(r,n,QQQ_p); i:=0;
 	while i<n+1 do (s=s-(g(s)/g'(s));i=i+1);
 	s)

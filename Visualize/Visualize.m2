@@ -325,7 +325,6 @@ multidoc ///
      Description
        Text
      	 We use really rediculusly cools things to do really cool things.
-<<<<<<< HEAD
      Caveat
      	 Let's see.
   Node
@@ -348,7 +347,6 @@ multidoc ///
      Text
        We are able to see the interactive staircase diagram. More stuff
        should be here about the convext hull and other stuff.	    
-=======
 ///
 
 
@@ -361,9 +359,9 @@ doc ///
     Creates staircase diagram for an ideal
   Usage
     visIdeal I
-  Inputs
-    I:Ideal
-      An ideal in a ring with 2 or 3 variables.
+--  Inputs
+--    I:Ideal
+--      An ideal in a ring with 2 or 3 variables.
   Outputs
     An interactive html file that is opened in the user's default browser.
   Description
@@ -454,7 +452,6 @@ doc ///
      socleCheck(I,x*y);
      socleCheck(I,x^2);
      socleCheck(I,x);
->>>>>>> 8daa13ad0347ad3cc4aa1fecec3eefb2d5879bd3
 ///
 
 -------------------------------------------------------------------------------------------
@@ -479,6 +476,7 @@ restart
 loadPackage"Graphs"
 uninstallPackage"Visualize"
 installPackage"Visualize"
+loadPackage"Visualize"
 viewHelp Visualize
 
 (options Visualize).Configuration
