@@ -496,7 +496,7 @@ H = graph({{x_1, x_0}, {x_3, x_0}, {x_3, x_1}, {x_4, x_0}}, Singletons => {x_2, 
 visGraph H
 
 -- New Graphs
-G = graph((0..5),{{0,1},{0,3},{0,4},{1,3},{2,3}},Singletons => {5},EntryMode => "edges")
+G = graph(toList(0..5),{{0,1},{0,3},{0,4},{1,3},{2,3}},Singletons => {5},EntryMode => "edges")
 G = graph(toList(0..5),{0,{1,2,3,4}},Singletons => {5})--,EntryMode => "edges")
 visGraph G
 visGraph( G, VisPath => "/Users/bstone/Desktop/Test/")
@@ -513,7 +513,7 @@ viewHelp ideal
 
 R = QQ[a,b,c]
 I = ideal"a2,ab,b2c,c5,b4"
-I = ideal"x4,xyz3,yz,xz,z6,y5"
+-- I = ideal"x4,xyz3,yz,xz,z6,y5"
 visIdeal I
 visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 

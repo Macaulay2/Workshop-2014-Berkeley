@@ -27,9 +27,9 @@ function getRandomColor() {
     return color;
 }
 
-function initializeBuilder(c) {
+function initializeBuilder3d() {
 
-    container = c;
+    container = document.getElementById("canvasElement3d");
     windowWidth = window.innerWidth;
     windowHeight = window.innerHeight;
 
@@ -52,12 +52,6 @@ function initializeBuilder(c) {
     THREEx.FullScreen.bindKey({ charCode : 'f'.charCodeAt(0) });
     // CONTROLS
     controls = new THREE.OrbitControls( camera, renderer.domElement );
-    // STATS
-    stats = new Stats();
-    stats.domElement.style.position = 'absolute';
-    stats.domElement.style.bottom = '0px';
-    stats.domElement.style.zIndex = 100;
-    container.appendChild( stats.domElement );
 
 
     bigObject = new THREE.Object3D();
@@ -120,14 +114,17 @@ function getGroupCenter(n) {
 }
 
 
-function generateGraph(data, dataSize) {
-    //takes adge pair list from the collecter and generates the graph
-    console.log("datLen: " + data.length);
-    console.log("from: "+data[0].from.title + "  "+ data[0].from.group + " " + data[0].from.groupID + " " + data[0].from.groupSize + "  to: " + data[0].to.title  + "  "+ data[0].to.group + " " + data[0].to.groupID + " " + data[0].to.groupSize );
-    
+function generateGraph() {
+    //takes edge pair list from the collecter and generates the graph
+    var data = [];
 
-    console.log("DATATATATATATAT -== = -- " + dataSize);
-
+    for (var i = 0; i<dataData.length; i++) {
+        for (var j = 0; j < i ; j++) {
+            if (dataData[i][j] != 0) {
+                data.push( { source: nodes[i], target: nodes[j], left: false, right: false} );
+            }    
+        }
+    }
     var first = new node(data[0].from.title, data[0].from.group, data[0].from.groupID, data[0].from.groupSize, data[0].from.infoString, getRandomColor());
     first.initialize();
     nodes.push(first);
@@ -149,7 +146,6 @@ function generateGraph(data, dataSize) {
     addEdge(first, second, data[0].color);
     
     for (var i = 1 ; i<data.length; i++) {
-    console.log("from: "+data[i].from.title + "  "+ data[i].from.group + " " + data[i].from.groupID + " " + data[i].from.groupSize + "  to: " + data[i].to.title  + "  "+ data[i].to.group + " " + data[i].to.groupID + " " + data[i].to.groupSize );
         first = getNode(data[i].from.title);
         second = getNode(data[i].to.title);
         if ((first!=null) && (second!=null)) {
@@ -161,14 +157,12 @@ function generateGraph(data, dataSize) {
             nodes.push(second);
             if (second.groupID == 0) {
                 second.setCoords( (Math.random()*400 - 200), (Math.random()*400 - 200), ((second.group * -300) + 300));
-                console.log( (Math.random()*200 - 100)+" , " +  (Math.random()*200 - 100) + " , " + (second.group * - 150) + 300);
             }
             else {
                 var angle = (2*Math.PI)/(second.groupSize - 1);
                 //second.setCoords( 600*Math.cos((Math.random() * second.groupSize)*angle), 600*Math.sin((Math.random() * second.groupSize)*angle), (second.group * - 150) + 300);
                 coordList = getGroupCenter(second);
                 second.setCoords( 250*Math.cos(2*Math.PI*Math.random()) + coordList[0], 250*Math.sin(2*Math.PI*Math.random()) + coordList[1], ((second.group * -300) + 300));
-                console.log( 300*Math.cos(second.groupID*angle) + " , " + 300*Math.sin(second.groupID*angle)+ " , " + (second.group));
             }
             
             addEdge(first, second, data[i].color);
@@ -179,21 +173,15 @@ function generateGraph(data, dataSize) {
             nodes.push(first);
             if (first.groupID == 0) {
                 first.setCoords( (Math.random()*400 - 200), (Math.random()*400 - 200), (first.group * -300) + 300);
-                console.log( (Math.random()*200 - 100)+" , " +  (Math.random()*200 - 100) + " , " + (first.group *-150) + 300);
             }
             else {
                 var angle = (2*Math.PI)/(first.groupSize - 1);
                 coordList = getGroupCenter(first);
                 first.setCoords( 250*Math.cos(2*Math.PI*Math.random()) + coordList[0], 250*Math.sin(2*Math.PI*Math.random()) + coordList[1], (first.group * -300) + 300);
-                console.log( 300*Math.cos(first.groupID*angle) + " , " + 300*Math.sin(first.groupID*angle)+ " , " + (first.group));
             }
             
             addEdge(first, second, data[i].color);
         }
-        else {
-            console.log("REEEEThis should never happen");
-        }
-        console.log();
     }
 
     for (var i = 0; i<nodes.length; i++) {
@@ -485,7 +473,6 @@ function runIt() {
     renderer.render( scene, camera );
 
     controls.update();
-    stats.update();
      
 }
 
