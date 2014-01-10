@@ -151,23 +151,35 @@ pAdicField ZZ:=(p)->(
      ZZ + A := (n,a)->a+n;
      A - ZZ := (a,n)->a+(-n);
      ZZ - A := (n,a)->(-a)+n;
-     pValuation := n->(
-	  b := n;
-	  v := 0;
-          while b%p==0 do (
-	       b = b//p;
-	       v = v+1;
-	       );
-	  v
-	  );
      A * ZZ := (a,n)->(
 	  if n==0 then 0 else (
-	       v := pValuation(n);
+	       v := pValuation(n,p);
 	       b := toPAdicFieldElement(n,v+relativePrecision a,A);
 	       a*b
 	       )
 	  );
      ZZ * A := (n,a)->a*n;
+     A / ZZ := (a,n)->(
+	  if n==0 then (
+	       error "You cannot divide by zero!";
+	       ) else (
+	       v := pValuation(n,p);
+	       b := toPAdicFieldElement(n,v+relativePrecision a,A);
+	       a/b
+	       )
+	  );
+     ZZ / A := (n,a)->n*inverse(a);
+     A + QQ := (a,r)->(
+	  b := toPAdicFieldElement(r,precision a,A);
+	  a+b
+	  );
+     QQ + A := (r,a)->a+r;
+     A - QQ := (a,r)->a+(-r);
+     QQ - A := (r,a)->(-a)+r;
+     A * QQ := (a,r)->a*numerator(r)/denominator(r);
+     QQ * A := (r,a)->a*r;
+     A / QQ := (a,r)->a/numerator(r)*denominator(r);
+     QQ / A := (r,a)->inverse(a)*numerator(r)/denominator(r);
      coarse := method();
      coarse(A,ZZ) := (a,prec) -> (
 	  newPrecision := min(prec,precision a);
@@ -211,8 +223,17 @@ QQQ#subscript=i->(pAdicField i)
 -- precision (value ZZ)
 -- expansion (hashtable, two entries: exponents, coefficients)
 
-
-
+pValuation = method()
+pValuation(ZZ,ZZ) := (n,p)->(
+     b := n;
+     v := 0;
+     while b%p==0 do (
+	  b = b//p;
+	  v = v+1;
+	  );
+     v
+     );
+pValuation(QQ,ZZ) := (r,p)->(pValuation(numerator(r),p)-pValuation(denominator(r),p));
 
 toPAdicFieldElement = method()
 
@@ -225,6 +246,18 @@ toPAdicFieldElement (List,PAdicField) := (L,S) -> (
    )
 toPAdicFieldElement(ZZ,ZZ,PAdicField) := (n,prec,S) -> (
      new S from ({0},{n},prec)
+     );
+toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
+     n := numerator r;
+     d := denominator r;
+     p := S.prime;
+     nVal := pValuation(n,p);
+     dVal := pValuation(d,p);
+     rVal := nVal-dVal;
+     newRelativePrecision := prec-rVal;
+     nPAdic := toPAdicFieldElement(n,nVal+newRelativePrecision,S);
+     dPAdic := toPAdicFieldElement(d,dVal+newRelativePrecision,S);
+     nPAdic/dPAdic
      );
 
 
@@ -328,20 +361,13 @@ Q3 = pAdicField(3)
 x = toPAdicFieldElement({1,2,0,1,0},Q3);
 y = toPAdicFieldElement(0,3,Q3);
 z = toPAdicFieldElement(10,10,Q3);
-print(x<<3);
-print(y<<15);
-print(x<<(-5));
-print(x+x)
-print(x*x)
-print(x+y)
-print(x*y)
-print(y*y)
-print(x+1)
-print((1-x)+x)
-print(82*x)
-a = toPAdicFieldElement(10,1000,Q3)
-print(a^(-100))
-print(a^(-100)*(a^100))
+w = toPAdicFieldElement(1/2,5,Q3);
+a = toPAdicFieldElement(10,100,Q3)
+assert(x+y==y+x);
+assert(a^100*a^(-100)==1);
+assert(14/w*w==14);
+assert(1/6+w-1/2+1/3==w);
+assert((6/9)*w/(1/3)==w+w);
 end
 
 ----------------------------

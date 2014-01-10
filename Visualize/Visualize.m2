@@ -114,6 +114,24 @@ visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
     return (show new URL from { "file://"|PATH }, fileName);
     )
 
+-- input: path to ah html file
+-- output: a copy of the input file in a temporary folder
+--
+copyTemplate = method()
+copyTemplate String := src -> (
+    local fileName; local dirPath;
+    
+    fileName = (toString currentTime() )|".html";
+    
+    dirPath = temporaryFileName();
+    makeDirectory dirPath;
+    dirPath = dirPath|"/";
+    
+    copyFile( src, concatenate (dirPath,fileName));
+    
+    return dirPath;
+)
+
 
 
 --input: A monomial ideal of a polynomial ring in 2 or 3 variables.
@@ -248,22 +266,23 @@ loadPackage"Visualize"
 (options Visualize).Configuration
 
 
--- input: 
-
+-- input: path to ah html file
+-- output: a copy of the input file in a temporary folder
+--
 copyTemplate = method()
 copyTemplate String := src -> (
     local fileName; local dirPath;
-    
-     
     fileName = (toString currentTime() )|".html";
-        
     dirPath = temporaryFileName();
     makeDirectory dirPath;
-    
-    tempPath = currentDirectory()|"Visualize/templates/"
-    copyFile( tempPath|"visIdeal/visIdeal3D.html", concatenate (dirPath,"/",fileName))
+    dirPath = dirPath|"/";
+--    tempPath = currentDirectory()|"Visualize/templates/"
+--    copyFile( tempPath|"visIdeal/visIdeal3D.html", concatenate (dirPath,"/",fileName))
+    copyFile( src, concatenate (dirPath,fileName));
+    return dirPath;
 )
 
+copyTemplate(currentDirectory()|"Visualize/templates/visIdeal/visIdeal3d.html")
 
 dirPath
 fileName
