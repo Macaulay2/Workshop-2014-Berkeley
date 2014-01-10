@@ -482,9 +482,36 @@ document {
     "This package facilitates basic computations with p-adic numbers, including
     arithmetic and a simple form of Hensel lifting."}}
 
---document {
-  --   Key =>PAdicField,
-    -- }
+document {
+     Key =>PAdicField,
+     Headline=> "a new type of InexactField used for p-adic fields",
+     PARA{"A ",TT "PAdicField"," is a new type of ",TO InexactField," 
+	  used for p-adic fields. When a new ",TT "PAdicField"," is created,
+	  it is stored for future reference."},
+     PARA{"A new ",TT "PAdicField"," may be created with ",TO QQQ,"."}
+     }
+
+
+document {
+     Key =>QQQ,
+     Headline=> "a scripted functor for creating p-adic fields",
+     PARA{TT "QQQ"," is ",ofClass ScriptedFunctor," used for creating p-adic
+	  fields. ",TT "QQQ_p"," refers to the field of p-adic numbers, where
+	  p is a prime. ",TT "QQQ"," is a synonym for ",TO pAdicField,"."},
+     EXAMPLE {"QQQ_7"}
+          }
+
+document {
+     Key =>pAdicField,
+     Inputs => {"p" => ofClass ZZ},
+     Outputs => {"A" => ofClass PAdicField},
+     Usage => "A=pAdicField(p)",
+     Headline=> "a method for creating p-adic fields",
+     PARA{TT "pAdicField"," creates ",ofClass PAdicField," with
+	  respect to the prime ",TT "p","." },
+     EXAMPLE {"pAdicField(7)"}
+     }
+
 
 document {
      Key =>PAdicFieldElement,
