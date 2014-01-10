@@ -517,6 +517,9 @@ G = graph(toList(0..5),{{0,1},{0,3},{0,4},{1,3},{2,3}},Singletons => {5},EntryMo
 G = graph(toList(0..5),{0,{1,2,3,4}},Singletons => {5})--,EntryMode => "edges")
 visGraph G
 visGraph( G, VisPath => "/Users/bstone/Desktop/Test/")
+y
+visGraph( G, VisPath => "/Users/bstone/Desktop/Test/", Warning => false)
+y
 S = G.vertexSet
 toString S
 
