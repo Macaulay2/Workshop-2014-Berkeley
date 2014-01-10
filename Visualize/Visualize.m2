@@ -31,7 +31,7 @@ newPackage(
     	Headline => "Visualize",
     	DebuggingMode => true,
 	AuxiliaryFiles => true,
-	Configuration => {"DefaultPath" => concatenate(currentDirectory(),"temp-files/") } 
+	Configuration => {"DefaultPath" => null } 
     	)
 
 export {
@@ -39,6 +39,7 @@ export {
     -- Options
      "VisPath",
      "VisTemplate",
+     "Warning",
     
     -- Methods
      "visIntegralClosure",
@@ -142,7 +143,7 @@ visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
     return (show new URL from { "file://"|PATH }, fileName);
     )
 
--- input: path to ah html file
+-- input: path to an html file
 -- output: a copy of the input file in a temporary folder
 --
 copyTemplate = method()
@@ -160,6 +161,22 @@ copyTemplate String := src -> (
     return dirPath;
 )
 
+-- input: A source path to an html file and a destination directory
+-- output: a copy of the source file in the destination directory
+--
+copyTemplate(String,String) := (src,dst) -> (
+    local fileName; local dirPath;
+    
+    fileName = (toString currentTime() )|".html";
+    
+--    dirPath = temporaryFileName();
+--    makeDirectory dirPath;
+    dirPath = concatenate(dst,fileName);
+    
+    copyFile( src, dirPath);
+    
+    return dirPath;
+)
 
 -- input:
 -- output:
@@ -182,7 +199,7 @@ searchReplace(String,String,String) := opts -> (oldString,newString,visSrc) -> (
 --input: A monomial ideal of a polynomial ring in 2 or 3 variables.
 --output: The newton polytope of the of the ideal.
 --
-visIdeal = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() |"Visualize/templates/visIdeal/visIdeal"})
+visIdeal = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() |"Visualize/templates/visIdeal/visIdeal", Warning => true})
 visIdeal(Ideal) := opts -> J -> (
     local R; local arrayList; local arrayString; local numVar; local visTemp;
     local varList;
@@ -196,9 +213,16 @@ visIdeal(Ideal) := opts -> J -> (
     
     if numVar == 2 
     then (
-	visTemp = copyTemplate(opts.VisTemplate|"2D.html");
-	copyJS(replace(baseFilename visTemp, "", visTemp));
-
+	if opts.VisPath =!= null 
+	then (
+	    	visTemp = copyTemplate(opts.VisTemplate|"2D.html",opts.VisPath);
+	    	copyJS(opts.VisPath, Warning => opts.Warning);	    
+	    )
+	else (
+	    	visTemp = copyTemplate(opts.VisTemplate|"2D.html");
+	    	copyJS(replace(baseFilename visTemp, "", visTemp), Warning => opts.Warning);	    
+	    );
+	
 	arrayList = apply( flatten entries gens J, m -> flatten exponents m);	
 	arrayList = toArray arrayList;
 	arrayString = toString arrayList;
@@ -209,10 +233,17 @@ visIdeal(Ideal) := opts -> J -> (
 --	searchReplace("ZZZ",toString(varList_2), visTemp)
     )
     else (
-	visTemp = copyTemplate(opts.VisTemplate|"3D.html");
-	copyJS(replace(baseFilename visTemp, "", visTemp));
 	
-	
+	if opts.VisPath =!= null 
+	then (
+	    	visTemp = copyTemplate(opts.VisTemplate|"3D.html",opts.VisPath);
+	    	copyJS(opts.VisPath, Warning => opts.Warning);	    
+	    )
+	else (
+	    	visTemp = copyTemplate(opts.VisTemplate|"3D.html");
+	    	copyJS(replace(baseFilename visTemp, "", visTemp), Warning => opts.Warning);	    
+	    );
+	    
     	arrayList = apply(flatten entries basis(0,infinity, R/J), m -> flatten exponents m );
     	arrayList = toArray arrayList;
     	arrayString = toString arrayList;
@@ -297,7 +328,7 @@ visDigraph(Digraph) := opts -> G -> (
 	 -- vertexString = toString new Array from apply((values G)#0, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
     );
     
-    visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visGraph/visGraph-template.html"); -- Copy the visGraph template to a temporary directory.
+    visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visDigraph/visDigraph-template.html"); -- Copy the visDigraph template to a temporary directory.
     
     searchReplace("visArray",arrayString, visTemp); -- Replace visArray in the visGraph html file by the adjacency matrix.
     searchReplace("visLabels",vertexString, visTemp); -- Replace visLabels in the visGraph html file by the ordered list of vertices.
@@ -316,8 +347,8 @@ visDigraph(Digraph) := opts -> G -> (
 --caveat: Checks to see if files exist. If they do exist, the user
 --        must give permission to continue. Continuing will overwrite
 --        current files and cannont be undone.
-copyJS = method()
-copyJS(String) := dst -> (
+copyJS = method(Options => {Warning => true} )
+copyJS(String) := opts -> dst -> (
     local jsdir; local ans; local quest;
     
     dst = dst|"js/";    
@@ -327,19 +358,22 @@ copyJS(String) := dst -> (
 	    readDirectory(currentDirectory()|"Visualize/js/")
 	    ));
     
+    if opts.Warning == true
+    then(
     -- test to see if files exist in target
     if (scan(jsdir, j -> if fileExists(concatenate(dst,j)) then break true) === true)
     then (
     	   quest = concatenate(" -- Some files in ",dst," will be overwritten.\n -- This action cannot be undone.");
 	   print quest;
-	   ans = read "Would you like to continue? (yes or no):  ";
-	   while (ans != "yes" and ans != "no") do (
-	       ans = read "Would you like to continue? (yes or no):  ";
+	   ans = read "Would you like to continue? (y or n):  ";
+	   while (ans != "y" and ans != "n") do (
+	       ans = read "Would you like to continue? (y or n):  ";
 	       );  
-	   if ans == "no" then (
+	   if ans == "n" then (
 	       error "Process was aborted."
 	       );
     	);
+    );
     
     copyDirectory(currentDirectory()|"Visualize/js/",dst);
     
@@ -413,87 +447,6 @@ doc ///
 end
 
 
-doc ///
-  Key
-    bigIdeal
-    (bigIdeal,ZZ,List)
-    BaseField
-  Headline
-    Constructs one of the family of ideals with large projective dimension and regularity.
-  Usage
-    bigIdeal(g,L)
-    bigIdeal(g,{2,1,3})
-  Inputs
-    g:ZZ
-      Assumed to be at least 2.
-    L:List
-      List of integers {m_1,...m_n} such that m_n is nonnegative, m_{n-1} > 0 and all other
-      m_i > 1.
-  Outputs
-    I:Ideal
-      An ideal with g+1 generators in degree m_1+...+m_n+1.
-  Description
-   Text
-     The ideal returned has g generators of the form x_i^d and 1 generator using the remaining
-     variables.  Note that the y variables are indexed by matrices with entries prescribed by
-     the entries of L.  The special case where L contains a single integer reverts to the ideals
-     defined by the jasonIdeal command.
-   Example
-     bigIdeal(2,{3,1})
-     bigIdeal(2,{2,1,2})
-     bigIdeal(3,{2})
-///
-
-doc ///
-  Key
-    (jasonIdeal,ZZ,ZZ,ZZ)
-  Headline
-    Constructs one of the family of ideals in "A Family of Ideals with Few Generators in Low Degree and Large Projective Dimension" by Jason McCullough.
-  Usage
-    x = jasonIdeal(m,n,d)
-  Inputs
-    m:ZZ
-      Assumed to be at least 2.
-    n:ZZ
-      Assumed to be at least 1.
-    d:ZZ
-      Assumed to be at least 1.
-  Outputs
-    I:Ideal
-      An ideal with m+n generators in degree d and with pd(R/I) = (m + d - 2)!/((m-1)!(d-1)!).
-  Description
-   Text
-     The ideal returned has m generators of the form x_i^d and n generators each of which
-     are a sum of the y_i variables times each of the degree-(d-1) monomials in the x_is.
-   Example
-     jasonIdeal(3,1,3)
-///
-
-doc ///
-  Key
-    socleCheck
-    (socleCheck,Ideal,RingElement)
-  Headline
-    Checks where a ring element is nonzero is nonzero in socle(R/I) for an ideal I.
-  Usage
-    socleCheck(I,s)
-  Inputs
-    I:Ideal
-    s:RingElement
-  Outputs
-    x:Boolean
-      True if s is in (I:m) - I.  False otherwise.
-  Description
-   Text
-     This function merely checks whether every variable multiplies s into I and that s is not already in I.
-   Example
-     R = QQ[x,y];
-     I = ideal(x^2,y^2);
-     socleCheck(I,x*y);
-     socleCheck(I,x^2);
-     socleCheck(I,x);
-///
-
 -------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------
@@ -508,23 +461,11 @@ end
 
 -----------------------------
 -----------------------------
--- Stable Tests
+-- UnStable Tests
 -----------------------------
 -----------------------------
--- branden
-restart
-loadPackage"Graphs"
-uninstallPackage"Visualize"
-installPackage"Visualize"
-loadPackage"Visualize"
-viewHelp Visualize
 
-(options Visualize).Configuration
-
-searchReplace("visArray","kickass string", testFile)
-searchReplace("XXX","kickass string", testFile)
-searchReplace("YYY","kickass string", testFile)
-searchReplace("ZZZ","kickass string", testFile)
+-- brett
 
 -- Digraphs
 restart
@@ -534,6 +475,22 @@ G = digraph({ {1,{2,3}} , {2,{3}} , {3,{1}}})
 A = adjacencyMatrix G
 keys(G#graph)
 visGraph G
+
+----------------
+
+-----------------------------
+-----------------------------
+-- Stable Tests
+-----------------------------
+-----------------------------
+
+-- branden
+restart
+loadPackage"Graphs"
+loadPackage"Visualize"
+
+(options Visualize).Configuration
+
 
 -- Old Graphs
 restart
@@ -564,7 +521,10 @@ R = QQ[a,b,c]
 I = ideal"a2,ab,b2c,c5,b4"
 -- I = ideal"x4,xyz3,yz,xz,z6,y5"
 visIdeal I
+visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/", Warning => false)
 visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
+y
+copyTemplate(currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html", "/Users/bstone/Desktop/Test/")
 
 S = QQ[x,y]
 I = ideal"x4,xy3,y5"
@@ -572,8 +532,8 @@ visIdeal I
 visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
 
-copyJS "/Users/bstone/Desktop/Test/"
-yes
+copyJS("/Users/bstone/Desktop/Test/", Warning => false)
+n
 
 
 
