@@ -225,7 +225,7 @@ visGraph(Graph) := opts -> G -> (
 	 tempG#vertexSet = {};
 	 G = new HashTable from tempG;
     ) else (
-         vertexString = toString new Array from apply(G#vertexSet, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+         vertexString = toString new Array from apply(G.vertexSet, i -> "\""|toString(i)|"\""); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
     );
     
     visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visGraph/visGraph-template.html"); -- Copy the visGraph template to a temporary directory.
@@ -335,7 +335,8 @@ H = graph({{x_1, x_0}, {x_3, x_0}, {x_3, x_1}, {x_4, x_0}}, Singletons => {x_2, 
 visGraph H
 
 -- New Graphs
-G = graph(toList(x_0..x_5),{{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5},EntryMode => "edges")
+G = graph(toList(0..5),{{0,1},{0,3},{0,4},{1,3},{2,3}},Singletons => {5},EntryMode => "edges")
+G = graph(toList(0..5),{0,{1,2,3,4}},Singletons => {5})--,EntryMode => "edges")
 visGraph G
 visGraph( G, VisPath => "/Users/bstone/Desktop/Test/")
 S = G.vertexSet
