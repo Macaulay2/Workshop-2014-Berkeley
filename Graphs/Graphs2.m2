@@ -949,8 +949,17 @@ edgeIdeal (Graph) := Ideal => G -> (
 		else apply(toList \ edges G, e -> R_(position(V, i -> i == e_0)) * R_(position(V, i -> i == e_1)))
 		)
 	)
--- TODO: Fix this to note call indexLabelGraph
--- DONE
+
+findPaths = method ()
+findPaths (Digraph,Thing,ZZ) := List => (G,v,l) -> (
+	if l < 0 then error "integer must be nonnegative";
+	if l == 0 then {{v}}
+	else(
+		nbors := children (G,v);
+		nPaths := apply(nbors, n -> findPaths(G,n,l-1));
+		flatten apply(nPaths, P -> apply(P, p -> {v} | p))
+	)
+)
 
 floydWarshall = method()
 floydWarshall Digraph := HashTable => G -> (

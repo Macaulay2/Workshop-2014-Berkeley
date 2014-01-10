@@ -513,7 +513,7 @@ viewHelp ideal
 
 R = QQ[a,b,c]
 I = ideal"a2,ab,b2c,c5,b4"
-I = ideal"x4,xyz3,yz,xz,z6,y5"
+-- I = ideal"x4,xyz3,yz,xz,z6,y5"
 visIdeal I
 visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
