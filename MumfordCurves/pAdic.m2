@@ -13,7 +13,7 @@ newPackage(
 	       HomePage => "http://math.berkeley.edu/~qingchun/"}
           },
      Headline => "a package for p-adic numbers",
-     DebuggingMode => false
+     DebuggingMode => true
      )
 
 export {PAdicField,
@@ -79,12 +79,12 @@ computeCarryingOver := (aKeys,aValues,prec,A) -> (
      	  p:=A#prime;
 	  newKeys := ();
 	  newValues := ();
-	  carryingOver := 0_ZZ;
+	  carryingOver := 0;
 	  aPointer := 0;
-	  while (aPointer<#aKeys and aKeys#aPointer<=prec) do (
+	  while (aPointer<#aKeys and aKeys#aPointer<prec) do (
 	       currentKey := aKeys#aPointer;
 	       currentValue := aValues#aPointer+carryingOver;
-	       carryingOver = 0_ZZ;
+	       carryingOver = 0;
 	       while currentValue!=0 do (
 	     	    q := currentValue%p;
 		    currentValue = (currentValue-q)//p;
@@ -106,10 +106,6 @@ computeCarryingOver := (aKeys,aValues,prec,A) -> (
 	       "expansion"=>{toList deepSplice newKeys,
 		    toList deepSplice newValues}}
 	  )
-   
---new PAdicFieldElement from Sequence := (A',a) -> (
---	  computeCarryingOver(a#0,a#1,a#2)
---	  )
 
 PAdicFieldElement + PAdicFieldElement := (a,b) -> (
 	  if not (class b)===(class a) then error "Elements must be in same PAdicField";
@@ -239,7 +235,7 @@ PAdicFieldElement / ZZ := (a,n)->(
 	  error "You cannot divide by zero!";
 	  ) else (
 	  v := pValuation(n,p);
-	  b := toPAdicFieldElement(n,v+relativePrecision a,class a);
+	  b := toPAdicFieldElement(n,v+max(1,relativePrecision a),class a);
 	  a/b
 	  )
      )
@@ -331,7 +327,7 @@ toPAdicFieldElement (List,PAdicField) := (L,S) -> (
    new S from {"precision"=>n,"expansion"=>expans}
    )
 toPAdicFieldElement(ZZ,ZZ,PAdicField) := (n,prec,S) -> (
-     new S from ({0},{n},prec)
+     computeCarryingOver({0},{n},prec,S)
      );
 toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
      n := numerator r;
@@ -539,6 +535,11 @@ assert((1/2)*b/a==b);
 assert((1/49)/b/b==1);
 assert((c+1/2)==a);
 assert(c*132*123*134/1234==0);
+///
+
+TEST ///
+a := toPAdicFieldElement(3,0,QQQ_7);
+assert(a#"expansion"_0=={});
 ///
 
 end
