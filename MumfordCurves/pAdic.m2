@@ -381,6 +381,16 @@ transpose PAdicMatrix := M -> (
 net PAdicMatrix := M -> net expression M
 expression PAdicMatrix := M -> MatrixExpression applyTable(M.matrix, expression)
 
+henselApproximation = method()
+henselApproximation (ZZ[x],ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
+	x:=(ring f)_0;
+	f':=diff(x,f);
+	g:= a->sum(0..(degree(f))_0, j->coefficient(x^j,f)*a^j);
+	g':= a->sum(0..(degree(f'))_0, j->coefficient(x^j,f')*a^j);
+	local s; s=toPAdicFieldElement(r,n,QQQ_p); i=0;
+	while i<n+1 do (s=s-(g(s)/g'(s));i=i+1);
+	s)
+
 end
 ----------------------------
 --Friday Demonstration
@@ -524,4 +534,4 @@ henselApproximation (ZZ[x],ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
 	g':= a->sum(0..(degree(f'))_0, j->coefficient(x^j,f')*a^j);
 	local s; s=toPAdicFieldElement(r,n,QQQ_p); i=0;
 	while i<n+1 do ( print i; s=s-(g(s)/g'(s));i=i+1);
-	r)
+	s)
