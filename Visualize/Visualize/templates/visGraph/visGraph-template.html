@@ -6,12 +6,12 @@
     <style>
       #tdToggle
       {
-      color:#0000FF;
-      vertical-align: middle;
-      position:relative;
-      left:15%;
-      top:0px;
-      z-index:1;
+        color:#0000FF;
+        vertical-align: middle;
+        position:relative;
+        left:15%;
+        top:0px;
+        z-index:1;
       }
       #tdToggle:hover {
           text-decoration:underline;
@@ -23,12 +23,12 @@
 
       #editToggle
       {
-      color:#0000FF;
-      vertical-align: middle;
-      position:relative;
-      left:25%;
-      top:0px;
-      z-index:1;
+        color:#0000FF;
+        vertical-align: middle;
+        position:relative;
+        left:35%;
+        top:0px;
+        z-index:1;
       }
       #editToggle:hover {
           text-decoration:underline;
@@ -38,31 +38,14 @@
           color:#800080;
       }
 
-      #exportToggle
-      {
-      color:#0000FF;
-      vertical-align: middle;
-      position:relative;
-      left:40%;
-      top:0px;
-      z-index:1;
-      }
-      #exportToggle:hover {
-          text-decoration:underline;
-      }
-      #exportToggle:active {
-          text-decoration:underline;
-          color:#800080;
-      }
-
       #moreOptions
       {
-      color:#0000FF;
-      vertical-align: middle;
-      position:relative;
-      left:50%;
-      top:0px;
-      z-index:1;
+        color:#0000FF;
+        vertical-align: middle;
+        position:relative;
+        left:50%;
+        top:0px;
+        z-index:1;
       }
       #moreOptions:hover {
           text-decoration:underline;
@@ -87,6 +70,7 @@
         z-index: 5;
 
       }
+
       #resetButton {
         position:relative;
         vertical-align: middle;
@@ -98,6 +82,13 @@
         vertical-align: middle;
         left: 5%;
         top: 15%;
+      }
+      #exportToggle
+      {
+        vertical-align: middle;
+        position:relative;
+        left:5%;
+        top:25%;
       }
 
 
@@ -172,11 +163,11 @@
   <body>
   	    <a id= "tdToggle"> switch to 3d</a>
         <a id= "editToggle"> enable editing</a>
-        <a id= "exportToggle"> export</a>
         <a id= "moreOptions"> more</a>
         <div id="popupMenu"> 
           <button id = "resetButton" onclick="resetGraph();">reset nodes</button>
           <button id = "forceToggle" onclick="toggleForce();">turn off force</button>
+          <button id = "exportToggle" onclick="exportTicksy();">export ticksy</button>
         </div>
   </body>
 
@@ -212,12 +203,8 @@
                 	}
                     
                 }
-                var c = document.getElementById("exportToggle");
+                var c = document.getElementById("moreOptions");
                 c.onclick = function() {
-                    console.log("export ticksy");
-                }
-                var d = document.getElementById("moreOptions");
-                d.onclick = function() {
                     //resetGraph();
                     document.getElementById("popupMenu").style.display = "inline";
                     menuOpen = true;
@@ -244,6 +231,9 @@
         document.getElementById("forceToggle").innerHTML = "turn off force";
       }
       forceOn = !forceOn;
+    }
+    function exportTicksy() {
+
     }
 
     window.addEventListener("mousedown", function(e) {
