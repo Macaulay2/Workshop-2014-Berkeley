@@ -181,20 +181,18 @@ toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
 
 
 net PAdicFieldElement := a->(expans:=a#"expansion";
-  p:=(class a)#prime;
   keylist:=expans_0;
   ((horizontalJoin apply(#keylist,i->
-  net(expans_1_i)|"*"|net p|
+  net(expans_1_i)|"*"|"p"|
   (net keylist_i)^1|"+"))
-|"O("|net p|(net(precision a))^1|")"))
+|"O("|"p"|(net(precision a))^1|")"))
 
 toString PAdicFieldElement := a->(expans:=a#"expansion";
-  p:=(class a)#prime;
   keylist:=expans_0;
   ((concatenate apply(#keylist,i->
-  toString(expans_1_i)|"*"|toString p|"^"|
+  toString(expans_1_i)|"*p^"|
   (toString keylist_i)|"+"))
-|"O("|toString p|"^"|(toString(precision a))|")"))
+|"O(p^"|(toString(precision a))|")"))
 
 
 precision PAdicFieldElement := a->a#"precision";
@@ -470,12 +468,16 @@ transpose PAdicMatrix := M -> (
 net PAdicMatrix := M -> net expression M
 expression PAdicMatrix := M -> MatrixExpression applyTable(M.matrix, expression)
 
+---------------------------------------------
+-- Hensel approximation
+---------------------------------------------
+
 henselApproximation = method()
 henselApproximation (RingElement,ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
 	x:=(ring f)_0;
 	f':=diff(x,f);
-	g:= a->sum(0..(degree(f))_0, j->coefficient(x^j,f)*a^j);
-	g':= a->sum(0..(degree(f'))_0, j->coefficient(x^j,f')*a^j);
+	g:= a->sum(1..(degree(f))_0, j->coefficient(x^j,f)*a^j)+coefficient(x^0,f);
+	g':= a->sum(1..(degree(f'))_0, j->coefficient(x^j,f')*a^j)+coefficient(x^0,f');
 	if not sub(g(r),ZZ/p) == sub(0,ZZ/p) then error "The starting value is not a root";
 	if sub(g'(r),ZZ/p) == sub(0,ZZ/p) then error "This is a double root";
 	local s; s=toPAdicFieldElement(r,n,QQQ_p); i:=0;
@@ -731,7 +733,6 @@ assert((+a)==(+123456789));
 assert((-a)==(-123456789));
 assert(a-b==123456789-987654321);
 assert(a*b==123456789*987654321);
-assert(a^10==123456789^10);
 c := toPAdicFieldElement(0,8,QQQ_7);
 assert(c+c==0);
 assert(c+a==a);
@@ -739,6 +740,16 @@ assert(-c==c);
 assert(a-c==a);
 assert(c-a==-a);
 assert(a*c==0);
+///
+
+TEST ///
+a := toPAdicFieldElement(123456789,10,QQQ_7);
+assert(a^0==1);
+assert(a^1==a);
+assert(a^2==a*a);
+assert(a^10==123456789^10);
+c := toPAdicFieldElement(0,8,QQQ_7);
+assert(c^0==1);
 assert(c^10==0);
 ///
 
@@ -801,12 +812,73 @@ assert(relativePrecision c==0);
 
 TEST ///
 a := toPAdicFieldElement(-123,10,QQQ_7);
+b := toPAdicFieldElement(23*7,7,QQQ_7);
+assert(precision(a+b)==min(precision a,precision b));
+assert(precision(-a)==precision(a));
+assert(precision(a-b)==min(precision a,precision b));
+assert(relativePrecision(a*b)==min(relativePrecision(a),relativePrecision(b)));
+assert(relativePrecision(inverse(a))==relativePrecision(a));
+assert(relativePrecision(a/b)==min(relativePrecision(a),relativePrecision(b)));
+assert(relativePrecision(b^10)==relativePrecision(b));
+assert(precision(3489723-b)==precision(b));
+assert(relativePrecision(3243523/b)==relativePrecision(b));
+///
+
+TEST ///
+a := toPAdicFieldElement(-123,10,QQQ_7);
 assert((a<<1)==a*7);
 assert((a<<15)!=0);
 assert(((a<<23)<<(-23))==a);
 ///
 
+TEST ///
+a := toPAdicFieldElement(123456789,10,QQQ_7);
+assert(a^10*a^(-10)==1);
+assert(a^3*a^7/a^4*a^(-5)==a);
+///
+
+TEST ///
+R := ZZ[x];
+a := henselApproximation(x^2+1,3,6,5);
+assert(precision a==6);
+assert(a#"expansion"_1#0==3);
+assert(a^2+1==0);
+b := henselApproximation(x^2+6*x+5,0,6,5);
+assert(b==-5);
+c := henselApproximation(x^3-7,3,6,5);
+assert(precision c==6);
+assert(c#"expansion"_1#0==3);
+assert(c^3==7);
+///
+
+TEST ///
+a11 := toPAdicFieldElement(1,5,QQQ_3);
+a12 := toPAdicFieldElement(2,5,QQQ_3);
+a21 := toPAdicFieldElement(3,5,QQQ_3);
+a22 := toPAdicFieldElement(4,5,QQQ_3);
+b11 := toPAdicFieldElement(5,5,QQQ_3);
+b12 := toPAdicFieldElement(6,5,QQQ_3);
+b21 := toPAdicFieldElement(7,5,QQQ_3);
+b22 := toPAdicFieldElement(8,5,QQQ_3);
+A := pAdicMatrix {{a11,a12},{a21,a22}};
+B := pAdicMatrix {{b11,b12},{b21,b22}};
+assert(entries(A+B)=={{a11+b11,a12+b12},{a21+b21,a22+b22}});
+assert(entries(transpose(A))=={{a11,a21},{a12,a22}});
+assert(entries(A*B)=={{a11*b11+a12*b21,a11*b12+a12*b22},{a21*b11+a22*b21,a21*b12+a22*b22}});
+///
+
+TEST ///
+a11 := toPAdicFieldElement(1,5,QQQ_3);
+a12 := toPAdicFieldElement(2,5,QQQ_3);
+a21 := toPAdicFieldElement(3,5,QQQ_3);
+a22 := toPAdicFieldElement(4,5,QQQ_3);
+A := pAdicMatrix {{a11,a12},{a21,a22}};
+assert(entries(A^1)==entries(A));
+assert(entries(A^5)==entries(A*A*A*A*A));
+///
+
 end
+
 ----------------------------
 --Friday Demonstration
 ----------------------------

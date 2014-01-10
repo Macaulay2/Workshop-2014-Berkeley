@@ -7,7 +7,7 @@ bigObject = null,
 windowWidth = 0,
 windowHeight = 0,
 clock = null,
-nodes = [],
+nodes3d = [],
 mouse = new THREE.Vector2(),
 objects = [],
 offset = new THREE.Vector3(),
@@ -29,20 +29,21 @@ function initializeBuilder3d() {
 
     container = document.getElementById("canvasElement3d");
     windowWidth = window.innerWidth;
-    windowHeight = window.innerHeight;
+    windowHeight = window.innerHeight -  125;
 
     renderer = new THREE.WebGLRenderer( {antialias:true} );
 
 
     renderer.setSize(windowWidth, windowHeight);
-    renderer.setClearColor(0xeaecfe, 1);
+    renderer.setClearColorHex(0xffffff);
+
     container.appendChild( renderer.domElement );
 
     // Create a new Three.js scene
     scene = new THREE.Scene();
 
     // Put in a camera
-    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+    camera = new THREE.PerspectiveCamera( 60, windowWidth/ windowHeight, 1, 20000 );
     camera.position.set( 0, 0, 600 );
 
     // EVENTS
@@ -94,21 +95,21 @@ function initializeBuilder3d() {
 
 function generateGraph() {
     //takes an ajacency matrix representation of a graph g and draws it in Three dimensional space
-    
+
     var size = dataData[0].length;
     var numRows = Math.floor(size / 4);
     var curNode = null;
     for (var i = 0; i<size; i++) {
         curNode = new node(labelData[i], getRandomColor());
         curNode.initialize();
-        curNode.setCoords((i*40) - 280, (i % numRows)*80 - 160, Math.floor(Math.random()*600) - 300 );
+        curNode.setCoords((Math.random() * 400) - 200, (Math.random() * 400) - 200, (Math.random() * 400) - 200);
         //console.log("x:" + (-240 + i*80)+ "   y:" + (((i % numRows) * 160)  + "   z:" + (Math.floor(Math.random()*480) - 240) );
-        nodes.push(curNode);
+        nodes3d.push(curNode);
     }
     for (var i = 0; i<size; i++) {
         for (var j = i; j < size; j++) {
             if (dataData[i][j]==1) {
-                addEdge(nodes[i],nodes[j]);
+                addEdge(nodes3d[i],nodes3d[j]);
             }
         }
     }
@@ -161,47 +162,49 @@ function generateGraph() {
                     //if (zz<0) 
                         //zAdd = -zAdd;
                     //this.label.position = (new THREE.Vector3(xx + (Math.abs(xx) * (-5 / 240) + 5), yy + (Math.abs(yy) * (-5 / 240) + 5), zz + zAdd)).multiplyScalar(1.1);
-                    this.label.position = (new THREE.Vector3());
-                    updateLabels();
-                };
-                this.updateLocation = function() {
-                    this.x = this.mesh.position.x;
-                    this.y = this.mesh.position.y;
-                    this.z = this.mesh.position.z;
-                    for (var i = 0; i<this.edgeVectors.length; i++) {
-                        console.log(this.edgeVectors[i]);
-                        this.edgeVectors[i].set(this.mesh.position.x, this.mesh.position.y,this.mesh.position.z);
-                    }
-                    this.label.position = (new THREE.Vector3());
-                    updateLabels();
-                };
+            this.label.position = (new THREE.Vector3());
+            updateLabels();
+        };
+        this.updateLocation = function() {
+            this.x = this.mesh.position.x;
+            this.y = this.mesh.position.y;
+            this.z = this.mesh.position.z;
+            for (var i = 0; i<this.edgeVectors.length; i++) {
+                console.log(this.edgeVectors[i]);
+                this.edgeVectors[i].set(this.mesh.position.x, this.mesh.position.y,this.mesh.position.z);
+            }
+            this.label.position = (new THREE.Vector3());
+            updateLabels();
+        };
 
             }
 
-            function updateLabels() {
-                var cameraDistance = Math.sqrt(Math.pow(camera.position.x,2) + Math.pow(camera.position.y,2) + Math.pow(camera.position.z,2));
+    function updateLabels() {
+        var cameraDistance = Math.sqrt(Math.pow(camera.position.x,2) + Math.pow(camera.position.y,2) + Math.pow(camera.position.z,2));
 
-                var scaledDownCameraX = (camera.position.x );
-                var scaledDownCameraY = (camera.position.y);
-                var scaledDownCameraZ = (camera.position.z);
+        var scaledDownCameraX = (camera.position.x);
+        var scaledDownCameraY = (camera.position.y);
+        var scaledDownCameraZ = (camera.position.z);
 
 
-    //console.log("scaledx: " + scaledDownCameraX + "  scaledy: " + scaledDownCameraY + "  scaledz: " + scaledDownCameraZ);
-    
-    var curNode = null;
-    for (var i = 0; i < nodes.length; i++) {
-        curNode = nodes[i];
-        var scalar = 20 / Math.sqrt(Math.pow(scaledDownCameraX - curNode.x, 2) + Math.pow(scaledDownCameraY - curNode.y, 2) +  Math.pow(scaledDownCameraZ - curNode.z, 2) );
+        //console.log("scaledx: " + scaledDownCameraX + "  scaledy: " + scaledDownCameraY + "  scaledz: " + scaledDownCameraZ);
         
-        curNode.label.position.x = curNode.x - (scalar * (-scaledDownCameraX + curNode.x));
-        curNode.label.position.y = curNode.y - (scalar * (-scaledDownCameraY + curNode.y));
-        curNode.label.position.z = curNode.z - (scalar * (-scaledDownCameraZ + curNode.z));
-        //console.log("Node["+i+"]  x: " + curNode.x + "   labelX: " + curNode.label.position.x);
-        //console.log("Node["+i+"]  y: " + curNode.y + "   labelY: " + curNode.label.position.y);
-        //console.log("Node["+i+"]  z: " + curNode.z + "   labelZ: " + curNode.label.position.z);
+        var curNode = null;
+        for (var i = 0; i < nodes3d.length; i++) {
+            curNode = nodes3d[i];
+            var scalar = 20 / Math.sqrt(Math.pow(scaledDownCameraX - curNode.x, 2) + Math.pow(scaledDownCameraY - curNode.y, 2) +  Math.pow(scaledDownCameraZ - curNode.z, 2) );
+            
+            console.log("huur\n");
+            console.log(curNode);
+            curNode.label.position.x = curNode.x - (scalar * (-scaledDownCameraX + curNode.x));
+            curNode.label.position.y = curNode.y - (scalar * (-scaledDownCameraY + curNode.y));
+            curNode.label.position.z = curNode.z - (scalar * (-scaledDownCameraZ + curNode.z));
+            //console.log("Node["+i+"]  x: " + curNode.x + "   labelX: " + curNode.label.position.x);
+            //console.log("Node["+i+"]  y: " + curNode.y + "   labelY: " + curNode.label.position.y);
+            //console.log("Node["+i+"]  z: " + curNode.z + "   labelZ: " + curNode.label.position.z);
 
+        }
     }
-}
 
 function addEdge(node1, node2) {
 
@@ -311,6 +314,8 @@ function onMouseDown(event)
 {
     event.preventDefault();
     isMouseDown = true;
+
+    /*
     var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
     projector.unprojectVector( vector, camera );
 
@@ -327,22 +332,23 @@ function onMouseDown(event)
         var intersects = raycaster.intersectObject( plane );
         offset.copy( intersects[ 0 ].point ).sub( plane.position );
         console.log(intersects[0].object);
-        for (var i = 0; i<nodes.length;i++) {
-            if (intersects[0]["object"] == nodes[i].mesh) {
+        for (var i = 0; i<nodes3d.length;i++) {
+            if (intersects[0]["object"] == nodes3d[i].mesh) {
 
-                currentObject = nodes[i];
+                currentObject = nodes3d[i];
                 
             }
         }
 
         container.style.cursor = 'move';
+        */
 
-    }
+    
     
 }   
 function onMouseUp (event) {
     event.preventDefault();
-
+    /*
     controls.enabled = true;
 
     if ( objectIntersected ) {
@@ -355,6 +361,7 @@ function onMouseUp (event) {
 
     container.style.cursor = 'auto';
     isMouseDown = false;
+    */
 
 }
 
@@ -364,9 +371,9 @@ function onMouseMove( event ) {
     if (isMouseDown) {
         updateLabels();
     }
-
-    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+    /*
+    mouse.x = ( event.clientX / window.innerWidth  ) * 2 - 1;
+    mouse.y = - ( event.clientY / (window.innerHeight - 125) ) * 2 + 1;
 
     //
 
@@ -414,6 +421,7 @@ function onMouseMove( event ) {
         container.style.cursor = 'auto';
 
     }
+    */
 }
 
 
