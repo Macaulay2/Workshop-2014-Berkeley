@@ -3363,6 +3363,37 @@ doc ///
 		independenceComplex
 ///
 
+--findPaths
+doc ///
+	Key
+		findPaths
+		(findPaths, Digraph, Thing, ZZ)
+	Headline
+		finds all the paths in a digraph of a given length starting at a given vertex
+	Usage
+		F = findPaths(D,v,l)
+	Inputs
+		D:Digraph
+		v:Thing
+			vertex at which paths start
+		l:ZZ
+			length of desired paths
+	Outputs
+		F:List
+			list of paths starting at v of length l
+	Description
+		Text
+			The method will return a list of all the paths of length l starting at a vertex v in the digraph D.  The method is compatible for graphs with loops or cycles, as variables can be repeatedly visited in paths.
+		Example
+			D = digraph(toList(1..5), {{1,2},{1,3},{2,5},{2,4}})
+			F = findPaths(D,1,2)
+			D = digraph(toList(a..d), {{a,c},{a,b},{b,b},{b,d}})
+			F = findPaths(D,a,100)
+	SeeAlso
+		distance
+		distanceMatrix
+///
+
 --floydWarshall
 doc ///
 	Key

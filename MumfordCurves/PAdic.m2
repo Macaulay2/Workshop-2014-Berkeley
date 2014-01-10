@@ -161,14 +161,18 @@ toPAdicFieldElement(ZZ,ZZ,PAdicField) := (n,prec,S) -> (
 toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
      n := numerator r;
      d := denominator r;
-     p := S.prime;
-     nVal := pValuation(n,p);
-     dVal := pValuation(d,p);
-     rVal := nVal-dVal;
-     newRelativePrecision := prec-rVal;
-     nPAdic := toPAdicFieldElement(n,nVal+newRelativePrecision,S);
-     dPAdic := toPAdicFieldElement(d,dVal+newRelativePrecision,S);
-     nPAdic/dPAdic
+     if d==1 then (
+	  toPAdicFieldElement(n,prec,S)
+	  ) else (
+     	  p := S.prime;
+     	  nVal := pValuation(n,p);
+     	  dVal := pValuation(d,p);
+     	  rVal := nVal-dVal;
+     	  newRelativePrecision := prec-rVal;
+     	  nPAdic := toPAdicFieldElement(n,nVal+newRelativePrecision,S);
+     	  dPAdic := toPAdicFieldElement(d,dVal+newRelativePrecision,S);
+     	  nPAdic/dPAdic
+	  )
      );
 
 ---------------------------------------------
@@ -373,6 +377,13 @@ PAdicFieldElement == ZZ := (a,n) -> (
      )
 
 ZZ == PAdicFieldElement := (n,a) -> a==n
+
+PAdicFieldElement == QQ := (a,r) -> (
+     b := toPAdicFieldElement(r,precision a,class a);
+     a === b
+     )
+
+QQ == PAdicFieldElement := (r,a) -> a==r
 
 PAdicFieldElement << ZZ := (a,n) -> (
      newPrecision := a#"precision"+n;
@@ -680,6 +691,20 @@ TEST ///
 a := toPAdicFieldElement(1/2,10,QQQ_7);
 b := toPAdicFieldElement(1/7,15,QQQ_7);
 c := toPAdicFieldElement(0,8,QQQ_7);
+assert(a==1/2);
+assert(a!=1/7);
+assert(b==1/7);
+assert(0/1==c);
+assert(not a!=1/2);
+assert(not a==1/7);
+assert(not b!=1/7);
+assert(not 0/1!=c);
+///
+
+TEST ///
+a := toPAdicFieldElement(1/2,10,QQQ_7);
+b := toPAdicFieldElement(1/7,15,QQQ_7);
+c := toPAdicFieldElement(0,8,QQQ_7);
 assert(a*2==1);
 assert(b*7==1);
 assert((1/3+a)*6==5);
@@ -693,6 +718,28 @@ assert(c*132*123*134/1234==0);
 TEST ///
 a := toPAdicFieldElement(3,0,QQQ_7);
 assert(a#"expansion"_0=={});
+///
+
+TEST ///
+a := toPAdicFieldElement(-123,10,QQQ_7);
+assert(precision a==10);
+assert(valuation a==0);
+assert(relativePrecision a==10);
+b := toPAdicFieldElement(23*7,10,QQQ_7);
+assert(precision b==10);
+assert(valuation b==1);
+assert(relativePrecision b==9);
+c := toPAdicFieldElement(0,10,QQQ_7);
+assert(precision c==10);
+assert(valuation c==infinity);
+assert(relativePrecision c==0);
+///
+
+TEST ///
+a := toPAdicFieldElement(-123,10,QQQ_7);
+assert((a<<1)==a*7);
+assert((a<<15)!=0);
+assert(((a<<23)<<(-23))==a);
 ///
 
 end
