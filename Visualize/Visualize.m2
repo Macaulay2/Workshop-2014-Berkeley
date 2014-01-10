@@ -419,10 +419,8 @@ end
 restart
 loadPackage"Graphs"
 uninstallPackage"Visualize"
-restart
 installPackage"Visualize"
 viewHelp Visualize
-
 
 (options Visualize).Configuration
 
@@ -436,8 +434,6 @@ G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5
 visGraph G
 H = graph({{x_1, x_0}, {x_3, x_0}, {x_3, x_1}, {x_4, x_0}}, Singletons => {x_2, x_5, 6, cat_sandwich})
 visGraph H
-
-apply(keys(G), i -> class i)
 
 -- New Graphs
 G = graph(toList(0..5),{{0,1},{0,3},{0,4},{1,3},{2,3}},Singletons => {5},EntryMode => "edges")
@@ -461,7 +457,7 @@ visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
 copyJS "/Users/bstone/Desktop/Test/"
 yes
-copyJS ( currentDirectory()|"temp
+
 
 
 -----------------------------
@@ -482,8 +478,58 @@ copyJS ( currentDirectory()|"temp
 -----------------------------
 -----------------------------
 
+restart
+loadPackage"Graphs"
+loadPackage"Visualize"
+
+-- Old Graphs
+G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
+visGraph G
+H = graph({{Y,c},{1, 0}, {3, 0}, {3, 1}, {4, 0}}, Singletons => {A, x_5, 6, cat_sandwich})
+visGraph H
 
 restart
+loadPackage"Graphs"
+loadPackage"Visualize"
+-- New Graphs
+G = graph(toList(0..5),{{0,1},{0,3},{0,4},{1,3},{2,3}},Singletons => {5},EntryMode => "edges")
+visGraph G
+cycleGraph 9
+visGraph oo
+wheelGraph 8
+visGraph oo
+generalizedPetersenGraph(3,4)
+visGraph oo
+completeGraph(70)
+visGraph oo
+cocktailParty(70)
+visGraph oo
+
+
+R = QQ[a,b,c]
+I = ideal"a2,ab,b2c,c5,b4"
+I = ideal"x4,xyz3,yz,xz,z6,y5"
+visIdeal I
+copyJS "/Users/bstone/Desktop/Test/"
+yes
+visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
+
+S = QQ[x,y]
+I = ideal"x4,xy3,y5"
+visIdeal I
+visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
+
+
+copyJS "/Users/bstone/Desktop/Test/"
+yes
+
+
+
+
+restart
+uninstallPackage"Graphs"
+loadPackage"Graphs"
+peek Graphs
 loadPackage"Visualize"
 
 -- Creates staircase diagram 
