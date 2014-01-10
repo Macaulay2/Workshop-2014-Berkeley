@@ -65,26 +65,26 @@ pAdicField ZZ:=(p)->(
      if PAdicFields#?p then return PAdicFields#p;
      R := ZZ;
      A := new PAdicField from {(symbol prime) => p};
-     precision A := a->a#"precision";
-     valuation A := a->(if #(a#"expansion"_0)>0 then return min a#"expansion"_0;
+     PAdicFields#p=A;
+     A
+)
+
+precision PAdicFieldElement := a->a#"precision";
+valuation PAdicFieldElement := a->(if #(a#"expansion"_0)>0 then return min a#"expansion"_0;
 	  infinity);
-     relativePrecision A:= a -> (
+relativePrecision PAdicFieldElement:= a -> (
 	  if #(a#"expansion"_0)==0 then 0 else (precision a)-(valuation a));
-     net A := a->(expans:=a#"expansion";
-	  keylist:=expans_0;
-       	  ((concatenate apply(#keylist,i->
-		  toString(expans_1_i)|"*"|toString p|"^"
-		  |toString keylist_i|"+"))
-		|"O("|toString p|"^"|toString(precision a)|")"));
-     computeCarryingOver := (aKeys,aValues,prec) -> (
+
+computeCarryingOver := (aKeys,aValues,prec,A) -> (
+     	  p:=A#prime;
 	  newKeys := ();
 	  newValues := ();
-	  carryingOver := 0_R;
+	  carryingOver := 0_ZZ;
 	  aPointer := 0;
 	  while (aPointer<#aKeys and aKeys#aPointer<=prec) do (
 	       currentKey := aKeys#aPointer;
 	       currentValue := aValues#aPointer+carryingOver;
-	       carryingOver = 0_R;
+	       carryingOver = 0_ZZ;
 	       while currentValue!=0 do (
 	     	    q := currentValue%p;
 		    currentValue = (currentValue-q)//p;
@@ -105,11 +105,14 @@ pAdicField ZZ:=(p)->(
 	  new A from {"precision"=>prec,
 	       "expansion"=>{toList deepSplice newKeys,
 		    toList deepSplice newValues}}
-	  );
-     new A from Sequence := (A',a) -> (
-	  computeCarryingOver(a#0,a#1,a#2)
-	  );
-     A + A := (a,b) -> (
+	  )
+   
+--new PAdicFieldElement from Sequence := (A',a) -> (
+--	  computeCarryingOver(a#0,a#1,a#2)
+--	  )
+
+PAdicFieldElement + PAdicFieldElement := (a,b) -> (
+	  if not (class b)===(class a) then error "Elements must be in same PAdicField";
 	  newPrecision := min(a#"precision",b#"precision");
           aKeys := a#"expansion"_0;
           aValues := a#"expansion"_1;
@@ -122,147 +125,179 @@ pAdicField ZZ:=(p)->(
 	  s := merge(aTable,bTable,plus);
 	  newKeys := sort keys s;
 	  newValues := for i in newKeys list s#i;
-	  computeCarryingOver(newKeys,newValues,newPrecision)
-	  );
-     A * A := (a,b)->(
-          newPrecision := min(precision a+min(precision b,valuation b),
-	       precision b+min(precision a,valuation a));
-	  aKeys := a#"expansion"_0;
-  	  aValues := a#"expansion"_1;
-	  aTable := new HashTable from for i in 0..#aKeys-1 list {aKeys#i,aValues#i};
-	  bKeys := b#"expansion"_0;
-	  bValues := b#"expansion"_1;
-	  bTable := new HashTable from for i in 0..#bKeys-1 list {bKeys#i,bValues#i};
-	  combineFunction := (aKey,bKey)-> (
-	       s := aKey+bKey;
-	       if (s<newPrecision) then s else continue
-	       );
-	  prod := combine(aTable,bTable,combineFunction,times,plus);
-	  newKeys := sort keys prod;
-	  newValues := for i in newKeys list prod#i;
-	  computeCarryingOver(newKeys,newValues,newPrecision)
-	  );
-     toPAdicInverse := method ();
-     toPAdicInverse List := L -> (
-	       n:=#L;
-	       i:=1;
-	       b := new IndexedVariableTable;
-	       s := new IndexedVariableTable;
-	       b_0=(sub(1/sub(L_0,ZZ/p),ZZ)+p)%p; s_0=-1; S:={b_0};
-	       while i<n do(
-			s_i=s_(i-1)+sum(0..i-1, j-> L_j*b_(i-1-j))*p^(i-1); 
-	       		b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->L_j*b_(i-j)),ZZ/p)/sub(L_0,ZZ/p),ZZ)+p)%p;
-			S=append(S,b_i);
-			i=i+1);
-	       S
-	       );
-     inverse A := a->(
-	  if valuation(a)==infinity then (
-	       error "You cannot divide by 0!";
-	       );
-	  v := valuation(a);
-	  a = a<<(-v);
-           i:=0;
-           L:={};
-           local c;
-           while i<precision(a)
-	     do(if member(i,a#"expansion"_0) 
-                   then c=a#"expansion"_1#(position(a#"expansion"_0,j->j==i)) 
-                   else c=0;
-	        L=append(L,c);
-	        i=i+1);
-         toPAdicFieldElement(toPAdicInverse(L),A)<<(-v)
-	  );
-     +A := a->a;
-     -A := a->(
-	  newValues := for i in a#"expansion"_1 list -i;
-	  computeCarryingOver(a#"expansion"_0,newValues,a#"precision")
-	  );
-     A - A:= (a,b)->(a+(-b));
-     A / A:= (a,b)->(a*inverse(b));
-     A ^ ZZ := (a,n)->(
-	  if n>=0 then (
-	       m := 1;
-	       c := a;
-	       while n>0 do (
-		    if n%2==1 then m = m*c;
-		    n = n//2;
-		    c = c*c;
-		    );
-	       m
-	       ) else (
-	       inverse(a^(-n))
-	       )
-	  );
-		    
-     A + ZZ := (a,n)->(
-	  b := toPAdicFieldElement(n,precision a,A);
-	  a+b
-	  );
-     ZZ + A := (n,a)->a+n;
-     A - ZZ := (a,n)->a+(-n);
-     ZZ - A := (n,a)->(-a)+n;
-     A * ZZ := (a,n)->(
-	  if n==0 then 0 else (
-	       v := pValuation(n,p);
-	       b := toPAdicFieldElement(n,v+relativePrecision a,A);
-	       a*b
-	       )
-	  );
-     ZZ * A := (n,a)->a*n;
-     A / ZZ := (a,n)->(
-	  if n==0 then (
-	       error "You cannot divide by zero!";
-	       ) else (
-	       v := pValuation(n,p);
-	       b := toPAdicFieldElement(n,v+relativePrecision a,A);
-	       a/b
-	       )
-	  );
-     ZZ / A := (n,a)->n*inverse(a);
-     A + QQ := (a,r)->(
-	  b := toPAdicFieldElement(r,precision a,A);
-	  a+b
-	  );
-     QQ + A := (r,a)->a+r;
-     A - QQ := (a,r)->a+(-r);
-     QQ - A := (r,a)->(-a)+r;
-     A * QQ := (a,r)->a*numerator(r)/denominator(r);
-     QQ * A := (r,a)->a*r;
-     A / QQ := (a,r)->a/numerator(r)*denominator(r);
-     QQ / A := (r,a)->inverse(a)*numerator(r)/denominator(r);
-     coarse := method();
-     coarse(A,ZZ) := (a,prec) -> (
-	  newPrecision := min(prec,precision a);
-	  newKeys := select(a#"expansion"_0,i->(i<newPrecision));
-	  newValues := for i in 0..#newKeys-1 list a#"expansion"_1#i;
-	  new A from {"precision"=>newPrecision,
-	       "expansion"=>{newKeys,newValues}}
-	  );
-     A == A := (a,b) -> (
-	  if precision a < precision b then (
-	       a === coarse(b,precision a)
-	       ) else if precision a > precision b then (
-	       b === coarse(a,precision b)
-	       ) else (
-	       a === b
-	       )
-	  );
-     A == ZZ := (a,n) -> (
-	  b := toPAdicFieldElement(n,precision a,A);
-	  a === b
-	  );
-     ZZ == A := (n,a) -> a==n;
-     A << ZZ := (a,n) -> (
-	  newPrecision := a#"precision"+n;
-	  newKeys := for i in a#"expansion"_0 list i+n;
-	  new A from {"precision"=>newPrecision,
-	       "expansion"=>{newKeys,a#"expansion"_1}}
-	  );
-     PAdicFields#p=A;
-     A
-)
+	  computeCarryingOver(newKeys,newValues,newPrecision,class a)
+	  )
+     
+PAdicFieldElement * PAdicFieldElement := (a,b)->(
+	  if not (class b)===(class a) then error "Elements must be in same PAdicField";
+	  newPrecision := min(precision a+min(precision b,valuation b),
+     	    precision b+min(precision a,valuation a));
+  aKeys := a#"expansion"_0;
+  aValues := a#"expansion"_1;
+  aTable := new HashTable from for i in 0..#aKeys-1 list {aKeys#i,aValues#i};
+  bKeys := b#"expansion"_0;
+  bValues := b#"expansion"_1;
+  bTable := new HashTable from for i in 0..#bKeys-1 list {bKeys#i,bValues#i};
+  combineFunction := (aKey,bKey)-> (
+       s := aKey+bKey;
+       if (s<newPrecision) then s else continue
+       );
+  prod := combine(aTable,bTable,combineFunction,times,plus);
+  newKeys := sort keys prod;
+  newValues := for i in newKeys list prod#i;
+  computeCarryingOver(newKeys,newValues,newPrecision,class a)
+  )
 
+
+
+toPAdicInverse = method ()
+toPAdicInverse(List,PAdicField):= (L,A) -> (
+     	  p:=A#prime;
+	  n:=#L;
+	  i:=1;
+	  b := new IndexedVariableTable;
+	  s := new IndexedVariableTable;
+	  b_0=(sub(1/sub(L_0,ZZ/p),ZZ)+p)%p; s_0=-1; S:={b_0};
+	  while i<n do(
+		   s_i=s_(i-1)+sum(0..i-1, j-> L_j*b_(i-1-j))*p^(i-1); 
+		   b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->L_j*b_(i-j)),ZZ/p)/sub(L_0,ZZ/p),ZZ)+p)%p;
+		   S=append(S,b_i);
+		   i=i+1);
+	  S
+	  )
+
+ inverse PAdicFieldElement := a->(
+      A:=class a;
+      if valuation(a)==infinity then (
+	   error "You cannot divide by 0!";
+	   );
+      v := valuation(a);
+      a = a<<(-v);
+       i:=0;
+       L:={};
+       local c;
+       while i<precision(a)
+	 do(if member(i,a#"expansion"_0) 
+	       then c=a#"expansion"_1#(position(a#"expansion"_0,j->j==i)) 
+	       else c=0;
+	    L=append(L,c);
+	    i=i+1);
+     toPAdicFieldElement(toPAdicInverse(L,A),A)<<(-v)
+      )
+
+ +PAdicFieldElement := a->a
+
+ -PAdicFieldElement := a->(
+      newValues := for i in a#"expansion"_1 list -i;
+      computeCarryingOver(a#"expansion"_0,newValues,a#"precision",class a)
+      )
+
+ PAdicFieldElement - PAdicFieldElement:= (a,b)->(a+(-b))
+
+ PAdicFieldElement / PAdicFieldElement:= (a,b)->(a*inverse(b))
+
+ PAdicFieldElement ^ ZZ := (a,n)->(
+      if n>=0 then (
+	   m := 1;
+	   c := a;
+	   while n>0 do (
+		if n%2==1 then m = m*c;
+		n = n//2;
+		c = c*c;
+		);
+	   m
+	   ) else (
+	   inverse(a^(-n))
+	   )
+      )
+
+ PAdicFieldElement + ZZ := (a,n)->(
+      b := toPAdicFieldElement(n,precision a,class a);
+      a+b
+      )
+
+ ZZ + PAdicFieldElement := (n,a)->a+n
+
+ PAdicFieldElement - ZZ := (a,n)->a+(-n)
+
+ ZZ - PAdicFieldElement := (n,a)->(-a)+n
+
+ PAdicFieldElement * ZZ := (a,n)->(
+      p:=(class a)#prime;
+      if n==0 then 0 else (
+	   v := pValuation(n,p);
+	   b := toPAdicFieldElement(n,v+relativePrecision a,class a);
+	   a*b
+	   )
+      )
+ 
+ ZZ * PAdicFieldElement := (n,a)->a*n
+ 
+PAdicFieldElement / ZZ := (a,n)->(
+     p:=(class a)#prime;
+     if n==0 then (
+	  error "You cannot divide by zero!";
+	  ) else (
+	  v := pValuation(n,p);
+	  b := toPAdicFieldElement(n,v+relativePrecision a,class a);
+	  a/b
+	  )
+     )
+
+ZZ / PAdicFieldElement := (n,a)->n*inverse(a)
+
+PAdicFieldElement + QQ := (a,r)->(
+     b := toPAdicFieldElement(r,precision a,class a);
+     a+b
+     )
+
+QQ + PAdicFieldElement := (r,a)->a+r
+
+PAdicFieldElement - QQ := (a,r)->a+(-r)
+
+QQ - PAdicFieldElement := (r,a)->(-a)+r
+
+PAdicFieldElement * QQ := (a,r)->a*numerator(r)/denominator(r)
+
+QQ * PAdicFieldElement := (r,a)->a*r
+
+PAdicFieldElement / QQ := (a,r)->a/numerator(r)*denominator(r)
+
+QQ / PAdicFieldElement := (r,a)->inverse(a)*numerator(r)/denominator(r)
+
+coarse := method();
+coarse(PAdicFieldElement,ZZ) := (a,prec) -> (
+     newPrecision := min(prec,precision a);
+     newKeys := select(a#"expansion"_0,i->(i<newPrecision));
+     newValues := for i in 0..#newKeys-1 list a#"expansion"_1#i;
+     new (class a) from {"precision"=>newPrecision,
+	  "expansion"=>{newKeys,newValues}}
+     )
+
+PAdicFieldElement == PAdicFieldElement := (a,b) -> (
+     if not class a === class b then return false;
+     if precision a < precision b then (
+	  a === coarse(b,precision a)
+	  ) else if precision a > precision b then (
+	  b === coarse(a,precision b)
+	  ) else (
+	  a === b
+	  )
+     )
+
+PAdicFieldElement == ZZ := (a,n) -> (
+     b := toPAdicFieldElement(n,precision a,class a);
+     a === b
+     )
+
+ZZ == PAdicFieldElement := (n,a) -> a==n
+
+PAdicFieldElement << ZZ := (a,n) -> (
+     newPrecision := a#"precision"+n;
+     newKeys := for i in a#"expansion"_0 list i+n;
+     new (class a) from {"precision"=>newPrecision,
+	  "expansion"=>{newKeys,a#"expansion"_1}}
+     )
 
 
 QQQ=new ScriptedFunctor
