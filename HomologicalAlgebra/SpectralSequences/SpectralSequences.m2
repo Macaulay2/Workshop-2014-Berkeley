@@ -19,7 +19,7 @@ newPackage(
   "SpectralSequences",
 --  AuxiliaryFiles => true,
   Version => "0.6",
-  Date => "7 January 2014",
+  Date => "10 January 2014",
   Authors => {
        {
       Name => "David Berlekamp", 
@@ -52,23 +52,14 @@ export {
   "filteredComplex",
   "SpectralSequence",
   "spectralSequence", 
---  "computeErModules",
---  "computeErMaps", 
-"ErMaps",
   "spots",
   "SpectralSequencePage", 
   "spectralSequencePage",
---  "rpqHomology",
   "homologyIsomorphism",
   "Shift",
   "ReducedHomology",
-  --"project",
   "SpectralSequencePageMap",
  "spectralSequencePageMap",
- -- "pprune",
- -- "epqrMaps",
- -- "pruneEpqrMaps",
- -- "epq",
   "connectingMorphism",
   "sourcePruningMap",
   "targetPruningMap",
@@ -76,7 +67,6 @@ export {
    "PageMap", 
    "pageMap", 
    "page" ,
-  -- "InfiniteSequence",
   "prunningMaps", "edgeComplex",
   "filteredHomologyObject", "associatedGradedHomologyObject", "changeOfRingsTor", "pushFwdChainComplex"  --, "xHom", "yHom" --, "xTensor", "yTensor"
   }
@@ -114,8 +104,7 @@ support ChainComplex := List => (
      C -> sort select (spots C, i -> C_i != 0))
 
 
-
-  -- Computes the graded pieces of the total complex of a Hom double complex 
+-- Computes the graded pieces of the total complex of a Hom double complex 
 -- (just as a graded module, so no maps!)
 Hom (GradedModule, GradedModule) := GradedModule => (C,D) -> (
   R := C.ring;  if R =!= D.ring then error "expected graded modules over the same ring";
@@ -227,7 +216,6 @@ support FilteredComplex := List => (
      K -> sort select (spots K, i -> K#i != 0))
 
 
-
 FilteredComplex _ InfiniteNumber :=
 FilteredComplex _ ZZ := ChainComplex => (K,p) -> (
   if K#?p then K#p 
@@ -289,15 +277,9 @@ filteredComplex(List) := FilteredComplex => opts -> L -> (
     if any(#maps, p -> target maps#p != C) then (
       error "expected all map to have the same target"));     
   Z := image map(C, C, i -> 0*id_(C#i)); -- make zero subcomplex as a subcomplex of ambient complex 
-   --   P :=  {(#maps-opts.Shift) => C} ; 
    P := {};
--- apply (#maps,  p -> #maps - (p+1) -opts.Shift => image maps#p); 
  myList := {};
  for p from 0 to #maps - 1 do (
---	 if(image maps#p != C) then -- Why do we want to omit redundant pieces?? -- In any
--- event if we want to omit redundant pieces then we need to fix the max value.
--- i.e. count the number of redundant pieces and the subtract... 
--- see scratch examples below.
 	 myList = myList |
 	  {#maps - (p+1) -opts.Shift => image maps#p};
 	  );
@@ -310,7 +292,6 @@ filteredComplex(List) := FilteredComplex => opts -> L -> (
 --------------------------------------------------------------------------------
 -- constructing filtered complexes ---------------------------------------------
 --------------------------------------------------------------------------------
-
 
 
 -- make the filtered complex associated to the "naive truncation of a chain complex"
@@ -727,7 +708,8 @@ SpectralSequencePage ^ List := Module => (E,i)-> (E_(-i))
 
 support SpectralSequencePage := E -> (
      new HashTable from apply(spots E.dd, i -> i=> source E.dd #i) )
- 
+
+-- this can problably be made more efficient....   
 page SpectralSequencePage := Page => opts -> E -> ( 
     	K := E.filteredComplex;
 	s := E.number;
@@ -736,6 +718,7 @@ page SpectralSequencePage := Page => opts -> E -> (
     if min K_(infinity) < infinity and max K_infinity > - infinity then (
 	    for p from min K to max K do (
 	  	for q from -p + min K_(infinity) to max K_(infinity) do (
+--		    H#{p,q} = E^s_{p,q}
 	       	    if E.Prune == false then H#{p,q} = epq(K,p,q,s)
 	       	    else H#{p,q} = prune epq(K,p,q,s)
 	       )
@@ -1151,7 +1134,7 @@ doc ///
 	      C = complete res monomialCurveIdeal(B,{1,3,4})
 	      K = filteredComplex(J,C,4)
 	 Text
-	      Here are higher some pages of the associated spectral sequence:
+	      Here are some higher pages of the associated spectral sequence:
 	 Example
 	       E = prune spectralSequence K
 	       E^2
