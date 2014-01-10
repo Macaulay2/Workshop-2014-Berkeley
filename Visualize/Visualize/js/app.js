@@ -514,8 +514,8 @@ function keyup() {
 function disableEditing() {
   circle.call(drag);
   svg.classed('shift', true);
-  current_node = null;
-  current_link = null;
+  selected_node = null;
+  selected_link = null;
   
   /*
   for (var i = 0; i<nodes.length; i++) {
