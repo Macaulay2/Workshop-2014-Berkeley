@@ -205,30 +205,30 @@ peek OptionTable
 --
 visGraph = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
-    local A; local B; local arrayString; local vertexList; local vertexString; local tempFile;
+    local A; local arrayString; local vertexString; local visTemp;
     
     A = adjacencyMatrix G;
     arrayString = toString toArray entries A; -- Turn the adjacency matrix into a nested array (as a string) to copy to the template html file.
     
     if (options Graphs).Version != 0.1 then (
-	 vertexList = toString(G.vertexSet); -- Create a string containing an ordered list of the vertices.
+	 vertexString = toString(toArray(apply(G.vertexSet, i -> "i"))); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
     ) else (
-    	 vertexList = toString(keys G#graph);
+    	 vertexString = toString(toArray(apply(keys(G#graph), i -> "i"))); -- Create a string containing an ordered list of the vertices in the older Graphs package.
     );
     
-    vertexString = 
+    print vertexString;
+        
+    visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visGraph/visGraph-template.html"); -- Copy the visGraph template to a temporary directory.
     
-    tempFile = copyTemplate(currentDirectory()|"Visualize/templates/visGraph/visGraph-template.html"); -- Copy the visGraph template to a temporary directory.
-    
-    searchReplace("visArray",arrayString, tempFile); -- Replace visArray in the visGraph html file by the adjacency matrix.
-    searchReplace("visLabels",vertexString, tempFile); -- Replace visLabels in the visGraph html file by the ordered list of vertices.
+    searchReplace("visArray",arrayString, visTemp); -- Replace visArray in the visGraph html file by the adjacency matrix.
+    searchReplace("visLabels",vertexString, visTemp); -- Replace visLabels in the visGraph html file by the ordered list of vertices.
 
-    copyJS(replace(tempFile,);
+    copyJS(replace(baseFilename visTemp, "", visTemp)); -- Copy the javascript libraries to the temp folder.
     
-    show new URL from { "file://"|tempFile };
+    show new URL from { "file://"|visTemp };
     
-    return tempFile;
-    )
+    return visTemp;
+)
 
 
 --input: a String of a path to a directory
