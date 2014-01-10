@@ -21,33 +21,44 @@ newPackage(
     	Version => "0.2", 
     	Date => "October 2, 2013",
     	Authors => {       
+     	     {Name => "Brett Barwick", Email => "Brett@barwick.edu", HomePage => "http://www.bard.edu/~bstone/"},	     
 	     {Name => "Elliot Korte", Email => "ek2872@bard.edu"},	     
 	     {Name => "Will Smith", Email => "smithw12321@gmail.com"},		
 	     {Name => "Branden Stone", Email => "bstone@bard.edu", HomePage => "http://www.bard.edu/~bstone/"},	     
 	     {Name => "Jim Vallandingham", Email => "vlandham@gmail.com", HomePage => "http://vallandingham.me/"}
 	     },
     	Headline => "Visualize",
-    	DebuggingMode => true
+    	DebuggingMode => true,
+	AuxiliaryFiles => true,
+	Configuration => {"DefaultPath" => concatenate(currentDirectory(),"temp-files/") } 
     	)
 
 export {
     
     -- Options
-     "Path",
-     "visTemplate",
+     "VisPath",
+     "VisTemplate",
     
     -- Methods
      "visIntegralClosure",
      "visIdeal",
      "visGraph",
-     "runServer", --helper
-     "toArray", --helper
-     "getCurrPath", --helper
-     "copyJS"
+     "copyJS",
+     
+    -- Helpers 
+     "runServer",
+     "toArray", 
+     "getCurrPath", 
+     "copyTemplate"     
+
 }
 
 needsPackage"Graphs"
 
+
+defaultPath = (options Visualize).Configuration#"DefaultPath"
+
+-- (options Visualize).Configuration
 
 ------------------------------------------------------------
 -- METHODS
@@ -75,7 +86,7 @@ toArray(List) := L -> (
 --input: A path
 --output: runs a server for displaying objects
 --
-runServer = method(Options => {Path => currentDirectory()})
+runServer = method(Options => {VisPath => currentDirectory()})
 runServer(String) := opts -> (visPath) -> (
     return run visPath;
     )
@@ -94,12 +105,12 @@ runServer(String) := opts -> (visPath) -> (
 --    	 where template file is located.
 --output: A file with visKey replaced with visString.
 --
-visOutput = method(Options => {Path => currentDirectory()})
+visOutput = method(Options => {VisPath => currentDirectory()})
 visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
     local fileName; local openFile; local PATH;
     
     fileName = (toString currentTime() )|".html";
-    PATH = opts.Path|fileName;
+    PATH = opts.VisPath|fileName;
     openOut PATH << 
     	replace(visKey, visString , get visTemplate) << 
 	close;
@@ -107,55 +118,124 @@ visOutput(String,String,String) := opts -> (visKey,visString,visTemplate) -> (
     return (show new URL from { "file://"|PATH }, fileName);
     )
 
+-- input: path to ah html file
+-- output: a copy of the input file in a temporary folder
+--
+copyTemplate = method()
+copyTemplate String := src -> (
+    local fileName; local dirPath;
+    
+    fileName = (toString currentTime() )|".html";
+    
+    dirPath = temporaryFileName();
+    makeDirectory dirPath;
+    dirPath = concatenate(dirPath,"/",fileName);
+    
+    copyFile( src, dirPath);
+    
+    return dirPath;
+)
+
+
+-- input:
+-- output:
+searchReplace = method(Options => {VisPath => currentDirectory()})
+searchReplace(String,String,String) := opts -> (oldString,newString,visSrc) -> (
+    local visFilePathTemp;
+    
+    visFilePathTemp = temporaryFileName();
+    copyFile(visSrc,visFilePathTemp);
+    openOut visSrc << 
+    	replace(oldString, newString , get visFilePathTemp) << 
+	close;
+	
+    return visSrc;
+    )
+
+
 
 
 --input: A monomial ideal of a polynomial ring in 2 or 3 variables.
 --output: The newton polytope of the of the ideal.
 --
-visIdeal = method(Options => {Path => currentDirectory()|"temp-files/", visTemplate => currentDirectory() |"templates/visIdeal/visIdeal"})
+visIdeal = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() |"Visualize/templates/visIdeal/visIdeal"})
 visIdeal(Ideal) := opts -> J -> (
     local R; local arrayList; local arrayString; local numVar; local visTemp;
-    local A;
+    local varList;
+    -- local A;
     
     R = ring J;
     numVar = rank source vars R;
-    
+    varList = flatten entries vars R;
+        
     if ((numVar != 2) and (numVar != 3)) then (error "Ring needs to have either 2 or 3 variables.");
     
     if numVar == 2 
     then (
-    	visTemp = opts.visTemplate|"2D.html";
+	visTemp = copyTemplate(opts.VisTemplate|"2D.html");
+	copyJS(replace(baseFilename visTemp, "", visTemp));
+
 	arrayList = apply( flatten entries gens J, m -> flatten exponents m);	
 	arrayList = toArray arrayList;
 	arrayString = toString arrayList;
+	
+	searchReplace("visArray",arrayString, visTemp);
+--	searchReplace("XXX",toString(varList_0), visTemp);
+--	searchReplace("YYY",toString(varList_1), visTemp);
+--	searchReplace("ZZZ",toString(varList_2), visTemp)
     )
     else (
-	visTemp = opts.visTemplate|"3D.html";
+	visTemp = copyTemplate(opts.VisTemplate|"3D.html");
+	copyJS(replace(baseFilename visTemp, "", visTemp));
+	
+	
     	arrayList = apply(flatten entries basis(0,infinity, R/J), m -> flatten exponents m );
     	arrayList = toArray arrayList;
     	arrayString = toString arrayList;
+	
+	searchReplace("visArray",arrayString, visTemp);
+	searchReplace("XXX",toString(varList_0), visTemp);
+	searchReplace("YYY",toString(varList_1), visTemp);
+	searchReplace("ZZZ",toString(varList_2), visTemp)
     );
     
-    A = visOutput( "visArray", arrayString, visTemp, Path => opts.Path );
+    show new URL from { "file://"|visTemp };
+--    A = visOutput( "visArray", arrayString, visTemp, VisPath => opts.VisPath );
     
-    return currentDirectory()|A_1;
+    return visTemp;--opts.VisPath|A_1;
     )
 
 --input: A graph
 --output: the graph in the browswer
 --
-visGraph = method(Options => {Path => currentDirectory()|"temp-files/", visTemplate => currentDirectory() | "templates/visGraph/visGraph-template.html"})
+visGraph = method(Options => {VisPath => defaultPath, VisTemplate => currentDirectory() | "Visualize/templates/visGraph/visGraph-template.html"})
 visGraph(Graph) := opts -> G -> (
-    local A; local arrayList; local arrayString; local B;
+    local A; local arrayString; local vertexString; local visTemp;
     
     A = adjacencyMatrix G;
-    arrayList = toArray entries A;
-    arrayString = toString arrayList;
+    arrayString = toString toArray entries A; -- Turn the adjacency matrix into a nested array (as a string) to copy to the template html file.
     
-    B = visOutput( "visArray", arrayString, opts.visTemplate, Path => opts.Path );    
+    -- Add this back in when we figure out how to deal with the old
+    -- Graphs package not knowing what G.vertexSet means.
     
-    return currentDirectory()|B_1;
-    )
+    --if (options Graphs).Version != 0.1 then (
+--	 vertexString = toString(toArray(apply(G.vertexSet, i -> toString i))); -- Create a string containing an ordered list of the vertices in the newer Graphs package.
+  --  ) else (
+         vertexString = toString new Array from apply(keys(G#graph), i -> "\""|toString(i)|"\"");
+       	 --vertexString = toString(toArray(apply(keys(G#graph), i -> toString i))); -- Create a string containing an ordered list of the vertices in the older Graphs package.
+    --);
+    
+    visTemp = copyTemplate(currentDirectory()|"Visualize/templates/visGraph/visGraph-template.html"); -- Copy the visGraph template to a temporary directory.
+    
+    searchReplace("visArray",arrayString, visTemp); -- Replace visArray in the visGraph html file by the adjacency matrix.
+    searchReplace("visLabels",vertexString, visTemp); -- Replace visLabels in the visGraph html file by the ordered list of vertices.
+
+    copyJS(replace(baseFilename visTemp, "", visTemp)); -- Copy the javascript libraries to the temp folder.
+    
+    show new URL from { "file://"|visTemp };
+    
+    return visTemp;
+)
 
 
 --input: a String of a path to a directory
@@ -172,7 +252,7 @@ copyJS(String) := dst -> (
     
     -- get list of filenames in js/
     jsdir = delete("..",delete(".",
-	    readDirectory(currentDirectory()|"temp-files/js/")
+	    readDirectory(currentDirectory()|"Visualize/js/")
 	    ));
     
     -- test to see if files exist in target
@@ -189,7 +269,7 @@ copyJS(String) := dst -> (
 	       );
     	);
     
-    copyDirectory(currentDirectory()|"temp-files/js/",dst);
+    copyDirectory(currentDirectory()|"Visualize/js/",dst);
     
     return "Created directory "|dst;
 )
@@ -234,27 +314,45 @@ end
 -- Stable Tests
 -----------------------------
 -----------------------------
-
-restart
+-- branden
+restart 
 loadPackage"Graphs"
 loadPackage"Visualize"
+(options Visualize).Configuration
 
+searchReplace("visArray","kickass string", testFile)
+searchReplace("XXX","kickass string", testFile)
+searchReplace("YYY","kickass string", testFile)
+searchReplace("ZZZ","kickass string", testFile)
+
+-- Old Graphs
+G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
+visGraph G
+H = graph({{x_1, x_0}, {x_3, x_0}, {x_3, x_1}, {x_4, x_0}}, Singletons => {x_2, x_5, 6, cat_sandwich})
+visGraph H
+
+-- New Graphs
 G = graph(toList(x_0..x_5),{{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5},EntryMode => "edges")
 visGraph G
+visGraph( G, VisPath => "/Users/bstone/Desktop/Test/")
+S = G.vertexSet
+toString S
 
-R = QQ[x,y,z]
+R = QQ[a,b,c]
+I = ideal"a2,ab,b2c,c5,b4"
 I = ideal"x4,xyz3,yz,xz,z6,y5"
 visIdeal I
-visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
+visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
 S = QQ[x,y]
-I = ideal"x4,xy3,y50"
+I = ideal"x4,xy3,y5"
 visIdeal I
-visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
+visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
 
 copyJS "/Users/bstone/Desktop/Test/"
-
+yes
+copyJS ( currentDirectory()|"temp
 
 
 -----------------------------
@@ -286,13 +384,13 @@ I = ideal"x4,xy3,y5"
 visIdeal I
 
 -- User can choose where to place files
-visIdeal( I, Path => "/Users/bstone/Desktop/Test/")
+visIdeal( I, VisPath => "/Users/bstone/Desktop/Test/")
 
 -- 3 variables
 R = QQ[x,y,z]
 J = ideal"x4,xyz3,yz2,xz3,z6,y5"
 visIdeal J
-visIdeal( J, Path => "/Users/bstone/Desktop/Test/")
+visIdeal( J, VisPath => "/Users/bstone/Desktop/Test/")
 
 restart
 needsPackage"Graphs"

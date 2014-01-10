@@ -73,8 +73,8 @@ NCRing ** NCRing := (A,B) -> (
    qTensorProduct(A,B,promote(1,coefficientRing A))
 )
 
-e = method()
-e (NCRing, Symbol) := (A,x) -> (
+envelopingAlgebra = method()
+envelopingAlgebra (NCRing, Symbol) := (A,x) -> (
    --  want to add an option to index op variables by number rather than a ring element?
    R := coefficientRing A;
    Aop := oppositeRing A;
@@ -102,7 +102,6 @@ D = C ** B
 e(A,s)
 e(C,t)
 ///
-
 
 subQuotientAsCokernel = method()
 subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
@@ -171,6 +170,22 @@ NCMatrix ++ NCMatrix := (M,N) -> (
    ds := ncMatrix {{M,urZero},{lrZero,N}};
    assignDegrees(ds,M.target | N.target, M.source | N.source)
 )
+
+--- The method below is in a state of disrepair... I need to 
+--- get acquainted with all the bergman stuff
+
+-- digraph(NCGroebnerBasis) := G -> (
+    -- N := {normal forms};
+    -- F := {obstructions};
+    -- ringGens := {get the gens from the ring} 
+    ---- maybe this is why the method should take NCIdeal, to pull the ring gens?
+    --suffixes := apply(keys G, k -> flatten apply( degree k - 1, i -> ncMonomial drop(k#monslist,i)));
+    -- vertset := {1} | ringGens | suffixes;
+    -- secondEdges := flatten apply(vertset,v -> {v,{w | vw contains a unique elt of F as a suffix}})
+    ----  need to figure out how to write that function...
+    -- edgeset :=  {{1,ringGens}, secondEdges;
+    -- digraph(edgeset)   
+--    )
 
 -------------------------------------------
 --- NCChainComplex Methods ----------------
@@ -256,6 +271,14 @@ zeroMap (List, List, NCRing) := (tar,src,B) -> (
    myZero := ncMatrix applyTable(entries map(R^#tar,R^#src,0), e -> promote(e,B));
    assignDegrees(myZero,tar,src);
    myZero
+)
+
+matrixInDegDOnLeft := (M,d) -> (
+   entryTable := apply(#(M.target), i -> apply(#(M.source), j -> (i,j)));
+   multTable := applyTable(entryTable, e -> leftMultiplicationMap(M#(e#0)#(e#1), 
+	                                                d - (M.source)#(e#1),
+                                                        d - (M.target)#(e#0)));
+   matrix multTable
 )
 
 Hom (NCMatrix,NCMatrix,ZZ) := (M,N,d) -> (
