@@ -93,8 +93,11 @@ pAdicField ZZ:=(p)->(
 	  );
      toPAdicInverse := method ();
      toPAdicInverse List := L -> (
-	       n=#L;
-	       i=1; b_0=(sub(1/sub(L_0,ZZ/p),ZZ)+p)%p; s_0=-1; S={b_0};
+	       n:=#L;
+	       i:=1;
+	       b := new IndexedVariableTable;
+	       s := new IndexedVariableTable;
+	       b_0=(sub(1/sub(L_0,ZZ/p),ZZ)+p)%p; s_0=-1; S:={b_0};
 	       while i<n do(
 			s_i=s_(i-1)+sum(0..i-1, j-> L_j*b_(i-1-j))*p^(i-1); 
 	       		b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->L_j*b_(i-j)),ZZ/p)/sub(L_0,ZZ/p),ZZ)+p)%p;
@@ -126,10 +129,21 @@ pAdicField ZZ:=(p)->(
 	  );
      A - A:= (a,b)->(a+(-b));
      A / A:= (a,b)->(a*inverse(b));
-     A ^ ZZ := (a,n) ->(local c; c=1; i:=0;
-	  if n>-1 
-	  then while i<n do(c=c*a;i=i+1) else while i<abs(n) do(c=c*inverse(a);i=i+1);
-	  c);
+     A ^ ZZ := (a,n)->(
+	  if n>=0 then (
+	       m := 1;
+	       c := a;
+	       while n>0 do (
+		    if n%2==1 then m = m*c;
+		    n = n//2;
+		    c = c*c;
+		    );
+	       m
+	       ) else (
+	       inverse(a^(-n))
+	       )
+	  );
+		    
      A + ZZ := (a,n)->(
 	  b := toPAdicFieldElement(n,precision a,A);
 	  a+b
@@ -312,6 +326,9 @@ print(y*y)
 print(x+1)
 print((1-x)+x)
 print(82*x)
+a = toPAdicFieldElement(10,1000,Q3)
+print(a^(-100))
+print(a^(-100)*(a^100))
 end
 
 ----------------------------
