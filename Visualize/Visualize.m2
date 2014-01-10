@@ -326,7 +326,7 @@ doc ///
 ///
 
 
-end
+--end
 
 doc ///
   Key
