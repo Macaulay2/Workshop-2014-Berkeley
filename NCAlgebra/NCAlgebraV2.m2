@@ -358,6 +358,19 @@ digraph NCGroebnerBasis := G -> (
     digraph(edgeset)   
 )
 
+TEST ///
+restart
+needsPackage "NCAlgebraV2"
+needsPackage "NCAlgebra"
+needsPackage "Graphs"
+A = QQ{x,y}
+I = ncIdeal(x^2 - y^2)
+G = twoSidedNCGroebnerBasisBergman(I)
+
+digraph(G)
+///
+
+
 end
 
 --- bug fix/performance/interface improvements
