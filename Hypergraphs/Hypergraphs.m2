@@ -30,6 +30,11 @@ export {
 	To do:
 	- add various other constructors (contructors accepting incidence matrix (done), list of edges (done))
 	- overload the net function for the Hypergraph class
+	- Add accessors:
+		- vertices(Hypergraph)
+		- edges(Hypergraph)
+		- incidenceMatrix(Hypergraph)
+		- neighbors(Hypergraph, vertex)
 
 	Functions We Might Want to Include:
 	From EdgeIdeals:
@@ -57,6 +62,10 @@ export {
 	- areIsomorphic
 	- addEdges
 	- generateHypergraphs
+	
+	Future priorities:
+	- Implement weighted hypergraphs
+	- Implement directed hypergraphs
 *}
 
 --------------------------------------------
@@ -85,10 +94,7 @@ hypergraph(List, List) := Hypergraph => opts -> (V, E) -> (
 	};
 )
 
-hypergraph(List) := Hypergraph => opts -> E -> (
-	V := unique flatten E;
-	return hypergraph(V, E, opts);
-)
+hypergraph(List) := Hypergraph => opts -> E -> return hypergraph(unique flatten E, E, opts);
 
 --Output: returns a Hypergraph given an incidence matrix.  The vertices are 0 .. numRows(incMatrix)-1.
 hypergraph(Matrix) := Hypergraph => opts -> (incMatrix) -> (
@@ -103,7 +109,10 @@ hypergraph(Matrix) := Hypergraph => opts -> (incMatrix) -> (
 	return hypergraph(V, E, opts);
 )
 
+<<<<<<< Updated upstream
 --------------------------------------------
+=======
+>>>>>>> Stashed changes
 
 inducedSubhypergraph = method(TypicalValue => Hypergraph);
 inducedSubhypergraph(List,Hypergraph) := Hypergraph => (V,H) -> (
