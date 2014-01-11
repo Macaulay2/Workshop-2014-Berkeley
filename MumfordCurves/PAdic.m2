@@ -517,6 +517,27 @@ document {
           }
 
 document {
+     Key => (net,PAdicField),
+     Inputs => {"A" => ofClass PAdicField},
+     Outputs => {"s" => ofClass Net},
+     Usage => "net A",
+     Headline => "a method for getting a description of a p-adic field, of the form QQQ_p",
+     PARA {"returns a net of the form QQQ_p, where p is the base."},
+     EXAMPLE {"net QQQ_7"}
+     }
+
+document {
+     Key => (inverse,PAdicFieldElement),
+     Inputs => {"a" => ofClass PAdicFieldElement},
+     Outputs => {"b" => ofClass PAdicFieldElement},
+     Usage => "inverse a",
+     Headline => "a method for computing the inverse of a p-adic number",
+     PARA {"Computes the inverse of a p-adic number up to the highest possible precision."},
+     EXAMPLE {"a = toPAdicFieldElement(2,5,QQQ_3)",
+	  "inverse a"}
+     }
+
+document {
      Key =>pAdicField,
      Inputs => {"p" => ofClass ZZ},
      Outputs => {"A" => ofClass PAdicField},
