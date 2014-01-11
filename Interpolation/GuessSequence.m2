@@ -11,6 +11,7 @@ newPackage(
 export {
 	"polynomialInterpolation",
 	"cubicSplines",
+	"evaluateCubicSpline",
 	"rationalInterpolation",
 	"floaterHormann",
 	"guessRational",
@@ -38,21 +39,31 @@ polynomialInterpolation (List) := RingElement => L -> (
 	polynomialInterpolation(L, QQ[t])
 )
 
-cubicSplines = method ()
+cubicSplines = method()
 cubicSplines (List,PolynomialRing) := List => (L,R) -> (
+	cubicCurve := (p0, p1, m0, m1, t) -> (2*t^3 - 3*t^2 + 1) * p0 + (t^3 - 2*t^2 + t) * m0 + (-2*t^3 + 3*t^2) * p1 + (t^3 - t^2) * m1;
 	t := first gens R;
 	n := #L;
-	P := for i from 1 to n-3 list (
-		(2*t^3 - 3*t^2 + 1)*(L_i) + (t^3 - 2*t^2 + t)*(1/2)*(L_(i+1) - L_(i-1)) + (-2*t^3 + 3*t^2)*(L_(i+1)) + (t^3 - t^2)*(1/2)*(L_(i+2) - L_i)
-	);
-	firstTerm := (2*t^3 - 3*t^2 + 1)*(L_0) + (t^3 - 2*t^2 + t)*(1/2)*(L_1 - L_0) + (-2*t^3 + 3*t^2)*(L_1) + (t^3 - t^2)*(1/2)*(L_2 - L_0);
-	finalTerm := (2*t^3 - 3*t^2 + 1)*(L_(n-2)) + (t^3 - 2*t^2 + t)*(1/2)*(L_(n-1) - L_(n-3)) + (-2*t^3 + 3*t^2)*(L_(n-1)) + (t^3 - t^2)*(1/2)*(L_(n-1) - L_(n-2));
-	{firstTerm} | P | {finalTerm}
+	firstTerm := cubicCurve(L_0, L_1, (L_1 - L_0)/2, (L_2 - L_0)/2, t);
+	P := for i from 1 to n-3 list cubicCurve(L_i, L_(i+1), (L_(i+1) - L_(i-1))/2, (L_(i+2) - L_i)/2, t);
+	lastTerm := cubicCurve(L_(n-2), L_(n-1), (L_(n-1) - L_(n-3))/2, (L_(n-1) - L_(n-2))/2, t);
+	{firstTerm} | P | {lastTerm}
 )
 cubicSplines List := RingElement => L -> (
 	t := symbol t;
 	cubicSplines(L,QQ[t])
 )
+
+evaluateCubicSpline = method()
+evaluateCubicSpline (List, QQ) := QQ => (P, v) -> (
+	if v < 1 or v > #P+1 then error "The value v must be in the interval [1, n].";
+	t := first gens ring P_0;
+	i := floor v;
+	j := v - i;
+	if i == #P+1 then sub(P_(-1), t => 1) else sub(P_(i-1), t => j)
+)
+evaluateCubicSpline (List, ZZ) := QQ => (P, v) -> evaluateCubicSpline(P, sub(v, QQ))
+evaluateCubicSpline (List, RR) := QQ => (P, v) -> evaluateCubicSpline(P, lift(v, QQ))
 
 -------------------------
 -----rational tools------
@@ -142,7 +153,7 @@ applyLinearRecurrence (List, List, ZZ) := List => (C, L, n) -> (
 
 beginDocumentation()
 
-     --polynomialInterpolation
+--polynomialInterpolation
 doc ///
 	Key
 		polynomialInterpolation
@@ -198,6 +209,43 @@ doc ///
 			P = cubicSplines(L,R)
 	SeeAlso
 		polynomialInterpolation
+		evaluateCubicSpline
+///
+
+--evaluateCubicSpline
+doc ///
+	Key
+		evaluateCubicSpline
+		(evaluateCubicSpline, List, QQ)
+		(evaluateCubicSpline, List, ZZ)
+		(evaluateCubicSpline, List, RR)
+	Headline
+		Evaluates a cubic spline at a specified number
+	Usage
+		E = evaluateCubicSpline(S,q)
+		E = evaluateCubicSpline(S,z)
+		E = evaluateCubicSpline(S,r)
+	Inputs
+		S:List
+		q:QQ
+		z:ZZ
+		r:RR
+	Outputs
+		E:QQ
+			The rational number approximating the spline at the supplied point.
+	Description
+		Text
+			The user should input a list of polynomials obtained from generating cubic splines using the cubicSplines method, and a number they wish the spline to be evaluated at, which must be between 1 and the length of their sequence.  The method will evaluate the spline at the appropriate interval using the appropriate polynomial, and return a rational number.
+		Example
+			L = {1,4,9,16}
+			R = QQ[x]
+			P = cubicSplines(L,R)
+			evaluateCubicSpline(P,2)
+			evaluateCubicSpline(P,1.5)
+			evaluateCubicSpline(P, sqrt(2))
+	SeeAlso
+		polynomialInterpolation
+		cubicSplines
 ///
 
 --rationalInterpolation

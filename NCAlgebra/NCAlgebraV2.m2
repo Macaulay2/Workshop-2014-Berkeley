@@ -416,7 +416,7 @@ zeroMap (List, List, NCRing) := (tar,src,B) -> (
    myZero
 )
 
-matrixInDegDOnLeft := (M,d) -> (
+NCMatrix _ ZZ := (M,d) -> (
    entryTable := apply(#(M.target), i -> apply(#(M.source), j -> (i,j)));
    multTable := applyTable(entryTable, e -> leftMultiplicationMap(M#(e#0)#(e#1), 
 	                                                d - (M.source)#(e#1),
