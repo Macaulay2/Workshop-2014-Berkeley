@@ -48,7 +48,7 @@ newToDual (ZZ,Matrix) := Matrix => (d,f) -> (
 	map(S^{degree g},S^1,matrix{{g}})))
 
 newToDualTrunc (ZZ,Matrix) := Matrix => (d,f) -> (
-    newToDual (d,f | ((target f) ** gens power(ideal vars ring f,d)))
+    newToDual (d,f | ((target f) ** gens power(ideal vars ring f,d+1)))
     )
 
 intersectInverseSystems Sequence :=  Matrix  => L -> intersectInverseSystems toList L

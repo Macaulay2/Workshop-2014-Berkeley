@@ -498,7 +498,7 @@ loadPackage"Visualize"
 G = digraph({ {1,{2,3}} , {2,{3}} , {3,{1}}})
 A = adjacencyMatrix G
 keys(G#graph)
-visGraph G
+visDigraph G
 
 ----------------
 
@@ -592,12 +592,14 @@ viewHelp Visualize
 -----------------------------
 
 restart
+uninstallPackage"Graphs"
+restart
 loadPackage"Graphs"
 loadPackage"Visualize"
 
 -- Old Graphs
 G = graph({{x_0,x_1},{x_0,x_3},{x_0,x_4},{x_1,x_3},{x_2,x_3}},Singletons => {x_5})
-visGraph Gp
+visGraph G
 H = graph({{Y,c},{1, 0}, {3, 0}, {3, 1}, {4, 0}}, Singletons => {A, x_5, 6, cat_sandwich})
 visGraph H
 
