@@ -343,16 +343,22 @@ removeElements := (L) -> (
   return L;   
 )
 
+-- Computes a Groebner basis from the multiplication matrices
+-- row j of the matrix i is  c_1,...,c_m, where 
+-- x_i * e_j = c_1 e_1 + ... + c_m e_m. We do not need to know the basis
+-- e_1,...,e_m, but we need to know how 1 is represented in the basis in order
+-- to start the computation. The vector connectionvector has this info, i.e. 
+-- connectionvector * (e_1,...,e_m)^t = 1. 
+-- Examples: In FGLM, the connection vector is (1,0...,0). With respect to a 
+-- separatorbasis, the connection vector is (1,...,1).
 GBFromMatrices = method()
 GBFromMatrices (List, List, PolynomialRing, Option) := 
-(mm,connectionvector,S,monOrd) -> (
-      
+(mm,connectionvector,S,monOrd) -> (      
      --from now on, we will compute over the ring R;
      R := newRing(S, monOrd);
      K := coefficientRing R;
      StoK := map(K,S);
-     s := length connectionvector;
-    
+     s := length connectionvector;   
      -- The local data structures:
      -- (P,PC) is the matrix which contains the elements to be reduced
      -- Fs is used to evaluate monomials at the points
@@ -362,8 +368,7 @@ GBFromMatrices (List, List, PolynomialRing, Option) :=
      -- (monom, (variable, coefflist, i)), where monom and variable is in R and
      -- the coefficientlist is the coefficient of (monom/variable) in basisS and
      -- i is the number of copies of the element in L.
-     -- monom is only used for keeping L sorted and to be able to use MergePairs.
-     
+     -- monom is only used for keeping L sorted and to be able to use MergePairs.   
      -- G is a list of GB elements
      -- inG is the ideal of initial monomials for the GB
      --Fs := makeRingMaps(M,R);
@@ -456,7 +461,6 @@ document {
       timing (nf2g = nfPoints(f, pointsMatrix, stdnew, Anew);)
       nf1g == nf2g
       --  True 
-
       -- Now compute the normal form by means of the Groebner basis.
       timing ((Q,inG,G) = points(pointsMatrix,R, options=>groebnerBasis);)
       Gb = forceGB (matrix {G});
@@ -554,51 +558,51 @@ document {
      }
 
 document {
-     Key => {FGLM,  (FGLM, GroebnerBasis, PolynomialRing, Option)},
+     Key => {FGLM,  (FGLM,  GroebnerBasis, PolynomialRing, Option)},
        Headline => "Uses the FGLM algorithm to change a Groebner basis for a zero-dimensional ideal wrt to a monomial ordering mo1 to another 
      Groebner basis with respect to a monomial ordering mo2.",
      Usage => "G2 = points(std,G1,R,mo2)",
      Inputs => {
-	  "G1" => GroebnerBasis => "A Groebner basis for the ideal wrt mo1", 
-	  "R" => PolynomialRing => "The polynomial ring",
+	 "G1" => GroebnerBasis => "A Groebner basis in R1",	
+	  "R1" => PolynomialRing => "A polynomial ring",	  
 	  "mo2" => Option =>"The output monomial ordering"
 	  },
-     Outputs => { "S2" => PolynomialRing => "The polynomial ring where G2 lives",
-	   	  "G2" => List => "The Groebner basis wrt to mo2"
+     Outputs => {  "Q2" => List => "A list of the standard monomials wrt to mo2",
+	 "G2" => List => "A list of the Groebner basis wrt to mo2",
+	 "R2" => PolynomialRing => "The polynomial ring where G2 lives"	   	 
 		  },
      EXAMPLE lines ///
-     n := 30
-     m := 40;
-     M = random(ZZ^n, ZZ^m);
-     -- m points in QQ^n
-     R = QQ[vars(0..(n-1))]
-     --,MonomialOrder => GRevLex]
-     --Compute a Gröbner basis for I(M) with respect to DegRevLex using the BM-algorithm
-     timing ((Q,inG,Gd) = points(M,R);)
-     DegRevLexGb = forceGB matrix {Gd};
-     IR = ideal gens DegRevLexGb;
-    --Convert the basis to a Lex-base using FGLM
-    (S1,FGLMLexGb,QLex) = FGLM(DegRevLexGb, R, MonomialOrder => Lex);
-    timing( (S1,FGLMLexGb,QLex) = FGLM(DegRevLexGb, R, MonomialOrder => Lex);)
-     -- 2.44324 seconds
-     -- Compute a Gröbner basis for I(M) with respect to Lex (in S) by
-     -- using the BM-algorithm
-     S2 = newRing(R, MonomialOrder => Lex)  
-     timing((Q2,inG2,PointsLexGb) = points(M,S2);)
-     --Map the result from FGLM (which is in S1) to S2
-     S1toS2 = map(S2,S1);  
-     FGLMLexGb = apply(FGLMLexGb, p -> S1toS2(p));
-    --Check that they are equal (sort is used since "==" does not
-    --apply for GB:s)
---FGLMLexGb
-  --   sort FGLMLexGb
-     gens forceGB matrix  {sort FGLMLexGb} == gens forceGB matrix {sort PointsLexGb}
---sort PointsLexGb
+     M = random(ZZ^20, ZZ^40);
+          
+     -- 1. Compute a Gröbner basis of I(M) with respect 
+     -- to DegRevLex using the BM-algorithm.
+     R1 = QQ[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,
+	 x12,x13,x14,x15,x16,x17,x18,x19,x20];
+     timing ((Q1,inG1,G1) = points(M,R1,groebnerBasis=>true);)
+     Gb1 = forceGB matrix {G1};
+     I1 = ideal gens Gb1;
+     
+     -- 2. Convert the basis to a Lex-basis using FGLM.
+     timing( (Q2,G2,R2) = FGLM(Gb1,R1, MonomialOrder => Lex);)
+     
+     -- 3. Compute a Gröbner basis of I(M) with respect 
+     -- to Lex using the BM-algorithm.
+     R3 = newRing(R1, MonomialOrder => Lex)  
+     timing((Q3,inG3,G3) = points(M,R3,groebnerBasis=>true);)
+     
+     --Map the result from FGLM (which is in R2) to R3
+     R2toR3 = map(R3,R2);  
+     G2mappedtoR3 = apply(G2, p -> R2toR3(p));
+    --Check that they are equal
+     gens forceGB matrix  {sort G2mappedtoR3} == gens forceGB matrix {sort G3}
      -- true
+     
+     -- CONTINUE HERE. Q: Determine the order in which the functions return
+     -- elements.
      -- Now, to show that we gain speed, 
      -- compute a Lex Gröbner basis from the generators of IR.
-     -- First map I from R to S2
-     RtoS2 = map(S2,R);
+     -- First map I from R1 to R2
+     R1toR2 = map(S2,R);
      IS2 = ideal RtoS2 gens IR;
      timing (BuchbergerLex = gens gb IS2)
     -- 30.9826 seconds
