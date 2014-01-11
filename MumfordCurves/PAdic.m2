@@ -527,6 +527,17 @@ document {
      }
 
 document {
+     Key => (net,PAdicFieldElement),
+     Inputs => {"a" => ofClass PAdicFieldElement},
+     Outputs => {"s" => ofClass Net},
+     Usage => "net a",
+     Headline => "a method for getting a nice formatting of an element in a p-adic field",
+     PARA {"Gives a nice formatting of an element in a p-adic field, with the powers come in the line above the coefficients."},
+     EXAMPLE {"a = toPAdicFieldElement(12345,10,QQQ_3)",
+	  "net a"}
+     }
+
+document {
      Key => (inverse,PAdicFieldElement),
      Inputs => {"a" => ofClass PAdicFieldElement},
      Outputs => {"b" => ofClass PAdicFieldElement},
