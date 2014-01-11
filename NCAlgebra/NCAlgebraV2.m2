@@ -25,7 +25,10 @@ export {NCModule,
 	NCChainComplex,
 	e,
 	qTensorProduct,
-	freeProduct}
+	freeProduct,
+	--- Anick methods
+	edgesAnick,
+	nChains}
 
 debug needsPackage "NCAlgebra"
 
@@ -502,9 +505,10 @@ Hom(M,N,2)
 -------------------------------------------
 debug needsPackage "Graphs"
 
-digraph NCGroebnerBasis := G -> (
+edgesAnick = method();
+edgesAnick NCGroebnerBasis := G -> (
     obstructions := (keys G.generators) / first ;
-    prevert1 := gens (ncIdeal gens G).ring / (i -> (first keys i.terms).monList);
+    prevert1 := (first gens G).ring / (i -> (first keys i.terms).monList);
     premons := apply (keys G.generators / first, m -> m.monList);
     suffixes := select( 
     apply (premons, m -> elements set subsets drop(m,1)) // flatten // set // elements,
@@ -514,14 +518,25 @@ digraph NCGroebnerBasis := G -> (
     prevert2 := suffixes;
     vertset := unique (prevert1 | prevert2);
     findSuffix := (t,O) -> (
-    select (O, o -> if #(o.monList) > #t then false else
-	 t_(
-	     toList(0..(#o.monList-1)) / (i -> i + #t -(#o.monList))) == o.monList
-	 )
+    	select (O, o -> if #(o.monList) > #t then false else
+	    t_(toList(0..(#o.monList-1)) / (i -> i + #t -(#o.monList))) == o.monList
+	    )
      );
     childrens := (t,V,O) -> select(V, v -> #(findSuffix(t|v,O)) == 1);
-    edgeset :=  {{1,prevert1}} | apply(vertset, v -> {v,childrens(v,vertset,obstructions)});
-    digraph(edgeset)   
+    edgeset :=  {{promote(1, (first gens G).ring),prevert1}} | apply(vertset, v -> {v,childrens(v,vertset,obstructions)})
+)
+
+nChains = method();
+nChains(ZZ,Digraph) := (n,G) -> ( 
+    R := (first (G.vertexSet)).ring;
+    P := findPaths(G, first(G.vertexSet),n);
+    apply(P,l -> fold(apply (drop(l,1), k -> toString ncMonomial (k, R)),concatenate))
+)
+
+debug needsPackage "Graphs2"
+
+digraph NCGroebnerBasis := G -> (
+    digraph(edgesAnick(G),EntryMode => "neighbors")   
 )
 
 TEST ///
@@ -532,8 +547,18 @@ needsPackage "Graphs"
 A = QQ{x,y}
 I = ncIdeal(x^2 - y^2)
 G = twoSidedNCGroebnerBasisBergman(I)
+edgesAnick(G)
 
-digraph(G)
+--- vvv - depends on a working Graphs2 - vvv ---
+debug needsPackage "Graphs2"
+E = digraph(edgeAnick(G),EntryMode => "neighbors")
+first (E.vertexSet)
+vertexSet E
+
+--- all paths of length 4 ---
+findPaths(E,first (E.vertexSet),4)
+--- verify... ---
+nChains(4,E)
 ///
 
 
