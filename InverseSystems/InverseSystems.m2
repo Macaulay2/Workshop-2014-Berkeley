@@ -48,7 +48,7 @@ newToDual (ZZ,Matrix) := Matrix => (d,f) -> (
 	map(S^{degree g},S^1,matrix{{g}})))
 
 newToDualTrunc (ZZ,Matrix) := Matrix => (d,f) -> (
-    newToDual (d,f | ((target f) ** gens power(ideal vars ring f,d)))
+    newToDual (d,f | ((target f) ** gens power(ideal vars ring f,d+1)))
     )
 
 intersectInverseSystems Sequence :=  Matrix  => L -> intersectInverseSystems toList L
@@ -66,32 +66,50 @@ intersectInverseSystems List :=  Matrix => L -> (
 
 beginDocumentation()
 
-document {
-    Key => InverseSystems,
-    Headline => "for computations with Macaulay inverse systems",
-    Caveat => "",
-    SeeAlso => ""
-    }
 
-document {
-       Key => newFromDual,
-       Headline => "computes the submodule annihilating an inverse system",
-       Usage => "N = newFromDual(F)",
-       Inputs => {
-	  "F" => {"F ", TO Matrix, " with entries in a polynomial ring"},
-	  },
-       Outputs => { 
-	   "N" => {"N ", TO Matrix, " with entries in a polynomial ring"},
-	  }, 
-       PARA{}, "The input matrix ", TT "F", " represents the generators of 
-       an inverse system and the output, ", TT "N", " is a presentation matrix 
-       for the submodule annihilating ", TT " F", 
-       
-       EXAMPLE {
-	   "F = matrix(QQ[x,y,z],{{x^4,y^4},{z^4,x^2*y^2}}",
-	   "N = newFromDual(F)"
-	   }
-}
+doc ///
+   Key
+      InverseSystems
+   Headline
+      for computations with Macaulay inverse systems	
+   Description
+      Text
+         This package makes it possible to do computations with Macaulay inverse systems 
+	 modules and ideals in a polynomial ring. 
+      	  
+      Example
+    
+   Caveat
+      The package uses the contraction action of the polynomial ring on itself. 
+   SeeAlso
+      fromDual
+      toDual
+///
+
+doc ///
+   Key 
+      newFromDual
+   Headline 
+      computes the submodule annihilating an inverse system
+   Usage 
+      N = newFromDual(F)
+   Inputs
+      F:Matrix 
+         F is a matrix where the columns are the generators of an inverse system in   
+	 the inverse system of a free module. 
+   Outputs
+      N:Matrix
+         N is a presentation matrix for the module that has F as its inverse system.
+   Description
+      Text
+      
+      Example 
+         F = matrix(QQ[x,y,z],{{x^4,y^4},{z^4,x^2*y^2}})
+         N = newFromDual(F)
+      Text 
+         The command {\tt newFromDual} extends the command {\tt fromDual} so that it also 
+         works for modules.
+///
 
 end
 TEST ///
