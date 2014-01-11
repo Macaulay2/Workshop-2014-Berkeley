@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Macaulay2: visGraph</title>
+    <title>Macaulay2: visDigraph</title>
     <style>
       #tdToggle
       {
@@ -95,7 +95,12 @@
       #canvasElement2d {
         background-color: #FFF;
         cursor: default;
-        display:block;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
       }
 
       #canvasElement2d:not(.active):not(.shift) {
@@ -149,15 +154,12 @@
         background-color: #FFF;
         cursor: default;
         display:none;
-      }
-      #constructorString {
-
-      }
-      #incString {
-
-      }
-      #adjString {
-
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
       }
     </style>
     <script type="text/javascript">
@@ -184,7 +186,7 @@
   </body>
 
   <script src="js/d3.v3.js"></script>
-  <script src="js/visGraph2d.js"></script>
+  <script src="js/visDigraph2d.js"></script>
   <script src="js/three.min.js"></script>
   <script src="js/Detectors.js"></script>
   <script src="js/OrbitControls.js"></script>
@@ -227,7 +229,7 @@
                 var c = document.getElementById("moreOptions");
                 c.onclick = function() {
                     //resetGraph();
-                    document.getElementById("popupMenu").style.display = "block";
+                    document.getElementById("popupMenu").style.display = "inline";
                     menuOpen = true;
                 }
 
@@ -243,14 +245,10 @@
 
       stopForce();
       document.getElementById("canvasElement2d").style.display = "none";
-      document.getElementById("canvasElement2d").style.zIndex = -1;
-      document.getElementById("canvasElement3d").style.display = "block";
-      document.getElementById("canvasElement3d").style.zIndex = 5;
+      document.getElementById("canvasElement3d").style.display = "inline";
 
-      curView = "3d";
       initializeBuilder3d();
       generateGraph();
-      runIt();
 
       
     }
