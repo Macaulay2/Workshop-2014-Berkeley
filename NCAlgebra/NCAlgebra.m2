@@ -111,7 +111,7 @@ globalAssignment NCRing
 removeNulls = xs -> select(xs, x -> x =!= null)
 
 removeZeroes = myHash -> select(myHash, c -> c != 0)
-
+ 
 minUsing = (xs,f) -> (
    n := min (xs / f);
    first select(1,xs, x -> f x == n)

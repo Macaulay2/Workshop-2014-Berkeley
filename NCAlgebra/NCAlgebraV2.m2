@@ -508,7 +508,7 @@ debug needsPackage "Graphs"
 edgesAnick = method();
 edgesAnick NCGroebnerBasis := G -> (
     obstructions := (keys G.generators) / first ;
-    prevert1 := (first gens G).ring / (i -> (first keys i.terms).monList);
+    prevert1 := (gens (first gens G).ring) / (i -> (first keys i.terms).monList);
     premons := apply (keys G.generators / first, m -> m.monList);
     suffixes := select( 
     apply (premons, m -> elements set subsets drop(m,1)) // flatten // set // elements,
@@ -533,7 +533,7 @@ nChains(ZZ,Digraph) := (n,G) -> (
     apply(P,l -> fold(apply (drop(l,1), k -> toString ncMonomial (k, R)),concatenate))
 )
 
-debug needsPackage "Graphs2"
+needsPackage "Graphs"
 
 digraph NCGroebnerBasis := G -> (
     digraph(edgesAnick(G),EntryMode => "neighbors")   
@@ -547,18 +547,17 @@ needsPackage "Graphs"
 A = QQ{x,y}
 I = ncIdeal(x^2 - y^2)
 G = twoSidedNCGroebnerBasisBergman(I)
-edgesAnick(G)
+E = edgesAnick(G)
 
 --- vvv - depends on a working Graphs2 - vvv ---
-debug needsPackage "Graphs2"
-E = digraph(edgeAnick(G),EntryMode => "neighbors")
-first (E.vertexSet)
-vertexSet E
+D = digraph(E,EntryMode => "neighbors")
+first (D.vertexSet)
+vertexSet D
 
 --- all paths of length 4 ---
-findPaths(E,first (E.vertexSet),4)
+findPaths(D,first (D,vertexSet),4)
 --- verify... ---
-nChains(4,E)
+nChains(4,D)
 ///
 
 
