@@ -620,6 +620,7 @@ document {
 document {
      Key=>{
 	  (symbol *,PAdicFieldElement,PAdicFieldElement),
+  	  (symbol *,PAdicMatrix,PAdicMatrix),
 	  (symbol *,ZZ,PAdicFieldElement),
 	  (symbol *,QQ,PAdicFieldElement),
 	  (symbol *,PAdicFieldElement,QQ),
@@ -635,6 +636,7 @@ document {
 document {
      Key=>{
 	  (symbol +,PAdicFieldElement,PAdicFieldElement),
+  	  (symbol +,PAdicMatrix,PAdicMatrix),
 	  (symbol +,ZZ,PAdicFieldElement),
 	  (symbol +,QQ,PAdicFieldElement),
 	  (symbol +,PAdicFieldElement,QQ),
@@ -659,6 +661,89 @@ document {
      EXAMPLE{"x=toPAdicFieldElement(36/98,5,QQQ_7)",
 	  "y=toPAdicFieldElement(3/7,5,QQQ_7)",
 	  "x/y"}     }
+
+document {
+     Key=>{
+	  (symbol -,PAdicFieldElement,PAdicFieldElement),
+	  (symbol -,ZZ,PAdicFieldElement),
+	  (symbol -,QQ,PAdicFieldElement),
+	  (symbol -,PAdicFieldElement,QQ),
+	  (symbol -,PAdicFieldElement,ZZ)
+	  },
+     Usage => "x-y",
+     PARA{"Finds the difference of the two inputs up 
+	  to the highest possible precision."},
+     EXAMPLE{"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "y=toPAdicFieldElement(3/7,5,QQQ_7)",
+	  "x-y"}     }
+
+
+document {
+     Key=>{
+	  (symbol ==,PAdicFieldElement,PAdicFieldElement),
+	  (symbol ==,ZZ,PAdicFieldElement),
+	  (symbol ==,QQ,PAdicFieldElement),
+	  (symbol ==,PAdicFieldElement,QQ),
+	  (symbol ==,PAdicFieldElement,ZZ)
+	  },
+     Usage => "x==y",
+     PARA{"Checks equality up to the minimum of the precisions of the inputs."},
+     EXAMPLE{"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	  "y=toPAdicFieldElement(36/98,10,QQQ_7)",
+	  "x==y",
+	  "x===y"}     }
+
+
+document {
+     Key=>{
+	  (symbol -,PAdicFieldElement)
+     	  },
+     Inputs => {"x"=> ofClass PAdicFieldElement},
+     Outputs => {"y"=>ofClass PAdicFieldElement},
+     Usage =>"-x",
+     PARA{"Calculates the additive inverse of the input, up to
+	   the precisions of the input."},
+     EXAMPLE{"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	    "-x"}   }  
+  
+  document {
+     Key=>{
+	  (symbol +,PAdicFieldElement)
+     	  },
+     Inputs => {"x"=> ofClass PAdicFieldElement},
+     Outputs => {"y"=>ofClass PAdicFieldElement},
+     Usage =>"+x",
+     PARA{"Returns ",TT "x","."},
+     EXAMPLE{"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	    "+x"}   }  
+
+document {
+     Key=>{
+	  (symbol ^,PAdicFieldElement,ZZ),
+	  (symbol ^,PAdicMatrix,ZZ),	  
+     	  },
+     Inputs => {"x"=> {ofClass PAdicFieldElement," or ",ofClass PAdicMatrix}, 
+	  "n"=> ofClass ZZ},
+     Outputs => {"y"=>{ofClass PAdicFieldElement," or ",ofClass PAdicMatrix}},
+     Usage =>"y=x^n",
+     PARA{"Exponentiates ",TT "x", "to the power ",TT "n",", up to
+	   the highest precision possible."},
+     EXAMPLE{"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	    "x^34"}   } 
+  
+  document {
+     Key=>{
+	  (symbol <<,PAdicFieldElement,ZZ),
+     	  },
+     Headline => "shifts a p-adic number",
+     Inputs => {"x"=> {ofClass PAdicFieldElement}, 
+	  "n"=> ofClass ZZ},
+     Outputs => {"y"=>{ofClass PAdicFieldElement}},
+     Usage =>"y=x << n",
+     PARA{"Multiplies ",TT "x"," by ",TT "p^n"," with 
+	   the highest precision possible."},
+     EXAMPLE{"x=toPAdicFieldElement(36/98,5,QQQ_7)",
+	    "x<< 34"}   }
 
 ----------------------------
 --Package test cases
