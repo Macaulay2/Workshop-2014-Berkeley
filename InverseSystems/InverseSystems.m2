@@ -53,13 +53,13 @@ newToDualTrunc (ZZ,Matrix) := Matrix => (d,f) -> (
 
 intersectInverseSystems Sequence :=  Matrix  => L -> intersectInverseSystems toList L
 
-intersectInverseSystems List :=  Matrix => L -> (
+intersectInverseSystems List := Matrix => L -> (
     -- first check that all modules have the same target
     -- and the same base ring
     if #L === 0 then error "expected at least one argument";
-    M := matrix {{}};
+    M := newFromDual(first L);
     for F in L do M = M | newFromDual(F);
-    d := sum first exponents lcm first entries monomials M;
+    d := sum first exponents lcm first entries monomials flatten M;
     newToDual(d,M)
     )
 
