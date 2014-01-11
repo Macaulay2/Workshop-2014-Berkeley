@@ -42,6 +42,7 @@ function initializeBuilder() {
     .attr('height', height)
     .attr('id', 'canvasElement2d');
 
+
   // set up initial nodes and links
   //  - nodes are known by 'id', not by index in array.
   //  - reflexive edges are indicated on the node (as a bold black circle).
@@ -63,6 +64,21 @@ function initializeBuilder() {
               links.push( { source: nodes[i], target: nodes[j], left: false, right: false} );
           }    
       }
+  }
+
+  // Brett: Need to fix this.
+
+  var maxLength = d3.max(nodes, function(d) {
+    return d.name.length;
+    console.log("name length: " + d.name.length + "\n");
+  });
+
+  console.log("maxLength: " + maxLength + "\n");
+
+  if(maxLength < 4){
+    d3.selectAll("text").classed("fill", 0xfefcff);
+  } else { 
+    d3.selectAll("text").classed("fill", 0x000000 );
   }
 
   constrString = graph2M2Constructor(nodes,links);
@@ -343,6 +359,18 @@ function restart() {
         d3.select(this.parentNode).select("text").text(function(d) {return d.name});
       }
 
+      document.getElementById("constructorString").innerHTML = "Macaulay2 Constructor: " + graph2M2Constructor(nodes,links);
+
+      var maxLength = d3.max(nodes, function(d) {
+        return d.name.length;
+      });
+      
+      if(maxLength < 4){
+        d3.selectAll("text").classed("fill", 0xfefcff);
+      } else { 
+        d3.selectAll("text").classed("fill", 0x000000);
+      }
+
     });
 
   // show node IDs
@@ -468,6 +496,11 @@ function keydown() {
       }
       selected_link = null;
       selected_node = null;
+
+      document.getElementById("constructorString").innerHTML = "Macaulay2 Constructor: " + graph2M2Constructor(nodes,links);
+      document.getElementById("incString").innerHTML = "Incidence Matrix: " + arraytoM2Matrix(getIncidenceMatrix(nodes,links));
+      document.getElementById("adjString").innerHTML = "Adjacency Matrix: " + arraytoM2Matrix(getAdjacencyMatrix(nodes,links));
+
       restart();
       break;
     case 66: // B
@@ -644,8 +677,6 @@ function getIncidenceMatrix (nodeSet, edgeSet){
   for(var i = 0;i < nodeSet.length; i++){
     incMatrix[i] = [];
 
-    console.log("nodeID: " + nodeSet[i].id + "\n");
-
     for(var j = 0; j < edgeSet.length; j++){
       incMatrix[i][j] = 0;
     }
@@ -703,6 +734,6 @@ function exportTikz() {
   alert("export tikkkzzz");
 }
 
-function forceStop() {
+function stopForce() {
   force.stop();
 }

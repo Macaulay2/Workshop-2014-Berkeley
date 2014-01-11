@@ -136,6 +136,7 @@ export {
     "distanceMatrix",
     "eccentricity",
     "edgeIdeal",
+    "findPaths",
     "floydWarshall",
     "forefathers",
     "girth",
@@ -949,8 +950,17 @@ edgeIdeal (Graph) := Ideal => G -> (
 		else apply(toList \ edges G, e -> R_(position(V, i -> i == e_0)) * R_(position(V, i -> i == e_1)))
 		)
 	)
--- TODO: Fix this to note call indexLabelGraph
--- DONE
+
+findPaths = method ()
+findPaths (Digraph,Thing,ZZ) := List => (G,v,l) -> (
+	if l < 0 then error "integer must be nonnegative";
+	if l == 0 then {{v}}
+	else(
+		nbors := children (G,v);
+		nPaths := apply(nbors, n -> findPaths(G,n,l-1));
+		flatten apply(nPaths, P -> apply(P, p -> {v} | p))
+	)
+)
 
 floydWarshall = method()
 floydWarshall Digraph := HashTable => G -> (
@@ -1704,9 +1714,12 @@ doc ///
 			The graph with edges E and vertices V, or constructed from HashTable H, or from an adjacency matrix A, or from a new naming of vertices V and an adjacency matrix A.
 	Description
 		Text
-			A graph consists of two sets, a vertex set and an edge set which is a subset of the collection of subsets of the vertex set. Edges in graphs are symmetric or two-way; if u and v are vertices then if {u,v} is an edge connecting them, {v,u} is also an edge (which is implicit in the definition, we will almost always just use one of the pairs). Graphs are defined uniquely from their Adjacency Matrices. These matrices use the entries as 0 or 1 to signal the existence of an edge connecting vertices.  The options for EntryMode are "neighbors" (the default) and "edges."  The former takes an input of a list of pairs, where the first entry of each pair is a vertex and the second entry of each pair is that vertex's neighborhood.  The latter takes a list of edges in a graph.
+			A graph consists of two sets, a vertex set and an edge set which is a subset of the collection of subsets of the vertex set. Edges in graphs are symmetric or two-way; if u and v are vertices then if {u,v} is an edge connecting them, {v,u} is also an edge (which is implicit in the definition, we will almost always just use one of the pairs). Graphs are defined uniquely from their Adjacency Matrices. These matrices use the entries as 0 or 1 to signal the existence of an edge connecting vertices.  
+			The options for EntryMode are "neighbors" (the default) and "edges."  This means that in including EntryMode => "edges" in the constructor allows the user to simply type in a list of edges to construct a graph.  See example 1 below.  Using the default takes an input of a list of pairs, where the first entry of each pair is a vertex and the second entry of each pair is that vertex's neighborhood.
+			The options for Singletons allows the user to enter Singletons => {list of single points} in a graph if they desire to have isolated points in a graph.  See second example below.
 		Example
 			G = graph({{1,2},{2,3},{3,4}},EntryMode=>"edges")
+			G = graph({{1,2},{2,3},{3,4}},EntryMode=>"edges",Singletons => {5,6,7})
 			G = graph({1,2,3,4},{{2,4},{2,3}})
 			G = graph hashTable {{1,{2}},{2,{1,3}},{3,{2,4}},{4,{3}}}
 			G = graph(matrix {{0,1,1},{1,0,0},{1,0,0}})
@@ -3351,6 +3364,37 @@ doc ///
 		independenceComplex
 ///
 
+--findPaths
+doc ///
+	Key
+		findPaths
+		(findPaths, Digraph, Thing, ZZ)
+	Headline
+		finds all the paths in a digraph of a given length starting at a given vertex
+	Usage
+		F = findPaths(D,v,l)
+	Inputs
+		D:Digraph
+		v:Thing
+			vertex at which paths start
+		l:ZZ
+			length of desired paths
+	Outputs
+		F:List
+			list of paths starting at v of length l
+	Description
+		Text
+			The method will return a list of all the paths of length l starting at a vertex v in the digraph D.  The method is compatible for graphs with loops or cycles, as variables can be repeatedly visited in paths.
+		Example
+			D = digraph(toList(1..5), {{1,2},{1,3},{2,5},{2,4}})
+			F = findPaths(D,1,2)
+			D = digraph(toList(a..d), {{a,c},{a,b},{b,b},{b,d}})
+			F = findPaths(D,a,100)
+	SeeAlso
+		distance
+		distanceMatrix
+///
+
 --floydWarshall
 doc ///
 	Key
@@ -4521,7 +4565,7 @@ doc ///
 			The Strong Product of G and H
 	Description
 		Text
-			This method will take in any two graphs and output the strong proudct of the two graphs. The vertex set of the strong product of G and H is the cartesian product of the vertex sets of G and H. The keys for each vertex will be output as a sequence to represent this clearly. The edge set of the strong product of G and H is formed by the rule any two distinct vertices (u,u') and (v,v') are adjacent in G × H if and only if u' is adjacent with v' or u'=v' , and u is adjacent with v or u = v.
+			This method will take in any two graphs and output the strong proudct of the two graphs. The vertex set of the strong product of G and H is the cartesian product of the vertex sets of G and H. The keys for each vertex will be output as a sequence to represent this clearly. The edge set of the strong product of G and H is formed by the rule any two distinct vertices (u,u') and (v,v') are adjacent in G \D7 H if and only if u' is adjacent with v' or u'=v' , and u is adjacent with v or u = v.
 		Example
 			G = graph({1,2},{{1,2}});
 			H = graph({3,4,5},{{3,4},{4,5}});   

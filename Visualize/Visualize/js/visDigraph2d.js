@@ -42,6 +42,7 @@ function initializeBuilder() {
     .attr('height', height)
     .attr('id', 'canvasElement2d');
 
+
   // set up initial nodes and links
   //  - nodes are known by 'id', not by index in array.
   //  - reflexive edges are indicated on the node (as a bold black circle).
@@ -52,17 +53,42 @@ function initializeBuilder() {
   lastNodeId = data.length;
   nodes = [];
   links = [];
+  // Create the nodes with their appropriate names and id's, and set reflexive to true if and only if there is a 1 in the appropriate
+  // spot on the main diagonal.  This represents a loop in the digraph.
   for (var i = 0; i<data.length; i++) {
-
-      nodes.push( {name: names[i], id: i, reflexive:false } );
-
+      nodes.push( {name: names[i], id: i, reflexive: data[i][i] == 1} );
   }
-  for (var i = 0; i<data.length; i++) {
-      for (var j = 0; j < i ; j++) {
+
+  for (var i = 0; i<data.length - 1; i++) {
+      for (var j = i+1; j < data.length; j++) {
           if (data[i][j] != 0) {
-              links.push( { source: nodes[i], target: nodes[j], left: false, right: false} );
-          }    
+              links.push( { source: nodes[i], target: nodes[j], left: false, right: true} );
+          }
       }
+  }
+
+  for (var i = 1; i<data.length; i++) {
+      for (var j = 0; j < i; j++) {
+          if (data[i][j] != 0) {
+            for(var k = 0; k < links.length; k++) {
+              if((links[k].source.id == j) && (links[k].target.id == i)){
+                links[k].left = true;
+              } else {
+                links.push( { source: nodes[j], target: nodes[i], left: true, right: false} );
+              }
+            }
+          }
+      }
+  }
+
+  var maxLength = d3.max(nodes, function(d) {
+    return d.name.length;
+  });
+
+  if(maxLength < 4){
+    d3.selectAll("text").classed("fill", 0xfefcff);
+  } else { 
+    d3.selectAll("text").classed("fill", 0x000000 );
   }
 
   constrString = graph2M2Constructor(nodes,links);
@@ -91,6 +117,29 @@ function initializeBuilder() {
       .linkDistance(150)
       .charge(-500)
       .on('tick', tick);
+
+  // define arrow markers for graph links
+  svg.append('svg:defs').append('svg:marker')
+    .attr('id', 'end-arrow')
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', 6)
+    .attr('markerWidth', 3)
+    .attr('markerHeight', 3)
+    .attr('orient', 'auto')
+  .append('svg:path')
+    .attr('d', 'M0,-5L10,0L0,5')
+    .attr('fill', '#000');
+
+  svg.append('svg:defs').append('svg:marker')
+    .attr('id', 'start-arrow')
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', 4)
+    .attr('markerWidth', 3)
+    .attr('markerHeight', 3)
+    .attr('orient', 'auto')
+  .append('svg:path')
+    .attr('d', 'M10,-5L0,0L10,5')
+    .attr('fill', '#000');
 
   drag = force.drag()
     .on("dragstart", dragstart);
@@ -343,6 +392,18 @@ function restart() {
         d3.select(this.parentNode).select("text").text(function(d) {return d.name});
       }
 
+      document.getElementById("constructorString").innerHTML = "Macaulay2 Constructor: " + graph2M2Constructor(nodes,links);
+
+      var maxLength = d3.max(nodes, function(d) {
+        return d.name.length;
+      });
+      
+      if(maxLength < 4){
+        d3.selectAll("text").classed("fill", 0xfefcff);
+      } else { 
+        d3.selectAll("text").classed("fill", 0x000000);
+      }
+
     });
 
   // show node IDs
@@ -468,6 +529,11 @@ function keydown() {
       }
       selected_link = null;
       selected_node = null;
+
+      document.getElementById("constructorString").innerHTML = "Macaulay2 Constructor: " + graph2M2Constructor(nodes,links);
+      document.getElementById("incString").innerHTML = "Incidence Matrix: " + arraytoM2Matrix(getIncidenceMatrix(nodes,links));
+      document.getElementById("adjString").innerHTML = "Adjacency Matrix: " + arraytoM2Matrix(getAdjacencyMatrix(nodes,links));
+
       restart();
       break;
     case 66: // B
@@ -644,8 +710,6 @@ function getIncidenceMatrix (nodeSet, edgeSet){
   for(var i = 0;i < nodeSet.length; i++){
     incMatrix[i] = [];
 
-    console.log("nodeID: " + nodeSet[i].id + "\n");
-
     for(var j = 0; j < edgeSet.length; j++){
       incMatrix[i][j] = 0;
     }
@@ -703,6 +767,6 @@ function exportTikz() {
   alert("export tikkkzzz");
 }
 
-function forceStop() {
+function stopForce() {
   force.stop();
 }

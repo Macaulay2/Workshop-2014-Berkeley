@@ -16,9 +16,160 @@ newPackage("NCAlgebraV2",
      DebuggingMode => true
      )
 
-export {subQuotientAsCokernel,homologyAsCokernel,identityMap,NCChainComplex,e,qTensorProduct,freeProduct}
+export {NCModule,
+        degreeList,
+	isNCModule,
+	homologyAsCokernel,
+	identityMap,
+	subquotientAsCokernel,
+	NCChainComplex,
+	e,
+	qTensorProduct,
+	freeProduct,
+	--- Anick methods
+	edgesAnick,
+	nChains}
 
 debug needsPackage "NCAlgebra"
+
+-----------------------------------------------------------------------------
+-- NCModule definitions
+
+NCModule = new Type of ImmutableType
+new NCModule from List := (NCModule,v) -> new NCModule of Vector from hashTable v
+new NCModule from Sequence := (NCModule,x) -> (
+     (R,rM) -> (
+          assert instance(R,NCRing);
+          assert instance(rM,ZZ);
+          new NCModule of Vector from hashTable {
+                    symbol cache => new CacheTable,
+--                    symbol RawFreeModule => rM,
+                    symbol ring => R,
+                    symbol numgens => rM,
+		    symbol degreeList => apply(rM, i-> 0)
+                    })) x
+
+NCRing ^ ZZ :=  (R,n) -> R^(apply(n,i-> 0))
+
+NCRing ^ List := (R,L) -> (
+   n := #L;
+   Mparts := {
+          symbol cache => new CacheTable,
+--          symbol RawFreeModule => rE,
+          symbol ring => R,
+          symbol numgens => n,
+	  symbol degreeList => L 
+          };
+   new NCModule of Vector from hashTable Mparts     
+)
+
+subquotient(Nothing,NCMatrix) := (null,relns) -> (
+     R := ring relns;
+--     E := target relns;
+     n := #relns.target;
+--     rE := E.RawFreeModule;
+     Mparts := {
+          symbol cache => new CacheTable,
+--          symbol RawFreeModule => rE,
+          symbol ring => R,
+          symbol numgens => n,
+	  symbol degreeList => relns.target
+          };
+--     relns = align matrix relns;    -- if we start having problems with homogenaity we might want to revisit this
+{*
+     if E.?generators then (
+          Mparts = append(Mparts, symbol generators => E.generators);
+          relns = E.generators * relns;
+          );
+     if E.?relations then relns = relns | E.relations;
+*}
+     if relns != 0 then (
+          Mparts = append(Mparts, symbol relations => relns);
+          );
+     new NCModule of Vector from hashTable Mparts)
+
+subquotient(NCMatrix,Nothing) := (subgens,null) -> (
+     R := ring subgens;
+--     E := target subgens;
+     n := #subgens.target;
+--     rE := E.RawFreeModule;
+--     subgens = align matrix subgens;
+--     if E.?generators then subgens = E.generators * subgens;
+     Mparts := {
+          symbol cache => new CacheTable,
+--          symbol RawFreeModule => rE,
+          symbol ring => R,
+          symbol numgens => n,
+	  symbol degreeList => subgens.target,
+          symbol generators => subgens
+          };
+{*
+     if E.?relations then (
+          Mparts = append(Mparts, symbol relations => E.relations);
+          );
+*}
+     new NCModule of Vector from hashTable Mparts)
+
+subquotient(NCMatrix,NCMatrix) := (subgens,relns) -> (
+     R := ring relns;
+--     E := target subgens;
+--     if E != target relns then error "expected maps with the same target"; -- we used to have =!=, but Schreyer orderings of free modules are discarded by "syz"
+--     rE := E.RawFreeModule;
+--     n := rawRank rE;
+     if subgens.target != relns.target then error "expected maps with the same target";
+     n := #subgens.target;
+     if n == 0 then new NCModule from (R,n)
+     else (
+{*
+          relns = align matrix relns;
+          subgens = align matrix subgens;
+          if E.?generators then (
+               relns = E.generators * relns;
+               subgens = E.generators * subgens;
+               );
+          if E.?relations then relns = relns | E.relations;
+*}
+          Mparts := {
+               symbol cache => new CacheTable,
+--               symbol RawFreeModule => rE,
+               symbol ring => R,
+               symbol numgens => n,
+	       symbol degreeList => subgens.target,
+               symbol generators => subgens
+               };
+          if relns != 0 then (
+               Mparts = append(Mparts, symbol relations => relns);
+               );
+          new NCModule of Vector from hashTable Mparts))
+
+-- The following checks will go in when NCMatrices have modules as source and target.
+{*
+subquotient(NCModule,NCMatrix,NCMatrix) := (F,g,r) -> (
+     if F =!= target g or F =!= target r then error "expected module to be target of maps";
+     subquotient(g,r))
+subquotient(NCModule,Nothing,NCMatrix) := (F,g,r) -> (
+     if F =!= target r then error "expected module to be target of maps";
+     subquotient(g,r))
+subquotient(NCModule,NCMatrix,Nothing) := (F,g,r) -> (
+     if F =!= target g then error "expected module to be target of maps";
+     subquotient(g,r))
+subquotient(NCModule,Nothing,Nothing) := (F,g,r) -> F
+*}
+
+
+isNCModule = method(TypicalValue => Boolean)
+isNCModule Thing := M -> false
+isNCModule Module := M -> false
+isNCModule NCModule := M -> true
+
+isFreeModule NCModule := M -> not M.?relations and not M.?generators
+
+isSubmodule NCModule := M -> not M.?relations
+
+isQuotientModule NCModule := M -> not M.?generators
+
+
+----------------------------------------------------------------------------
 
 freeProduct = method()
 freeProduct (NCRing,NCRing) := (A,B) -> (
@@ -103,8 +254,16 @@ e(A,s)
 e(C,t)
 ///
 
-subQuotientAsCokernel = method()
-subQuotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
+presentation NCModule := M -> (
+   if M.cache.?presentation then M.cache.presentation 
+   else M.cache.presentation = (
+	if M.?generators then 
+           subquotientAsCokernel(M.generators,M.relations)    
+        else M.relations)
+)
+
+subquotientAsCokernel = method()
+subquotientAsCokernel (NCMatrix, NCMatrix) := (M,N) -> (
    --- following Algorithm 6.3.1 in Boehm
    L := M | N;
    kerL := rightKernelBergman(L);
@@ -120,7 +279,7 @@ homologyAsCokernel(NCMatrix,NCMatrix) := (M,N) -> (
     B := N.ring;
     Z := Z = zeroMap((N.target),(N.source),B);
     kerM := rightKernelBergman(M);
-    subQuotientAsCokernel(kerM,N)
+    subquotientAsCokernel(kerM,N)
     )
 )
 
@@ -257,7 +416,7 @@ zeroMap (List, List, NCRing) := (tar,src,B) -> (
    myZero
 )
 
-matrixInDegDOnLeft := (M,d) -> (
+NCMatrix _ ZZ := (M,d) -> (
    entryTable := apply(#(M.target), i -> apply(#(M.source), j -> (i,j)));
    multTable := applyTable(entryTable, e -> leftMultiplicationMap(M#(e#0)#(e#1), 
 	                                                d - (M.source)#(e#1),
@@ -265,7 +424,17 @@ matrixInDegDOnLeft := (M,d) -> (
    matrix multTable
 )
 
-Hom (NCMatrix,NCMatrix,ZZ) := (M,N,d) -> (
+Hom (ZZ,NCModule,NCModule) := (d,M,N) -> (
+   if isFreeModule M then (
+      R := M.ring;
+      I := identityMap(M.source,R);
+      (presentation N) ** (transpose I))
+   else 
+      Hom(d,presentation M,presentation N)
+)
+
+Hom (ZZ,NCMatrix,NCMatrix) := (d,M,N) -> (
+   -- if isFreeModule M then N ** (dual M) else (
    B := ring M;
    Nsyz := rightKernelBergman N;  -- be careful if Nsyz is zero!
    L1 := identityMap(N.target,B);
@@ -336,9 +505,10 @@ Hom(M,N,2)
 -------------------------------------------
 debug needsPackage "Graphs"
 
-digraph NCGroebnerBasis := G -> (
+edgesAnick = method();
+edgesAnick NCGroebnerBasis := G -> (
     obstructions := (keys G.generators) / first ;
-    prevert1 := gens (ncIdeal gens G).ring / (i -> (first keys i.terms).monList);
+    prevert1 := (gens (first gens G).ring) / (i -> (first keys i.terms).monList);
     premons := apply (keys G.generators / first, m -> m.monList);
     suffixes := select( 
     apply (premons, m -> elements set subsets drop(m,1)) // flatten // set // elements,
@@ -348,14 +518,25 @@ digraph NCGroebnerBasis := G -> (
     prevert2 := suffixes;
     vertset := unique (prevert1 | prevert2);
     findSuffix := (t,O) -> (
-    select (O, o -> if #(o.monList) > #t then false else
-	 t_(
-	     toList(0..(#o.monList-1)) / (i -> i + #t -(#o.monList))) == o.monList
-	 )
+    	select (O, o -> if #(o.monList) > #t then false else
+	    t_(toList(0..(#o.monList-1)) / (i -> i + #t -(#o.monList))) == o.monList
+	    )
      );
     childrens := (t,V,O) -> select(V, v -> #(findSuffix(t|v,O)) == 1);
-    edgeset :=  {{1,prevert1}} | apply(vertset, v -> {v,childrens(v,vertset,obstructions)});
-    digraph(edgeset)   
+    edgeset :=  {{promote(1, (first gens G).ring),prevert1}} | apply(vertset, v -> {v,childrens(v,vertset,obstructions)})
+)
+
+nChains = method();
+nChains(ZZ,Digraph) := (n,G) -> ( 
+    R := (first (G.vertexSet)).ring;
+    P := findPaths(G, first(G.vertexSet),n);
+    apply(P,l -> fold(apply (drop(l,1), k -> toString ncMonomial (k, R)),concatenate))
+)
+
+needsPackage "Graphs"
+
+digraph NCGroebnerBasis := G -> (
+    digraph(edgesAnick(G),EntryMode => "neighbors")   
 )
 
 TEST ///
@@ -366,8 +547,17 @@ needsPackage "Graphs"
 A = QQ{x,y}
 I = ncIdeal(x^2 - y^2)
 G = twoSidedNCGroebnerBasisBergman(I)
+E = edgesAnick(G)
 
-digraph(G)
+--- vvv - depends on a working Graphs2 - vvv ---
+D = digraph(E,EntryMode => "neighbors")
+first (D.vertexSet)
+vertexSet D
+
+--- all paths of length 4 ---
+findPaths(D,first (D,vertexSet),4)
+--- verify... ---
+nChains(4,D)
 ///
 
 
