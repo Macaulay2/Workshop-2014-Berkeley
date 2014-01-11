@@ -968,15 +968,8 @@ FPT2VarHomogInternal (List,FTData) := opt -> (a,S) ->
 	else FPT2VarHomogNontrivial(a,S,MaxExp=>(opt.MaxExp))
 )
 
+-----------------------
 FPT2VarHomog = method(Options => {MaxExp => infinity})
-
---FPT2VarHomog(List,List)
---Given a list L={L_1,...,L_n} of linear forms in 2 variables and a list m={m_1,...,m_n}
---of multiplicities, FPT2VarHomog(L,m) returns the F-pure threshold of the polynomial 
---L_1^(m_1)*...*L_n^(m_n). 
-FPT2VarHomog (List,List) :=  opt -> (L,m) -> 
-    FPT2VarHomogInternal(m,setFTData(gens ring L_0,L),MaxExp=>(opt.MaxExp))
-
 
 --FPT2VarHomog(RingElement)
 --FPT(F) computes the F-pure threshold of a form F in two variables. 
@@ -999,6 +992,14 @@ FPT2VarHomog (RingElement) :=  opt ->  F ->
     (L,m):=toSequence transpose factorList(G);
     FPT2VarHomogNontrivial(m,setFTData(S_*,L),MaxExp=>(opt.MaxExp))
 )
+
+--FPT2VarHomog(List,List)
+--Given a list L={L_1,...,L_n} of linear forms in 2 variables and a list m={m_1,...,m_n}
+--of multiplicities, FPT2VarHomog(L,m) returns the F-pure threshold of the polynomial 
+--L_1^(m_1)*...*L_n^(m_n). 
+FPT2VarHomog (List,List) :=  opt -> (L,m) -> 
+    FPT2VarHomogInternal(m,setFTData(gens ring L_0,L),MaxExp=>(opt.MaxExp))
+
 
 {*
     Miscellaneous.
@@ -3067,19 +3068,26 @@ doc ///
 doc ///
      Key
      	truncation
+	(truncation,ZZ,QQ,ZZ)
+	(truncation,ZZ,List,ZZ)
      Headline
-        Gives the first e digits of the non-terminating base p expansion of x.
+        Truncations of base p expansions of rational numbers
      Usage
-     	 truncation(e,x,p)
+     	 t=truncation(e,x,p), T=truncation(e,X,p)
      Inputs 
-		e:ZZ
+	e:ZZ
 	x:QQ
 	p:ZZ
+	X:List
+	   which contains rational numbers
      Outputs
-         :List
+        t:QQ
+	    which is the e-th truncation of the non-terminating base p expansion of x
+	T:List
+	    which contains the e-th truncations of the entries of the list X
      Description
 	Text
-	     Gives the first e digits of the non-terminating base p expansion of x in [0,1], as a fraction.
+	     Gives the first e digits of the non-terminating base p expansion of a nonnegative rational number x, as a fraction; threads over lists of rational numbers.
 ///
 
 doc ///
@@ -3183,6 +3191,32 @@ doc ///
 	    Returns the largest exponent e such that p^e divides x.
 ///
 
+doc ///
+     Key
+     	FPT2VarHomog
+	(FPT2VarHomog,RingElement)
+	(FPT2VarHomog,List,List)
+     Headline
+        F-pure threshold of a form in two variables
+     Usage
+     	  fpt=FPT2VarHomog(G), fpt=FPT2VarHomog(factors,multiplicities)
+     Inputs 
+	factors:List
+	    which contains the linear factors of a form G in two variables 
+	multiplicities:List
+	    which contains the multiplicities of those linear factors in G
+	G:RingElement
+	    a form in two variables
+     Outputs
+        fpt:QQ
+     Description
+	Text
+	    FPT2VarHomog computes the F-pure threshold of a homogeneous polynomial G
+	    	in two variables. 
+	    The polynomial G can be entered directly, or if the user knows a factorization
+	    	G=L1^(a1)...Ln^(an) into linear forms, that can be used for improved 
+		performance: FPT2VarHomog({L1,...,Ln},{a1,...,an}).
+///
 
 
 end
