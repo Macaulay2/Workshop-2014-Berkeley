@@ -1,6 +1,6 @@
 --natural map from a module to its double dual courtesy of Frank Moore
 bidualityMap = method()
-bidualityMap := M -> (
+bidualityMap(Module) := M -> (
    R := ring M;
    Md := Hom(M,R^1);
    Mdd := Hom(Md,R^1);
@@ -42,8 +42,14 @@ augmentChainComplex =
 	  )
 augmentChainComplex (Module) := opts -> M -> (
      Q := resolution(M, LengthLimit => opts.LengthLimit);
-     augQ := Q;
-     augQ.dd_(0) = map(M, Q_0,id_(Q_0));
+--    augQ := Q;     
+     mapsList = ();
+     mapsList = append(mapsList, map(M, Q_0,id_(Q_0)));
+     for j from 1 to max Q do (
+	 f_j = Q.dd_j;
+	 mapsList = append(mapsList, f_j); );
+     augQ := chainComplex(mapsList)[1];
+--     augQ.dd_(0) = map(M, Q_0,id_(Q_0);
      augQ
 )
 
@@ -60,11 +66,11 @@ liftModuleMap (Module, Module, Matrix) := (N,M,A) -> (
 
 --version 3 is below, implementing a better way of constructing
 --the final chain complex map from the constructed pieces.
-constructionV3 = 
+buildCR = 
 method(TypicalValue => ChainComplex
      , Options => {LengthLimit => 2}
      )
-constructionV3 (ZZ,Module):= 
+buildCR (ZZ,Module):= 
      opts -> 
      (g,M) -> (
      if g <= 0
@@ -81,9 +87,9 @@ constructionV3 (ZZ,Module):=
      phi := Pd.dd_(-g+1)//h;
      toLiftSecondFactor := map (K, I, phi);
      kappa := toLiftSecondFactor * toLiftFirstFactor;
---     Pt := truncateComplex(g, P);
---     Ptd := dual Pt;
---     Q := Ptd[-(g-1)];
+     Pt := truncateComplex(g, P);
+     Ptd := dual Pt;
+     Q := Ptd[-(g-1)]; --this relates to the source of kappaLifted
      kappaLifted = liftModuleMap(kappa.target,kappa.source,kappa);
      w := map(G, P_g, id_(P_g));
      d := bidualityMap(G);
@@ -109,15 +115,17 @@ constructionV3 (ZZ,Module):=
     --put in the differentials
     for i from (g-1-max(g+2,n)) to g-1 do (
 	S.dd_i = Ld.dd_(-g+1+i);
-	);
---yields:stdio:118:20:(3): error: expected argument 1 to be a hash table    
+	);   
     for i from g+1 to max(g+2,n) do (
     	S.dd_i = P.dd_i;	
     	);
     S.dd_g = lambdaDual*d*w;
  --build the target of the chain complex map
---actually this is already built as it is P    
---build the maps between the source and target;
+-- T := new ChainComplex;
+-- T.ring = M.ring;
+--    for i from (g-1-max(g+2,n)) to g-1 do (
+--    T_i = Q_(-g+1
+    --build the maps between the source and target;
     --name the maps consistently
     for i from (g-1-max(g+2,n)) to g-1 do(
 	f_i = dual kappaLifted_(-g+1+i);
@@ -163,81 +171,45 @@ sign(ZZ) := j -> (
 
 end
 --------Test Code----------
+
+--test augmentChainComplex; it shouldn't override res M
 restart
 load "construction3-6v3.m2"
 R = QQ[x,y,z]/ideal(x*y*z)
-M = coker map(R^1,,{gens R})
+M = coker vars R
+P = res M
+Q = augmentChainComplex M
+P == Q --returns false, as desired
+
+restart
+load "construction3-6v3.m2"
+R = QQ[x,y,z]/ideal(x*y*z)
+M = coker vars R
 g = 3
 n = 5
-M = coker vars R
---This code here checks if the source and target of the f_i maps are what they should be
+C = buildCR(g,M) --the new output, as a hash table
+--for i from (g-1-max(g+2,n)) to max(g+2,n) do (
+--    print(i, C.ff#i)) --checks the syntax for calling the maps f_i
+CR = map(C.target, C.source, i -> C.ff#i)
+--This code here checks if the source and target of the 
+--f_i maps are what they should be; updated to reflect the
+--new output of buildCR as a hash table
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
-      print (i, source f_i === S_i, target f_i === P_i)
+      print (i, source C.ff#i === C.source_i, target C.ff#i === C.target_i)
       )
 --a less strict test;
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
-      print (i, source f_i == S_i, target f_i == P_i)
+      print (i, source C.ff#i == C.source_i, target C.ff#i == C.target_i)
       )  
 
+--a process to test the buildMaps and buildComplex code;
+--designed to create a chain complex using
+--map(ChainComplex,ChainComplex,Matrix) with only one interesteing
+--differential in the hope of narrowing down which differential(s)
+--is(/are) causing problems.
 mapsList = ()
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
     mapsList = append(mapsList,-(sign i)*(id_(R^1))))
 --    mapsList = append(mapsList,id_(R^(1))))
 mapsList
 P = chainComplex(mapsList)[g]
---P = chainComplex(mapsList)
-
---check that everything is ===
-
---====== \begin{old stuff}
-     cRes := id_(resolution (ring M)^0);     
-     --Jason's portion
-     for j from (g-1-max(g+2, n)) to g-1 do (
---     for j from (g-1-max(g+2)) to g-1 do (
---	  cRes.target_j = P_j;
-	  cRes.target.dd_j = P.dd_j;
---	  cRes.source_j = Ld_(g-1-j);
-	  cRes.source.dd_j = Ld.dd_(g-1-j); 
---	  cRes_j = kappaLifted_(g-1-j);
-	  );     
-     --Kat's portion
-     for i from g+1 to max(g+2,n) do (
---     for i from g+1 to max(g+n) do (
-	  cRes.source.dd_i=P.dd_i;
-	  cRes.target.dd_i=P.dd_i;
---	  cRes_i=id_(P_i);
-	  );
-     
-     --for portion in middle (i.e. the degree g part)
-     cRes.target.dd_g=P.dd_g;
-     cRes.source.dd_g=lambdaDual*d*w;
---     cRes_g=id_(P_g);
-     cRes
-     )
---=====\end{old stuff}     
-
-
--- example for testing constructionV3
-R = QQ[x,y,z]/ideal(x*y*z)
-M = coker map(R^1,,{gens R})
-g=3
-n=5
-C = constructionV3(g,M)
-P = resolution(M, LengthLimit=>max(g+2,n))
---neither C.source or C.target has differentials that square to 0.
---something is wrong. At least one source of the error is the following:
-  --i86 : for j from -4 to 5 do(
-  --	  print(j, source C.source.dd_j === source C.target.dd_(j+1))
-  --	  )
-  --(-4, true)
-  --(-3, true)
-  --(-2, true)
-  --(-1, true)
-  --(0, true)
-  --(1, false)
-  --(2, false)
-  --(3, false)
-  --(4, false)
-  --stdio:415:59:(3):[1]: error: wrong number of rows or columns
---Moreover, C.target should be exactly P = res M in all degrees;
---this fails for degrees less than g-1.

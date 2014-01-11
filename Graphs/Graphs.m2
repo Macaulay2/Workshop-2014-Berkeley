@@ -136,6 +136,7 @@ export {
     "distanceMatrix",
     "eccentricity",
     "edgeIdeal",
+    "findPaths",
     "floydWarshall",
     "forefathers",
     "girth",

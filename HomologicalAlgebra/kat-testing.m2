@@ -1,5 +1,4 @@
 --natural map from a module to its double dual courtesy of Frank Moore
-restart
 bidualityMap = M -> (
    R := ring M;
    Md := Hom(M,R^1);
@@ -36,21 +35,13 @@ truncateComplex(ZZ,ChainComplex) := (g,P) -> (
 	  )
 )
 
-
---version 3 is below, implementing a better way of constructing
---the final chain complex map from the constructed pieces.
-
--- example for testing constructionV2
-R = QQ[x,y,z]/ideal(x*y*z)
-M = coker map(R^1,,{gens R})
-g=3
-n=5
-
-constructionV3 = 
+--version 4 is below, it incorporates some of the previous methods
+--and also (hopefully) fixes the indexing issue.
+constructionV4 = 
 method(TypicalValue => ChainComplex
      , Options => {LengthLimit => 2}
      )
-constructionV3 (ZZ,Module):= 
+constructionV4 (ZZ,Module):= 
      opts -> 
      (g,M) -> (
      if g <= 0
@@ -60,17 +51,17 @@ constructionV3 (ZZ,Module):=
 --     P := resolution(M, LengthLimit=>g+2);
      G := omega(g,P);
      Pd := dual P;
-     toLiftFirstFactor := map(image(Pd.dd_(-g)), omega(1-g, Pd), id_(Pd_(1-g)));
-     K := kernel(Pd.dd_(-g-1));
-     I := image(Pd.dd_(-g));
+     toLiftFirstFactor := map(image(Pd.dd_(-g+1)), omega(1-g, Pd), id_(Pd_(1-g)));
+     K := kernel(Pd.dd_(-g));
+     I := image(Pd.dd_(-g+1));
      h := gens K;
-     phi := Pd.dd_(-g)//h;
+     phi := Pd.dd_(-g+1)//h;
      toLiftSecondFactor := map (K, I, phi);
      kappa := toLiftSecondFactor * toLiftFirstFactor;
      Pt := truncateComplex(g, P);
      Ptd := dual Pt;
      Q := Ptd[-(g-1)];
-     Qd = dual Q;
+--     Qd = dual Q;
 --     augP := P;
 --    augP.dd_(0) := map(M, P_0,id_(P_0)); for some reason,
 --    this gives an error if there's a colon, but not if it isn't there
@@ -81,7 +72,7 @@ constructionV3 (ZZ,Module):=
      augL := L;
      augL.dd_0 = map(Gd, L_0,id_(L_0));
      augLs = augL[-1];
-     kappaLifted := (extend(augLs,Qd,kappa))[1]
+     kappaLifted := (extend(augLs,Q,kappa))[1];
      --gives error maps not composable
      w := map(G, P_g, id_(P_g));
      d := bidualityMap(G);
@@ -89,44 +80,56 @@ constructionV3 (ZZ,Module):=
 --     L := resolution(Gd, LengthLimit => g+2);
     lambda := map(Gd, L_0, id_(L_0));
     lambdaDual := dual lambda; -- now implemented in M2 1.6
---here are the significant changes to version 3;
---build the source of the chain complex map
+-- here are the significant changes to version 3;
+-- build the source of the chain complex map
     S := new ChainComplex;
-    -- put in the ring
+-- put in the ring
     S.ring = M.ring;
-    --put in the modules
+-- put in the modules
     for i from (g-1-max(g+2,n)) to g-1 do (
 	S_i = Ld_(-g+1+i); 
 	);
     for i from g to max(g+2,n) do (
 	S_i = P_i;
 	);
-   -- S_g = P_g;
-    --put in the differentials
+-- S_g = P_g;
+--put in the differentials
     for i from (g-1-max(g+2,n)) to g-1 do (
 	S.dd_i = Ld.dd_(-g+1+i);
-	);
---yields:stdio:118:20:(3): error: expected argument 1 to be a hash table    
+	);  
     for i from g+1 to max(g+2,n) do (
     	S.dd_i = P.dd_i;	
     	);
     S.dd_g = lambdaDual*d*w;
- --build the target of the chain complex map
+--build the target of the chain complex map
 --actually this is already built as it is P    
---build the maps between the source and target;
-    --name the maps consistently
+--build the maps between the source and target
+--and name the maps consistently
     for i from (g-1-max(g+2,n)) to g-1 do(
-	f_i = dual kappaLifted_(i-(g-1));
+	f_i = dual kappaLifted_(-g+1+i);
 	);
     for i from g to max(g+2,n) do (
 	f_i = id_(P_i);
 	);
-    --make the chain complex map
+--make the chain complex map
     cRes := map (P,S,i-> f_i); 
     cRes
     )
 
+end
+
 --------Test Code----------
+restart
+load "kat-testing.m2"
+
+-- example for testing constructionV2
+R = QQ[x,y,z]/ideal(x*y*z)
+M = coker map(R^1,,{gens R})
+g=3
+n=5
+constructionV4(g,M)
+
+
 --This code here checks if the source and target of the f_i maps are what they should be
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
       print (i, source f_i === S_i, target f_i === P_i)
