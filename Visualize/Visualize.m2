@@ -555,7 +555,7 @@ loadPackage"Visualize"
 G = digraph({ {1,{2,3}} , {2,{3}} , {3,{1}}})
 A = adjacencyMatrix G
 keys(G#graph)
-visGraph G
+visDigraph G
 
 ----------------
 
