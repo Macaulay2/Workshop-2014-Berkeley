@@ -42,7 +42,7 @@ newPackage(
 
 
 export {PAdicField,
-     prime,
+     coefficientList,
      PAdicFieldElement,
      valuation,
      relativePrecision,
@@ -70,7 +70,7 @@ PAdicMatrix = new Type of MutableHashTable
 
 new PAdicField from List := (PAdicField, inits) -> new PAdicField of PAdicFieldElement from new HashTable from inits
 
-net PAdicField := A->"QQQ_"|toString(A#prime)
+net PAdicField := A->"QQQ_"|toString(A#"prime")
 
 QQQ=new ScriptedFunctor
 QQQ#subscript=i->(pAdicField i)
@@ -80,7 +80,7 @@ pAdicField ZZ:=(p)->(
      if not isPrime p then error(toString(p)|" is not a prime!");
      if PAdicFields#?p then return PAdicFields#p;
      R := ZZ;
-     A := new PAdicField from {(symbol prime) => p};
+     A := new PAdicField from {"prime"=> p};
      PAdicFields#p=A;
      A
 )
@@ -112,7 +112,7 @@ coarse(PAdicFieldElement,ZZ) := (a,prec) -> (
      )
 
 computeCarryingOver := (aKeys,aValues,prec,A) -> (
-     	  p:=A#prime;
+     	  p:=A#"prime";
 	  newKeys := ();
 	  newValues := ();
 	  carryingOver := 0;
@@ -164,7 +164,7 @@ toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
      if d==1 then (
 	  toPAdicFieldElement(n,prec,S)
 	  ) else (
-     	  p := S.prime;
+     	  p := S#"prime";
      	  nVal := pValuation(n,p);
      	  dVal := pValuation(d,p);
      	  rVal := nVal-dVal;
@@ -194,8 +194,13 @@ toString PAdicFieldElement := a->(expans:=a#"expansion";
   (toString keylist_i)|"+"))
 |"O(p^"|(toString(precision a))|")"))
 
+coefficientList = method ()
+coefficientList PAdicFieldElement := a->a#"expansion"_1
 
-precision PAdicFieldElement := a->a#"precision";
+exponents PAdicFieldElement := a->a#"expansion"_0
+
+
+precision PAdicFieldElement := a->a#"precision"
 
 valuation = method()
 valuation PAdicFieldElement := a->(if #(a#"expansion"_0)>0 then return min a#"expansion"_0;
@@ -245,7 +250,7 @@ PAdicFieldElement * PAdicFieldElement := (a,b)->(
 
 toPAdicInverse = method ()
 toPAdicInverse(List,PAdicField):= (L,A) -> (
-     	  p:=A#prime;
+     	  p:=A#"prime";
 	  n:=#L;
 	  i:=1;
 	  b := new IndexedVariableTable;
@@ -316,7 +321,7 @@ inverse PAdicFieldElement := a->(
  ZZ - PAdicFieldElement := (n,a)->(-a)+n
 
  PAdicFieldElement * ZZ := (a,n)->(
-      p:=(class a)#prime;
+      p:=(class a)#"prime";
       if n==0 then 0 else (
 	   v := pValuation(n,p);
 	   b := toPAdicFieldElement(n,v+relativePrecision a,class a);
@@ -327,7 +332,7 @@ inverse PAdicFieldElement := a->(
  ZZ * PAdicFieldElement := (n,a)->a*n
  
 PAdicFieldElement / ZZ := (a,n)->(
-     p:=(class a)#prime;
+     p:=(class a)#"prime";
      if n==0 then (
 	  error "You cannot divide by zero!";
 	  ) else (
@@ -517,6 +522,34 @@ document {
           }
 
 document {
+     Key => (exponents,PAdicFieldElement),
+     Inputs => {"a" => ofClass PAdicFieldElement},
+     Outputs => {"L" => ofClass List},
+     Usage => "exponents a",
+     Headline => "a method for returning the list of exponents of a p-adic number",
+     PARA {"returns a list of all powers of p with non-zero coefficients in increasing
+	  order, up to the  precision."},
+     EXAMPLE {"a = toPAdicFieldElement(12345,10,QQQ_3)",
+	  "exponents a"
+	    }
+     }
+
+document {
+     Key => {coefficientList,(coefficientList,PAdicFieldElement)},
+     Inputs => {"a" => ofClass PAdicFieldElement},
+     Outputs => {"L" => ofClass List},
+     Usage => "coefficients a",
+     Headline => "a method for returning the list of coefficients of a p-adic number",
+     PARA {"returns a list of all non-zero coefficients in the p-adic expansion of
+	   ",TT "a"," ordered by increasing powers of p, up to the 
+	  precision."},
+     EXAMPLE {"a = toPAdicFieldElement(12345,10,QQQ_3)",
+	  "coefficientList a"
+	    }
+     }
+
+
+document {
      Key => (net,PAdicField),
      Inputs => {"A" => ofClass PAdicField},
      Outputs => {"s" => ofClass Net},
@@ -535,6 +568,17 @@ document {
      PARA {"Gives a nice formatting of an element in a p-adic field, with the powers come in the line above the coefficients."},
      EXAMPLE {"a = toPAdicFieldElement(12345,10,QQQ_3)",
 	  "net a"}
+     }
+
+document {
+     Key => (toString,PAdicFieldElement),
+     Inputs => {"a" => ofClass PAdicFieldElement},
+     Outputs => {"s" => ofClass String},
+     Usage => "toString a",
+     Headline => "a method for converting an element in a p-adic field to a string",
+     PARA {"Converts an element in a p-adic field to a string."},
+     EXAMPLE {"a = toPAdicFieldElement(12345,10,QQQ_3)",
+	  "toString a"}
      }
 
 document {
