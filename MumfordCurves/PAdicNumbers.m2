@@ -1,7 +1,7 @@
 newPackage(
      "PAdicNumbers",
      Version => "0.1", 
-     Date => "Jan 9, 2013",
+     Date => "Jan 9, 2014",
      Authors => {{Name => "Nathan Ilten", 
 	       Email => "nilten@math.berkeley.edu", 
 	       HomePage => "http://http://math.berkeley.edu/~nilten/"},
