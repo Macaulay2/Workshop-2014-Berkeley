@@ -67,7 +67,6 @@
         height:220px;
         background-color:#000000;
         opacity:.6;
-        z-index: 5;
 
       }
 
@@ -95,7 +94,8 @@
       #canvasElement2d {
         background-color: #FFF;
         cursor: default;
-        display:block;
+        display:inline;
+        z-index:2;
       }
 
       #canvasElement2d:not(.active):not(.shift) {
@@ -149,15 +149,16 @@
         background-color: #FFF;
         cursor: default;
         display:none;
+        z-index: 0;
       }
       #constructorString {
-
+        z-index: 10;
       }
       #incString {
-
+        z-index: 10;
       }
       #adjString {
-
+        z-index: 10;
       }
     </style>
     <script type="text/javascript">
@@ -227,30 +228,40 @@
                 var c = document.getElementById("moreOptions");
                 c.onclick = function() {
                     //resetGraph();
-                    document.getElementById("popupMenu").style.display = "block";
+                    document.getElementById("popupMenu").style.display = "inline";
                     menuOpen = true;
                 }
 
-                //start with 2d
+                //load both 2d and 3d canvas, start with 2d
                 initializeBuilder();
                 disableEditing();
+                initializeBuilder3d();
+                generateGraph();
             }
 
     function switchTo2d() {
+      stopThree();
+      
+      document.getElementById("canvasElement3d").style.display = "none";
+      document.getElementById("canvasElement3d").style.zIndex = 0;
+      document.getElementById("canvasElement2d").style.display = "inline";
+      document.getElementById("canvasElement2d").style.zIndex = 2;
+      document.getElementById("tdToggle").innerHTML = "switch to 3d";
+
+      startForce();
+
 
     }
     function switchTo3d() {
 
       stopForce();
       document.getElementById("canvasElement2d").style.display = "none";
-      document.getElementById("canvasElement2d").style.zIndex = -1;
-      document.getElementById("canvasElement3d").style.display = "block";
-      document.getElementById("canvasElement3d").style.zIndex = 5;
+      document.getElementById("canvasElement2d").style.zIndex = 0;
+      document.getElementById("canvasElement3d").style.display = "inline";
+      document.getElementById("canvasElement3d").style.zIndex = 2;
+      document.getElementById("tdToggle").innerHTML = "switch to 2d";
 
-      curView = "3d";
-      initializeBuilder3d();
-      generateGraph();
-      runIt();
+      startThree();
 
       
     }
