@@ -14,7 +14,8 @@ offset = new THREE.Vector3(),
 projector = new THREE.Projector(),
 objectSelected, objectIntersected,
 plane = null,
-currentObject = null;
+currentObject = null,
+rendering = false;
 
 function getRandomColor() {
     var letters = '0123456789ABCDEF'.split('');
@@ -114,9 +115,9 @@ function generateGraph() {
         }
     }
 
+    updateLabels();
 
-
-    }
+}
 
     function node(n, c) {
         this.color = c;
@@ -193,8 +194,6 @@ function generateGraph() {
         for (var i = 0; i < nodes3d.length; i++) {
             curNode = nodes3d[i];
             var scalar = 20 / Math.sqrt(Math.pow(scaledDownCameraX - curNode.x, 2) + Math.pow(scaledDownCameraY - curNode.y, 2) +  Math.pow(scaledDownCameraZ - curNode.z, 2) );
-            
-            console.log("huur\n");
             console.log(curNode);
             curNode.label.position.x = curNode.x - (scalar * (-scaledDownCameraX + curNode.x));
             curNode.label.position.y = curNode.y - (scalar * (-scaledDownCameraY + curNode.y));
@@ -427,14 +426,22 @@ function onMouseMove( event ) {
 
 function runIt() {
    // Render the scene
+    if (rendering) {
+        requestAnimationFrame(runIt);
+    }
    
-   requestAnimationFrame(runIt);
-   
-   
-   renderer.render( scene, camera );
+    renderer.render( scene, camera );
 
-   controls.update();
+    controls.update();
    
+}
+
+function startThree() {
+    rendering = true;
+    runIt();
+}
+function stopThree() {
+    rendering = false;
 }
 
 
