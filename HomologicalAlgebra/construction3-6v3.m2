@@ -101,15 +101,16 @@ buildCR (ZZ,Module):=
      phi := Pd.dd_(-g+1)//h;
      toLiftSecondFactor := map (K, I, phi);
      kappa := toLiftSecondFactor * toLiftFirstFactor;
+     Gd = dual G;
+     kappa' := map(Gd, , kappa); 
+     --replace kappa rather than rework other source and target issues.
      Pt := truncateComplex(g, P);
      Ptd := dual Pt;
      Q := Ptd[-(g-1)]; --this relates to the source of kappaLifted
-     	       	       --not currrently used
-     		       
-     kappaLifted = liftModuleMap(kappa.target,kappa.source,kappa);
+     kappaLifted = liftModuleMap(kappa.target,augmentChainComplex(Q),kappa);
+--     kappaLifted = liftModuleMap(kappa.target,kappa.source,kappa);
      w := map(G, P_g, id_(P_g));
      d := bidualityMap(G);
-     Gd := dual G;
      L := resolution(Gd, LengthLimit => max(g+2, n));
      Ld := dual L;
 --     L := resolution(Gd, LengthLimit => g+2);
