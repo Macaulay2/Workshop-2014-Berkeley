@@ -53,6 +53,20 @@ augmentChainComplex (Module) := opts -> M -> (
      augQ
 )
 
+--a new method which takes the chain complex as input and outputs the
+--complex obtained by augmenting the complex with HH_0 in degree -1,
+--then shft.
+augmentChainComplex (ChainComplex) := C -> (
+     mapsList = ();
+     mapsList = append(mapsList, map(HH_0(Q), Q_0,id_(Q_0)));
+     for j from 1 to max Q do (
+	 f_j = Q.dd_j;
+	 mapsList = append(mapsList, f_j); );
+     augQ := chainComplex(mapsList)[1];
+--     augQ.dd_(0) = map(M, Q_0,id_(Q_0);
+     augQ
+)
+
 -- given a map between modules, lift the map to a chain map between
 -- the resolutions
 liftModuleMap = method(TypicalValue => ChainComplexMap)
@@ -90,6 +104,8 @@ buildCR (ZZ,Module):=
      Pt := truncateComplex(g, P);
      Ptd := dual Pt;
      Q := Ptd[-(g-1)]; --this relates to the source of kappaLifted
+     	       	       --not currrently used
+     		       
      kappaLifted = liftModuleMap(kappa.target,kappa.source,kappa);
      w := map(G, P_g, id_(P_g));
      d := bidualityMap(G);
