@@ -192,7 +192,7 @@ buildCR (ZZ,Module):= opts -> (g,M) -> (
 --	f_i = map(T_i,S_i, 0*(dual kappaLifted_(-g+1+i)));
 --    );
     for i from (g-1-max(g+2,n)) to g-1 do(
-	f_i = dual kappaLifted_(-g+1+i);
+	f_i = dual kappaLifted_(g-i-1);
     );	
     for i from g to max(g+2,n) do (
 	f_i = id_(P_i);
@@ -208,9 +208,12 @@ for i from (g-1-max(g+2,n)) to max(g+2,n) do (
     );
 --==============================
 --Step 8: make the chain complex map    
---    cRes := map (P,S,i-> f_i); 
---    cRes
-output
+    cRes := map (T,S,i-> null); 
+for i from (g-1-max(g+2,n)) to max(g+2,n) do (
+    cRes_i = f_i
+    );    
+    cRes
+--output
     )
 
 buildMaps = method()
@@ -252,7 +255,7 @@ R = QQ[x,y,z]/ideal(x*y*z)
 M = coker vars R
 g = 3
 n = 5
-C = buildCR(g,M) --the new output, as a hash table
+C = buildCR(g,M) --the output, as a chain complex map
 --for i from (g-1-max(g+2,n)) to max(g+2,n) do (
 --    print(i, C.ff#i)) --checks the syntax for calling the maps f_i
 CR = map(C.target, C.source, i -> C.ff#i)
