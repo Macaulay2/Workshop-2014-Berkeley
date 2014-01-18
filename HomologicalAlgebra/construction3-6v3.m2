@@ -146,22 +146,22 @@ buildCR (ZZ,Module):= opts -> (g,M) -> (
     lambda := map(Gd, E_0, id_(E_0));
 --Step 3.2: combine
     alpha := (dual lambda)*d*w;
---Step 3.3: adjust source and target     
+--Step 3.3: adjust source and target, might not be necessary
     alpha' := map((dual E_0),P_g,alpha);
---============================     
+--============================
 --Step 4: build the source of the chain complex map
     S := new ChainComplex;
     S.ring = M.ring;
 --Step 4.1: build the modules    
     for i from (g-1-max(g+2,n)) to g-1 do (
-	S_i = dual E_(-g+1+i); 
+	S_i = dual E_(g-i-1); 
     );
     for i from g to max(g+2,n) do (
 	S_i = P_i;
     );
 --Step 4.2: build the differentials
     for i from (g-1-max(g+2,n)) to g-1 do (
-	S.dd_i = dual E.dd_(-g+2+i);
+	S.dd_i = dual E.dd_(g-i);
     );   
     for i from g+1 to max(g+2,n) do (
     	S.dd_i = P.dd_i;	
@@ -173,27 +173,30 @@ buildCR (ZZ,Module):= opts -> (g,M) -> (
     T.ring = M.ring;
 --Step 5.1: build the modules        
     for i from (g-1-max(g+2,n)) to g-1 do (
-    	T_i = (dual D_(-g+1+i));
+    	T_i = (dual D_(g-i-1));
     );
     for i from g to max(g+2,n) do (
 	T_i = P_i;
     );
 --Step 5.2: build the differentials
     for i from (g-1-max(g+2,n)) to g-1 do (
-	T.dd_i = dual D.dd_(-g+2+i);
+	T.dd_i = dual D.dd_(g-i);
     );   
     for i from g+1 to max(g+2,n) do (
     	T.dd_i = P.dd_i;	
     );
-    T.dd_g = map(T_0,P_g,P.dd_g);
+    T.dd_g = map(T_(g-1),P_g,P.dd_g);
 --=============================
 --Step 6: build the maps between the source and target
+--    for i from (g-1-max(g+2,n)) to -1 do(
+--	f_i = map(T_i,S_i, 0*(dual kappaLifted_(-g+1+i)));
+--    );
     for i from (g-1-max(g+2,n)) to g-1 do(
 	f_i = dual kappaLifted_(-g+1+i);
-	);
+    );	
     for i from g to max(g+2,n) do (
 	f_i = id_(P_i);
-	);
+    );
 --==============================    
 --Step 7: output T, S, and f_i as a hash table
 output := new MutableHashTable;
@@ -240,7 +243,7 @@ load "construction3-6v3.m2"
 R = QQ[x,y,z]/ideal(x*y*z)
 M = coker vars R
 P = res M
-Q = augmentChaComplex M
+Q = augmentChainComplex M
 P == Q --returns false, as desired
 
 restart
