@@ -69,13 +69,29 @@ augmentChainComplex (ChainComplex) := C -> (
 
 -- given a map between modules, lift the map to a chain map between
 -- the resolutions
-liftModuleMap = method(TypicalValue => ChainComplexMap)
-liftModuleMap (Module, Module, Matrix) := (N,M,A) -> (
-     Q := (augmentChainComplex N)[-1];
-     P := (augmentChainComplex M)[-1];
+liftModuleMap = method(TypicalValue => ChainComplexMap, Options => {LengthLimit => 2})
+liftModuleMap (Module, Module, Matrix) := opts ->(N,M,A) -> (
+     n := opts.LengthLimit;
+     Q := (augmentChainComplex(N, LengthLimit => n))[-1];
+     P := (augmentChainComplex(M, LengthLimit => n))[-1];
      tempLift := (extend(Q,P,A))[1]; 
 --     tempLift_0 = 0*tempLift_0;
      tempLift
+     )
+ 
+ specialAugmentChainComplex = method(TypicalValue => ChainComplex);
+ specialAugmentChainComplex (Module,ChainComplex) := (M,C) -> (
+     if not (prune M)== (prune (coker C.dd_1)) then error "expected module
+     to be the homology in degree 0";
+     if not min C==0 then error "expected complex concentrated 
+     in non-negative degrees";
+     mapsList = ();
+     mapsList = append(mapsList, map(M, C_0,id_(C_0)));
+     for j from 1 to max C do (
+	 f_j = C.dd_j;
+	 mapsList = append(mapsList, f_j); );
+     augC := chainComplex(mapsList);
+     augC
      )
 
 --version 3 is below, implementing a better way of constructing
@@ -90,31 +106,56 @@ buildCR (ZZ,Module):=
      if g <= 0
      then error "expected g>0 for a syzygy of positive degree";
      n:= opts.LengthLimit;
+--======================     
+--Step 1: construct kappa
+--Step 1.1: construct Q     
      P := resolution(M, LengthLimit=>max(n,g+2));
---     P := resolution(M, LengthLimit=>g+2);
-     G := omega(g,P);
      Pd := dual P;
+     Pt := truncateComplex(g, P);
+     Ptd := dual Pt;
+     Q := Ptd[-(g-1)];
+--Step 1.2: construct L
+     G := omega(g,P);
+     Gd = dual G;
+     L := resolution(Gd, LengthLimit => max(g+2, n));
+--Step 1.3: construct the natural surjection; factor 1     
      toLiftFirstFactor := map(image(Pd.dd_(-g+1)), omega(1-g, Pd), id_(Pd_(1-g)));
+--Step 1.4: construct the natural injection
      K := kernel(Pd.dd_(-g));
      I := image(Pd.dd_(-g+1));
      h := gens K;
      phi := Pd.dd_(-g+1)//h;
      toLiftSecondFactor := map (K, I, phi);
+--and construct kappa.     
      kappa := toLiftSecondFactor * toLiftFirstFactor;
-     Gd = dual G;
-     kappa' := map(Gd, , kappa); 
-     --replace kappa rather than rework other source and target issues.
-     Pt := truncateComplex(g, P);
-     Ptd := dual Pt;
-     Q := Ptd[-(g-1)]; --this relates to the source of kappaLifted
-     kappaLifted = liftModuleMap(kappa.target,augmentChainComplex(Q),kappa);
---     kappaLifted = liftModuleMap(kappa.target,kappa.source,kappa);
+--end of Step 1.
+--=========================
+--Step 2: lift kappa
+--Step 2.1: build source of lifting
+     D = truncateComplex(g,resolution(source kappa, LengthLimit => g));
+--Step 2.1.1: augment with source kappa
+     D' = specialAugmentChainComplex(source kappa, D);
+--Step 2.2: build target of lifting
+     E = resolution(target kappa, LengthLimit => max(g+2, n));
+--Step 2.2.1: augment with target kappa
+     E' = specialAugmentChainComplex(target kappa, E);
+--and lift kappa     
+     kappaLifted = extend(E', D', kappa)[1];
+--end of Step 2.
+--==========================
+--Step 3: build the degree g differential
+--Step 3.1: build the factors
      w := map(G, P_g, id_(P_g));
      d := bidualityMap(G);
-     L := resolution(Gd, LengthLimit => max(g+2, n));
-     Ld := dual L;
+     lambda := map(Gd, E_0, id_(E_0));
+--Step 3.2: combine
+     alpha := (dual lambda)*d*w;
+--Step 3.3: adjust source and target     
+     alpha' := map((dual E_0),P_g,alpha)
+--end of step 3.
+--============================     
 --     L := resolution(Gd, LengthLimit => g+2);
-    lambda := map(Gd, L_0, id_(L_0));
+
     lambdaDual := dual lambda; -- now implemented in M2 1.6
 --here are the significant changes to version 3;
 --build the source of the chain complex map
@@ -138,10 +179,11 @@ buildCR (ZZ,Module):=
     	);
     S.dd_g = lambdaDual*d*w;
  --build the target of the chain complex map
--- T := new ChainComplex;
--- T.ring = M.ring;
---    for i from (g-1-max(g+2,n)) to g-1 do (
---    T_i = Q_(-g+1
+T := new ChainComplex;
+T.ring = M.ring;
+for i from (g-1-max(g+2,n)) to g-1 do (
+T_i = (dual Q_(-g+1+i));
+
     --build the maps between the source and target;
     --name the maps consistently
     for i from (g-1-max(g+2,n)) to g-1 do(
@@ -150,12 +192,11 @@ buildCR (ZZ,Module):=
     for i from g to max(g+2,n) do (
 	f_i = id_(P_i);
 	);
-
 --output P, S, and f_i as a hash table
 output := new MutableHashTable;
 output.ff = new MutableHashTable;
 output.source = S;
-output.target = P;
+output.target = T;
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
     output.ff#i = f_i
     );
@@ -195,7 +236,7 @@ load "construction3-6v3.m2"
 R = QQ[x,y,z]/ideal(x*y*z)
 M = coker vars R
 P = res M
-Q = augmentChainComplex M
+Q = augmentChaComplex M
 P == Q --returns false, as desired
 
 restart
