@@ -55,9 +55,8 @@ augmentResolution (Module,ChainComplex) := (M,C) -> (
 
 --latest version of consruction 3.6
 buildCR = 
-method(TypicalValue => ChainComplex
-    , Options => {LengthLimit => 2}
-    )
+method(TypicalValue => ChainComplex, 
+    Options => {LengthLimit => 2})
 buildCR (ZZ,Module):= opts -> (g,M) -> (
     if g <= 0
     then error "expected g>0 for a syzygy of positive degree";
