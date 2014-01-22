@@ -34,14 +34,14 @@ export {
 
 {*
 	To do:
-	- add various other constructors (contructors accepting incidence matrix (done), list of edges (done))
-	- overload the net function for the Hypergraph class
+	- Add various other constructors (contructors accepting incidence matrix (done), list of edges (done), constructors accepting input similar to the EdgeIdeal hypergraph constructor input)
+	- Overload the net function for the Hypergraph class
 	- Add accessors:
-		- vertices(Hypergraph)
-		- edges(Hypergraph)
-		- incidenceMatrix(Hypergraph)
-		- neighbors(Hypergraph, vertex)
-
+		- vertices(Hypergraph)			- done
+		- edges(Hypergraph)				- done
+		- incidenceMatrix(Hypergraph)	- done
+		- neighbors(Hypergraph, vertex) - done
+		
 	Functions We Might Want to Include:
 	From EdgeIdeals:
 	- chromaticNumber
