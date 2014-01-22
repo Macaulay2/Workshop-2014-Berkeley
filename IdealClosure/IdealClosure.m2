@@ -346,9 +346,8 @@ rees0ring := kk[symbnew,
 ------------------------------------------------------------------------------------
 -- set up local generator function variable t for rees(I)---------------------------
 ------------------------------------------------------------------------------------
---t:=getSymbol "t";
-     rt := kk{t};
-     use rt;
+symbt:="t";
+     rt := kk{symbt};
 ------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------
 rees0quotientring := tensor(rt,
@@ -357,7 +356,7 @@ rees0quotientring := tensor(rt,
 use rees0quotientring;		
 newreesideal := ideal(for i to #I-1 list 
                        sub(I#i,rees0quotientring)
-                       -rees0quotientring_(#gens(R)+i+1)*t
+                       -rees0quotientring_(#gens(R)+i+1)*rees0quotientring_0
                     );
 ------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------
@@ -419,7 +418,7 @@ newreesquotientring = tensor(rt,
        newreesideal = sub(oldreesideal,newreesquotientring)+
                       ideal(for i to #Inew-1 list 
                          sub(Inew#i,newreesquotientring)
-                         -newreesquotientring_(#gens(oldreesring)+i+1)*(sub(t,newreesquotientring))^k
+                         -newreesquotientring_(#gens(oldreesring)+i+1)*(newreesquotientring_0)^k
                       );
                Gnew = gens gb newreesideal;
 ------------------------------------------------------------------------------------
@@ -539,17 +538,18 @@ document {
                "J := {y93^4+x44^3*x40^6}",
                "I := {x44,x40}",
                "rr := qthReesAlgebra(wt,R,J,I)",
+	       "use ring(rr_(0,0))",
                "(y93^2*x44*x40)%rr"
 	 },
      SeeAlso => {reesAlgebra},
-	 Subnodes => {
-        "Options",
-		TO "Exponent",
-		TO "Idealsize",
-		TO "Modulesize",
-		TO "Units",
-		TO "Verb"
-    },
+--	 Subnodes => {
+--        "Options",
+--		TO "Exponent",
+--		TO "Idealsize",
+--		TO "Modulesize",
+--		TO "Units",
+--		TO "Verb"
+--    },
     PARA { "The integral closure of ideals paper contains 
 	   a non-homogeneous version of the classical Rees algebra.
 	   This has the map defining the ideal internal to it,
