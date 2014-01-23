@@ -51,6 +51,7 @@ export{
      "FPT2VarHomog",     
      "frobeniusPower",
      "fSig",
+     "FullMap",--specifies whether the full data should be returned
      "guessFPT",
 	"HSL",
      "isBinomial",
@@ -1144,9 +1145,10 @@ ethRootSafe = (f, I, a, e) -> (
 	
 	expOfA := basePExpMaxE(aRem,p1,e); --this gives "a base p", with the left-most term the smallest "endian".
 	
-	IN1 := I*ideal(f^(expOfA#0));
+	IN1 := I;
 	
 	if (e > 0) then (
+		IN1 = IN1*ideal(f^(expOfA#0));
 		IN1 = ethRoot(IN1, 1);
 		i := 1;
 	
@@ -1910,28 +1912,55 @@ sigmaAOverPEMinus1QGor  ={HSL=> false}>> o -> (fk, a1, e1, gg) -> (
 --This function computes the parameter test module of a ring, it returns it as a submodule of a canonical ideal.
 --this is a slightly modified function originally written by Moty Katzman for "Parameter test ideals of Cohen Macaulay rings"
 --it returns the lift of the canonical module to the ambient ring
-canonicalIdeal = (R1) -> (
+
+canonicalIdeal ={FullMap=> false} >> o -> (R1) -> (
 	S1 := ambient R1;
 	I1 := ideal(R1);
 	d1 := (dim S1) - (dim R1);
+	local answer2;
 	
-	canModuleMatrix := relations(prune( Ext^d1(S1^1/I1, S1^1)));
+	degShift := sum degrees S1;
+	
+	canModuleMatrix := relations(prune( Ext^d1(S1^1/I1, S1^{degShift})));
 	
 	answer:=0;
 	s1:=syz transpose substitute(canModuleMatrix,R1);
 	s2:=entries transpose s1;
-	use S1;
+	--use S1;
 	apply(s2, t->
 	{
 		s3:=substitute(syz gens ideal t,S1);
 ---		print(s3%canModuleMatrix);
 		if ((s3%canModuleMatrix)==0) then
 		{
+			answer2 = t;
 			answer=substitute(mingens ideal t,S1);
 			break;
 		};
 	});
-ideal answer
+	
+	if (o.FullMap == true) then (ideal answer, map(R1^1, coker(canModuleMatrix**R1), matrix {answer2}), canModuleMatrix) else ideal answer
+)
+
+moduleToIdeal = (M1, R1) -> (--turns a module to an ideal of a ring, it returns the lift of the ideal to the ambient ring
+	S1 := ambient R1;
+	myMatrix := substitute(relations prune M1, S1);
+	
+	answer:=0;
+	s1:=syz transpose substitute(myMatrix,R1);
+	s2:=entries transpose s1;
+	
+	apply(s2, t->
+	{
+		s3:=substitute(syz gens ideal t,S1);
+---		print(s3%canModuleMatrix);
+		if ((s3%myMatrix)==0) then
+		{
+			answer=substitute(mingens ideal t,S1);
+			break;
+		};
+	});
+	ideal answer	
 )
 
 --the following function computes the u of a canonical ideal in a polynomial ring
@@ -2246,9 +2275,7 @@ estFPT={FinalCheck=> true, Verbose=> false, MultiThread=>false, DiagonalCheck=>t
 
 --isFPTPoly, determines if a given rational number is the FPT of a pair in a polynomial ring. 
 --if Origin is specified, it only checks at the origin. 
---********************************************
---	--this needs to be changed to call ethRootSafe more frequently.  In particular, it shouldn't compute mySigma and myTau in general at least if the exponenets being considered are as big as they are...
---********************************************
+
 isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
 	pp := char ring f1;
 	if (o.Origin == true) then org := ideal(vars (ring f1));
@@ -2258,7 +2285,53 @@ isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
 	bb := funList#1;
 	cc := funList#2;
 	mySigma := ideal(f1);
+	myTau := ideal(sub(1, ring f1));
+	myA := aa;
+	myA2 := 0;
+	
+	if (cc != 0) then (
+		myA = floor(aa / (pp^cc - 1));
+		myTau = tauPoly( f1, (aa%(pp^cc-1))/(pp^cc-1) )
+	);
+	
+	if (o.Verbose==true) then print "higher tau Computed";
+
+	--first we check whether this is even a jumping number.
+	if (cc == 0) then (
+		myA2 = aa-1;
+		mySigma = sigmaAOverPEMinus1Poly(f1, (pp-1), 1)
+	)
+	else (
+		myA2 = floor((aa-1)/(pp^cc-1));
+		mySigma = (sigmaAOverPEMinus1Poly(f1, ((aa-1)%(pp^cc-1))+1, cc))
+	);
+	if (o.Verbose==true) then print "higher sigma Computed";
+
+	returnValue := false;
+	
+	if ( isSubset(ideal(sub(1, ring f1)), ethRootSafe(f1, mySigma, myA2, bb) )) then (
+		if (o.Verbose==true) then print "we know t1 <= FPT";
+		if (not isSubset(ideal(sub(1, ring f1)), ethRootSafe(f1, myTau, myA, bb) ))  then returnValue = true 
+	);
+		
+	returnValue
+)
+
+
+--********************************************
+--	--This next function should be deleted, it is just here for now for comparison
+--********************************************
+isFPTPolyOld ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> ( --this is obsolete
+	pp := char ring f1;
+	if (o.Origin == true) then org := ideal(vars (ring f1));
+	funList := divideFraction(t1, pp);
+	--this writes t1 = a/(p^b(p^c-1))
+	aa := funList#0;
+	bb := funList#1;
+	cc := funList#2;
+	mySigma := ideal(f1);
 	myTau := tauPoly(f1, t1*pp^bb);
+	
 	if (o.Verbose==true) then print "higher tau Computed";
 
 	--first we check whether this is even a jumping number.
@@ -2289,7 +2362,12 @@ isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
 	returnValue
 )
 
+
+
 --isFJumpingNumberPoly determines if a given rational number is an F-jumping number
+--***************************************************************************
+--This needs to be speeded up, like the above function
+--***************************************************************************
 isFJumpingNumberPoly ={Verbose=> false}>> o -> (f1, t1) -> (
 	pp := char ring f1;
 	funList := divideFraction(t1, pp);

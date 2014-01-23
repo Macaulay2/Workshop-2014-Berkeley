@@ -301,11 +301,8 @@ visGraph(Graph) := opts -> G -> (
     	copyJS(replace(baseFilename visTemp, "", visTemp), Warning => opts.Warning); -- Copy the javascript libraries to the temp folder.
       );
     
-    
     searchReplace("visArray",arrayString, visTemp); -- Replace visArray in the visGraph html file by the adjacency matrix.
     searchReplace("visLabels",vertexString, visTemp); -- Replace visLabels in the visGraph html file by the ordered list of vertices.
-
-
     
     show new URL from { "file://"|visTemp };
     
@@ -344,20 +341,18 @@ visDigraph(Digraph) := opts -> G -> (
 
     if opts.VisPath =!= null 
     then (
-	visTemp = copyTemplate(opts.VisTemplate, opts.VisPath); -- Copy the visGraph template to a temporary directory.
+	visTemp = copyTemplate(opts.VisTemplate, opts.VisPath); -- Copy the visDigraph template to a temporary directory.
     	copyJS(opts.VisPath, Warning => opts.Warning); -- Copy the javascript libraries to the temp folder.
 --	visTemp = copyTemplate(opts.VisTemplate|"3D.html",opts.VisPath);
 --	copyJS(opts.VisPath, Warning => opts.Warning);	    
       )
     else (
-	visTemp = copyTemplate(opts.VisTemplate); -- Copy the visGraph template to a temporary directory.
+	visTemp = copyTemplate(opts.VisTemplate); -- Copy the visDigraph template to a temporary directory.
     	copyJS(replace(baseFilename visTemp, "", visTemp), Warning => opts.Warning); -- Copy the javascript libraries to the temp folder.
       );
-    
 
-
-    searchReplace("visArray",arrayString, visTemp); -- Replace visArray in the visGraph html file by the adjacency matrix.
-    searchReplace("visLabels",vertexString, visTemp); -- Replace visLabels in the visGraph html file by the ordered list of vertices.
+    searchReplace("visArray",arrayString, visTemp); -- Replace visArray in the visDigraph html file by the adjacency matrix.
+    searchReplace("visLabels",vertexString, visTemp); -- Replace visLabels in the visDigraph html file by the ordered list of vertices.
     
     show new URL from { "file://"|visTemp };
     

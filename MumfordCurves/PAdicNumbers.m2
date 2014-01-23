@@ -1,7 +1,7 @@
 newPackage(
-     "PAdic",
+     "PAdicNumbers",
      Version => "0.1", 
-     Date => "Jan 9, 2013",
+     Date => "Jan 9, 2014",
      Authors => {{Name => "Nathan Ilten", 
 	       Email => "nilten@math.berkeley.edu", 
 	       HomePage => "http://http://math.berkeley.edu/~nilten/"},
@@ -42,7 +42,7 @@ newPackage(
 
 
 export {PAdicField,
-     prime,
+     coefficientList,
      PAdicFieldElement,
      valuation,
      relativePrecision,
@@ -70,7 +70,7 @@ PAdicMatrix = new Type of MutableHashTable
 
 new PAdicField from List := (PAdicField, inits) -> new PAdicField of PAdicFieldElement from new HashTable from inits
 
-net PAdicField := A->"QQQ_"|toString(A#prime)
+net PAdicField := A->"QQQ_"|toString(A#"prime")
 
 QQQ=new ScriptedFunctor
 QQQ#subscript=i->(pAdicField i)
@@ -80,7 +80,7 @@ pAdicField ZZ:=(p)->(
      if not isPrime p then error(toString(p)|" is not a prime!");
      if PAdicFields#?p then return PAdicFields#p;
      R := ZZ;
-     A := new PAdicField from {(symbol prime) => p};
+     A := new PAdicField from {"prime"=> p};
      PAdicFields#p=A;
      A
 )
@@ -112,7 +112,7 @@ coarse(PAdicFieldElement,ZZ) := (a,prec) -> (
      )
 
 computeCarryingOver := (aKeys,aValues,prec,A) -> (
-     	  p:=A#prime;
+     	  p:=A#"prime";
 	  newKeys := ();
 	  newValues := ();
 	  carryingOver := 0;
@@ -164,7 +164,7 @@ toPAdicFieldElement(QQ,ZZ,PAdicField) := (r,prec,S) -> (
      if d==1 then (
 	  toPAdicFieldElement(n,prec,S)
 	  ) else (
-     	  p := S.prime;
+     	  p := S#"prime";
      	  nVal := pValuation(n,p);
      	  dVal := pValuation(d,p);
      	  rVal := nVal-dVal;
@@ -194,8 +194,13 @@ toString PAdicFieldElement := a->(expans:=a#"expansion";
   (toString keylist_i)|"+"))
 |"O(p^"|(toString(precision a))|")"))
 
+coefficientList = method ()
+coefficientList PAdicFieldElement := a->a#"expansion"_1
 
-precision PAdicFieldElement := a->a#"precision";
+exponents PAdicFieldElement := a->a#"expansion"_0
+
+
+precision PAdicFieldElement := a->a#"precision"
 
 valuation = method()
 valuation PAdicFieldElement := a->(if #(a#"expansion"_0)>0 then return min a#"expansion"_0;
@@ -245,7 +250,7 @@ PAdicFieldElement * PAdicFieldElement := (a,b)->(
 
 toPAdicInverse = method ()
 toPAdicInverse(List,PAdicField):= (L,A) -> (
-     	  p:=A#prime;
+     	  p:=A#"prime";
 	  n:=#L;
 	  i:=1;
 	  b := new IndexedVariableTable;
@@ -316,7 +321,7 @@ inverse PAdicFieldElement := a->(
  ZZ - PAdicFieldElement := (n,a)->(-a)+n
 
  PAdicFieldElement * ZZ := (a,n)->(
-      p:=(class a)#prime;
+      p:=(class a)#"prime";
       if n==0 then 0 else (
 	   v := pValuation(n,p);
 	   b := toPAdicFieldElement(n,v+relativePrecision a,class a);
@@ -327,7 +332,7 @@ inverse PAdicFieldElement := a->(
  ZZ * PAdicFieldElement := (n,a)->a*n
  
 PAdicFieldElement / ZZ := (a,n)->(
-     p:=(class a)#prime;
+     p:=(class a)#"prime";
      if n==0 then (
 	  error "You cannot divide by zero!";
 	  ) else (
@@ -491,7 +496,7 @@ henselApproximation (RingElement,ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
 beginDocumentation()
 
 document {
-     Key => PAdic,
+     Key => PAdicNumbers,
      Headline => "a package for p-adic numbers",
      PARA{
     "This package facilitates basic computations with p-adic numbers, including
@@ -517,6 +522,34 @@ document {
           }
 
 document {
+     Key => (exponents,PAdicFieldElement),
+     Inputs => {"a" => ofClass PAdicFieldElement},
+     Outputs => {"L" => ofClass List},
+     Usage => "exponents a",
+     Headline => "a method for returning the list of exponents of a p-adic number",
+     PARA {"returns a list of all powers of p with non-zero coefficients in increasing
+	  order, up to the  precision."},
+     EXAMPLE {"a = toPAdicFieldElement(12345,10,QQQ_3)",
+	  "exponents a"
+	    }
+     }
+
+document {
+     Key => {coefficientList,(coefficientList,PAdicFieldElement)},
+     Inputs => {"a" => ofClass PAdicFieldElement},
+     Outputs => {"L" => ofClass List},
+     Usage => "coefficients a",
+     Headline => "a method for returning the list of coefficients of a p-adic number",
+     PARA {"returns a list of all non-zero coefficients in the p-adic expansion of
+	   ",TT "a"," ordered by increasing powers of p, up to the 
+	  precision."},
+     EXAMPLE {"a = toPAdicFieldElement(12345,10,QQQ_3)",
+	  "coefficientList a"
+	    }
+     }
+
+
+document {
      Key => (net,PAdicField),
      Inputs => {"A" => ofClass PAdicField},
      Outputs => {"s" => ofClass Net},
@@ -524,6 +557,28 @@ document {
      Headline => "a method for getting a description of a p-adic field, of the form QQQ_p",
      PARA {"returns a net of the form QQQ_p, where p is the base."},
      EXAMPLE {"net QQQ_7"}
+     }
+
+document {
+     Key => (net,PAdicFieldElement),
+     Inputs => {"a" => ofClass PAdicFieldElement},
+     Outputs => {"s" => ofClass Net},
+     Usage => "net a",
+     Headline => "a method for getting a nice formatting of an element in a p-adic field",
+     PARA {"Gives a nice formatting of an element in a p-adic field, with the powers come in the line above the coefficients."},
+     EXAMPLE {"a = toPAdicFieldElement(12345,10,QQQ_3)",
+	  "net a"}
+     }
+
+document {
+     Key => (toString,PAdicFieldElement),
+     Inputs => {"a" => ofClass PAdicFieldElement},
+     Outputs => {"s" => ofClass String},
+     Usage => "toString a",
+     Headline => "a method for converting an element in a p-adic field to a string",
+     PARA {"Converts an element in a p-adic field to a string."},
+     EXAMPLE {"a = toPAdicFieldElement(12345,10,QQQ_3)",
+	  "toString a"}
      }
 
 document {
@@ -985,148 +1040,3 @@ assert(entries(A^5)==entries(A*A*A*A*A));
 
 end
 
-----------------------------
---Friday Demonstration
-----------------------------
-restart
-load "~/Workshop-2014-Berkeley/MumfordCurves/pAdic.m2"
-
---for any p have field QQQ_p
-
-QQQ_23
-
---can make p-adics from rationals:
-x=toPAdicFieldElement(1,100,QQQ_23)
-y=toPAdicFieldElement(-345,5,QQQ_23)
-z=toPAdicFieldElement(-345,6,QQQ_23)
-
-y==z
-y===z
-
-
-w=toPAdicFieldElement(17/(4*23^5),30,QQQ_23)
-precision w
-valuation w
-
-
---addition, subtraction, multiplication, and division
-y*w
-y*z
-y-w
-y/w
-
---QQQ_23 only gets created once!
-ZZ[s]===ZZ[s]
-QQQ_27===QQQ_27
-
---basic matrix operations
-M=pAdicMatrix {{x,y},{z,w*z}}
-M+M
-M*M
-M^5
-
-
-
-
-
-
-----------------------------
---Qingchun's testing area
-----------------------------
-
-restart
-loadPackage "pAdic"
-ZZ[x]
-henselApproximation(x^2+1,2,3,5)
-Q3 = pAdicField(3)
-x = toPAdicFieldElement({1,2,0,1,0},Q3);
-y = toPAdicFieldElement(0,3,Q3);
-z = toPAdicFieldElement(10,10,Q3);
-w = toPAdicFieldElement(1/2,5,Q3);
-a = toPAdicFieldElement(10,100,Q3)
-assert(x+y==y+x);
-assert(a^100*a^(-100)==1);
-assert(14/w*w==14);
-assert(1/6+w-1/2+1/3==w);
-assert((6/9)*w/(1/3)==w+w);
-end
-
-----------------------------
---Nathan's testing area
-----------------------------
-restart
-loadPackage "pAdic"
-
-
-x=toPAdicFieldElement({1,2,2,2},QQQ_3)
-
-A=pAdicMatrix {{x,x}}
-B=pAdicMatrix {{x},{x}}
-C=pAdicMatrix {{A},{A}}
-C^2
-
-peek (A*B)
-peek oo
-class x
-QQQ_3
-
-
-x=toPAdicFieldElement({1,0,0,0,0,0},QQQ_3)
-inverse x
-
-Q3
-QQQ_3===Q3
-x-x
-
-x=toPAdicFieldElement({0,0,0,0,0,0},Q3)
-
-valuation x
-precision x
-relativePrecision x
-valuation x
-f=x
-
-
-ZZ[y]
-f=y^2+y^6
-jacobian f
-help jacobian
-diff(y,f)
-help diff
-
---------------------------------
---Ralph's finding inverses area
---------------------------------
-
---Let's say we want to find the inverse of a=a_0+a_1*p+a_2*p^2+... up to the 6th p-adic place.
---In this example we'll take p=7.  It's a coincidence that p=7 and we're taking i<7, since
---i goes up desired precision +1, which happens to be 6+1=7.
- R=ZZ; p=7; a_0=6; a_1=0; a_2=3; a_3=1; a_4=1; a_5=5; a_6=5; S=R/p;
-i=1; b_0=(sub(1/sub(a_0,S),R)+p)%p; s_0=-1; 
-while i<7 do(s_i=s_(i-1)+sum(0..i-1, j-> a_j*b_(i-1-j))*p^(i-1);
-b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->a_j*b_(i-j)),S)/sub(a_0,S),R)+p)%p;i=i+1)
-
---Running the code computes b_0, b_1,..., which gives a^-1=b=b_0+b_1*p+b_2*p^2+...
---This is finding inverses from just lists:
- toPAdicInverse = method ()
- 
- toPAdicInverse List := L -> (
-	       n=#L;
-	       i=1; b_0=(sub(1/sub(L_0,ZZ/p),ZZ)+p)%p; s_0=-1; S={b_0};
-	       while i<n do(
-			s_i=s_(i-1)+sum(0..i-1, j-> L_j*b_(i-1-j))*p^(i-1); 
-	       		b_i=(sub(-sub((s_i/p^i)+sum(1..i,j->L_j*b_(i-j)),ZZ/p)/sub(L_0,ZZ/p),ZZ)+p)%p;
-			S=append(S,b_i);
-			i=i+1);
-	       S
-	       )
---Hensel code rough draft
-henselApproximation = method()
-henselApproximation (ZZ[x],ZZ,ZZ,ZZ) := (f,r,n,p) ->  (
-	x:=(ring f)_0;
-	f':=diff(x,f); print f';
-	g:= a->sum(0..(degree(f))_0, j->coefficient(x^j,f)*a^j);
-	g':= a->sum(0..(degree(f'))_0, j->coefficient(x^j,f')*a^j);
-	local s; s=toPAdicFieldElement(r,n,QQQ_p); i=0;
-	while i<n+1 do ( print i; s=s-(g(s)/g'(s));i=i+1);
-	s)

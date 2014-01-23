@@ -1,0 +1,52 @@
+-- -*- M2-comint -*- {* hash: -1308077480 *}
+--loading configuration for package "Bertini" from file /Users/Ro/Library/Application Support/Macaulay2/init-Bertini.m2
+
+i1 : R=CC[u1,u2,u3,x,y]
+
+o1 = R
+
+o1 : PolynomialRing
+
+i2 : f1=u1*(y-1)+u2*(y-2)+u3*(y-3)
+
+o2 = u1*y + u2*y + u3*y - u1 - 2u2 - 3u3
+
+o2 : R
+
+i3 : f2=(x-11)*(x-12)*(x-13)
+
+      3      2
+o3 = x  - 36x  + 431x - 1716
+
+o3 : R
+
+i4 : finalParameters0={{1,0,0}}
+
+o4 = {{1, 0, 0}}
+
+o4 : List
+
+i5 : finalParameters1={{0,1+2*ii,0}}
+
+o5 = {{0, 1+2*ii, 0}}
+
+o5 : List
+
+i6 : bPH=bertiniParameterHomotopy( {f1,f2}, {u1,u2,u3},{finalParameters0 ,finalParameters1 })
+Temporary directory for input and output files:/var/folders/ty/zc3ztkx12z16c1x9b89s_97c0000gn/T/M2-44333-0/0
+
+The version of Bertini you have installed on your computer was used for this run. 
+Bertini is under ongoing development by D. Bates, J. Hauenstein, A. Sommese, and C. Wampler.
+
+
+o6 = {{{11, 1}, {12, 1}, {13, 1}}, {{11, 2}, {12, 2}, {13, 2}}}
+
+o6 : List
+
+i7 : bPH_0--the solutions to the system with finalParameters0
+
+o7 = {{11, 1}, {12, 1}, {13, 1}}
+
+o7 : List
+
+i8 : 

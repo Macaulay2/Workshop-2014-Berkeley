@@ -1,0 +1,77 @@
+-- -*- M2-comint -*- {* hash: 704393788 *}
+--loading configuration for package "Bertini" from file /Users/Ro/Library/Application Support/Macaulay2/init-Bertini.m2
+
+i1 : R = QQ[x,y,z]
+
+o1 = R
+
+o1 : PolynomialRing
+
+i2 : F = {(y^2+x^2+z^2-1)*x,(y^2+x^2+z^2-1)*y}
+
+       3      2      2       2     3      2
+o2 = {x  + x*y  + x*z  - x, x y + y  + y*z  - y}
+
+o2 : List
+
+i3 : S = bertiniPosDimSolve F
+Temporary directory for input and output files:/var/folders/ty/zc3ztkx12z16c1x9b89s_97c0000gn/T/M2-44357-0/0
+
+The version of Bertini you have installed on your computer was used for this run. 
+Bertini is under ongoing development by D. Bates, J. Hauenstein, A. Sommese, and C. Wampler.
+
+
+o3 = A variety of dimension 2 with components in
+     dim 1:  [dim=1,deg=1]
+     dim 2:  [dim=2,deg=2]
+
+o3 : NumericalVariety
+
+i4 : S#1_0#Points -- 1_0 chooses the first witness set in dimension 1
+
+o4 = {{6.56715e-62-2.21777e-61*ii, 2.45365e-61+4.85643e-62*ii,
+     ------------------------------------------------------------------------
+     -.330859-.0656729*ii}}
+
+o4 : VerticalList
+
+i5 : S#1 --first specify dimension
+
+o5 = {[dim=1,deg=1]}
+
+o5 : List
+
+i6 : peek oo_0 --then list position
+
+o6 = WitnessSet{ComponentNumber => 0                                                                             }
+                IsIrreducible => null
+                Points => {{6.56715e-62-2.21777e-61*ii, 2.45365e-61+4.85643e-62*ii, -.330859-.0656729*ii}}
+                Slice => | .571527+.49157i .137837+.431507i .785414+.011262i .985636+.436535i |
+                WitnessDataFileName => /var/folders/ty/zc3ztkx12z16c1x9b89s_97c0000gn/T/M2-44357-0/0/witness_data
+                                     3      2      2       2     3      2
+                Equations => ideal (x  + x*y  + x*z  - x, x y + y  + y*z  - y)
+
+i7 : PD=primaryDecomposition( ideal F)
+
+             2    2    2
+o7 = {ideal(x  + y  + z  - 1), ideal (y, x)}
+
+o7 : List
+
+i8 : dim PD_0
+
+o8 = 2
+
+i9 : degree PD_0
+
+o9 = 2
+
+i10 : dim PD_1
+
+o10 = 1
+
+i11 : degree PD_1
+
+o11 = 1
+
+i12 : 

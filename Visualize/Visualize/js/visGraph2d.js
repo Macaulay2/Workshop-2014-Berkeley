@@ -737,3 +737,6 @@ function exportTikz() {
 function stopForce() {
   force.stop();
 }
+function startForce() {
+  force.start();
+}

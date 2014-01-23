@@ -1,7 +1,7 @@
 newPackage(
 	"IdealClosure",
-	Version => "0.1",
-	Date => "1-7-14",
+	Version => "0.5",
+	Date => "1-20-14",
 	Authors => {
 		{  Name => "Douglas Leonard", Email => "leonada@auburn.edu" },
 		{  Name => "Nicholas Armenoff", Email => "nicholas.armenoff@uky.edu" }
@@ -11,12 +11,12 @@ newPackage(
 	Reload => true
 )
 
-
 export {
-	qthIdealClosure,
--- to be written	rationalIdealClosure,
--- to be written	reesalgebra,
-
+	qthIdealClosure, --written before the January 2014 workshop
+-- to be written	rationalIdealClosure
+	qthReesAlgebra, -- started at the workshop, finished a week after
+-- to be written        rationalreesalgebra
+        reesring,    --setup for qthReesAlgebra   
 	Exponent,
 	Idealsize,
 	Modulesize,
@@ -42,10 +42,11 @@ export {
 --           
 --	     
 --           
--- COMMENTS : (1) reesalgebra not written  
---          (2)  lift to QQ not written. 
---          (3) The conjecture is that Q=q^Exponent at least the degree of the extension of A over P is sufficient.
---          (4) Macaulay2 isn't really set up for local monomial orderings.
+-- COMMENTS :   
+--            (1)  lift to QQ not written. 
+--            (2) The conjecture is that Q=q^Exponent 
+--                at least the degree of the extension of A over P is sufficient.
+--            (3) Macaulay2 isn't really set up for local monomial orderings.
 
 ------------------------------------------------------------------------
 -----------------------  Code  -----------------------------------------
@@ -224,8 +225,219 @@ qthIdealClosure(Ring,List,List,List):=
    --------------------------------------------------------------
    for i to #newidealgens-1 list phiinv(newidealgens#i)
 );
+-----------------------------------------------------------------------------
+--unexported functions needed for reesalgebra--------------------------------
+-----------------------------------------------------------------------------
+ setcomplement = (m,l)-> (
+    for i to #l-1 do(
+       m=for j to #m-1 list 
+ 	 if leadMonomial(l#i)==leadMonomial(m#j) then continue else m#j
+    );
+    m
+ );
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+ weightsFromMatrix = (m)->(
+    apply(entries m , v->(Weights=>v))
+ );
+------------------------------------------------------------------------------------
+ zeroMatrix = (a,b)->(
+    matrix(for i to a-1 list(
+	      for j to b-1 list 0)
+	   )
+ );
+------------------------------------------------------------------------------------
+ grevLex = (m)->( 
+    matrix(for i to m-1 list(
+	      for j to m-1 list(
+		 if i+j<m then 1 else 0)
+	      )
+	  )
+ );
+------------------------------------------------------------------------------------
+wtGrevlex = (matr)-> (
+   grev := for i to numColumns(matr)-numRows(matr)-1 list (
+              for j to numColumns(matr)-1 list(
+	         if i+j < numColumns(matr)-numRows(matr) then 1 else 0
+                 )
+              );
+              matr||matrix(grev)
+          );
+------------------------------------------------------------------------------------
+--ring from weights and char--------------------------------------------------------
+------------------------------------------------------------------------------------
 
-
+reesring = method();
+reesring(List,Ring) := (wt,kk)->(
+------------------------------------------------------------------------------------
+-- setup variable names and local weights from wt-----------------------------------
+------------------------------------------------------------------------------------
+symboldj := 0;
+     mat := matrix(wt);    
+     Mat := if numRows(mat) == numColumns(mat) then mat else wtGrevlex(mat);    
+ symbold := (for i to numColumns(mat)-numRows(mat)-1 list "y")|
+           (for i to numRows(mat)-1 list "x");
+ symbold = for j to numColumns(mat)-1 list(
+              symboldj=symbold#j;
+              for i to numRows(mat)-1 do(
+ 	        symboldj=symboldj|toString(-mat_(i,j))
+              );
+              symboldj
+           );
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+      r := kk[symbold,
+             MonomialOrder=>{
+                apply(entries Mat, v->(Weights=>v))},
+             Global=>false];
+      (mat,Mat,r)	 
+ );
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+--extend the matrix of local weights to weights for the ideal-----------------------
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------
+qthReesAlgebra = method(TypicalValue => Matrix,
+     Options=>{
+	  Exponent => 1,Idealsize => 30,Modulesize => 40,Units => 0,Verb => 0
+	  });
+-------------------------------------------------------------
+qthReesAlgebra(List,PolynomialRing,List,List):=
+             o->(wt,R,J,I)->(
+         rees := reesring(wt,coefficientRing(R));
+         mat := rees#0;
+         Mat := rees#1;
+	 rng := rees#2;
+    symbnewj := 0;
+          kk := coefficientRing(rng);
+------------------------------------------------------------------------------------    
+ matnew := mat*matrix(for i to #gens(R)-1 list(
+                       for j to #I-1 list(
+ 	                 degree(R_i,leadMonomial(I#j))
+ 	              )
+                    )
+             );
+------------------------------------------------------------------------------------	 
+ Matnew := if numRows(mat) == numColumns(mat) then(
+     (Mat|matnew)||
+     (zeroMatrix(#I,numColumns(Mat))|grevLex(#I))
+     ) else(
+     (Mat|(matnew||zeroMatrix(numRows(Mat)-numRows(matnew),#I)))||
+     (zeroMatrix(#I,numColumns(Mat))|grevLex(#I)));
+------------------------------------------------------------------------------------
+--rees0-----------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+symbnew := for i to #I-1 list "g1";
+symbnew = gens(R)|for j to numColumns(matnew)-1 list(
+              symbnewj = symbnew#j;
+              for i to numRows(matnew)-1 do(
+	         symbnewj = symbnewj|toString(-matnew_(i,j))
+              );
+              symbnewj
+           );   
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+rees0ring := kk[symbnew,
+                  MonomialOrder=>{
+                       apply(entries Matnew, v->(Weights=>v))},
+                  Global=>false];
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+-- set up local generator function variable t for rees(I)---------------------------
+------------------------------------------------------------------------------------
+<<<<<<< HEAD
+symbt:="t";
+     rt := kk{symbt};
+=======
+     rt := kk{getSymbol "t"};
+     t := rt_0;
+>>>>>>> e31695cb4ab43fce501b843b1da31798778191f0
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+rees0quotientring := tensor(rt,
+                      rees0ring/sub(ideal(J),rees0ring)
+                    );           
+use rees0quotientring;		
+newreesideal := ideal(for i to #I-1 list 
+                       sub(I#i,rees0quotientring)
+                       -rees0quotientring_(#gens(R)+i+1)*rees0quotientring_0
+                    );
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+time     ic1 := qthIdealClosure(R,J,I,wt);
+       icold := ic1;
+        Inew := I;
+           k := 0;
+ newreesring := rees0ring;
+ Iold:=Inew;
+ Matold:=Matnew; 
+ symbold:=symbnew; 
+ oldreesring:=newreesring; 
+ oldreesideal:=newreesideal;
+ newreesquotientring:=newreesring;
+ Gnew:=matrix{{}};
+ icnew:=icold;	   
+------------------------------------------------------------------------------------
+--loop from here to compute C(I^k) recursively until rees algebra is computed-------
+------------------------------------------------------------------------------------
+        Inew = setcomplement(icold,Inew); 
+        while Inew != {} do( print(Inew);
+                   k = k+1;
+               Iold  = Inew;
+             Matold  = Matnew; 
+            symbold  = symbnew; 
+        oldreesring  = newreesring;
+       oldreesideal  = newreesideal; 
+-----------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------
+              matnew = mat*matrix(for i to #gens(R)-1 list(
+                                     for j to #Inew-1 list(
+	                                degree(R_i,Inew#j)
+	                             )
+                                  )
+                       );
+              Matnew = 
+(Matold|(matnew||zeroMatrix(numRows(Matold)-numRows(matnew),numColumns(matnew))))||
+	  (zeroMatrix(#Inew,numColumns(Matold))|grevLex(#Inew));
+------------------------------------------------------------------------------------  
+             symbnew = for i to #Inew-1 list "g"|k;
+             symbnew = symbold|for j to numColumns(matnew)-1 list(
+                          symbnewj = symbnew#j;
+                          for i to numRows(matnew)-1 do(
+	                     symbnewj = symbnewj|toString(-matnew_(i,j))
+                          );
+                          symbnewj
+                       );   
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+       newreesring  = kk[symbnew,
+                           MonomialOrder=>{
+                              apply(entries Matnew, v->(Weights=>v))},
+                           Global=>false];
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+newreesquotientring = tensor(rt,
+                         newreesring/sub(ideal(J),newreesring)
+                      );           
+       newreesideal = sub(oldreesideal,newreesquotientring)+
+                      ideal(for i to #Inew-1 list 
+                         sub(Inew#i,newreesquotientring)
+                         -newreesquotientring_(#gens(oldreesring)+i+1)*(newreesquotientring_0)^k
+                      );
+               Gnew = gens gb newreesideal;
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+                Inew = flatten entries gens gb ((ideal(icold)*ideal(ic1)));
+print(k);
+time           icnew = qthIdealClosure(R,J,Inew,wt);
+               icnew = for i to #icnew-1 list icnew#i%sub(ideal(J),R);
+               icnew = flatten entries gens gb ideal icnew;
+               icold = icnew;
+                Inew = setcomplement(icold,Inew);		
+         );
+         Gnew
+);
 -------------------------------------------------------------------------------
 ----------------------  Documentation -----------------------------------------
 -------------------------------------------------------------------------------
@@ -307,6 +519,109 @@ document {
 	Key => { Verb },
 	Headline => "prints bases for intermediate modules if greater than 0; default is 0",
 	Usage => "qthIdealClosure(inputring, quot, idealgens, wt, Verb => n)"
+}
+-------------------------------------------------------------------------------
+document {
+     Key => {
+	  qthReesAlgebra, (qthReesAlgebra, List, PolynomialRing, List, List)
+	  },
+     Headline => "computes the non-homogeneous rees algebra in positive characteristic",
+     Usage => "(polynomials) = reesalgebra(wt,R,J,I)",
+     Inputs => {
+	  "wt" => "list of weights used for local monomial ordering",
+	  "R" => "ring with variables having local weight names from reesring",
+	  "J" => "quotient for integrally closed A=R/J, {0} for polynomial ring",
+	  "I"=> "ideal of A=R/J"
+	  },
+     Outputs => {
+	  "polynomials" => Matrix => "gens gb rees algebra"
+	  },
+     EXAMPLE {
+	       "wt := {{-9,-4,-4},{-3,-4,0}}",
+               "kk := ZZ/5",
+	       "R := (reesring(wt,kk))#2",
+               "J := {y93^4+x44^3*x40^6}",
+               "I := {x44,x40}",
+               "rr := qthReesAlgebra(wt,R,J,I)",
+	       "use ring(rr_(0,0))",
+               "(y93^2*x44*x40)%rr"
+	 },
+     SeeAlso => {reesAlgebra},
+--	 Subnodes => {
+--        "Options",
+--		TO "Exponent",
+--		TO "Idealsize",
+--		TO "Modulesize",
+--		TO "Units",
+--		TO "Verb"
+--    },
+    PARA { "The integral closure of ideals paper contains 
+	   a non-homogeneous version of the classical Rees algebra.
+	   This has the map defining the ideal internal to it,
+	   if {\tt r in R} is in {\tt C(I^d,A)}, 
+	   it will have 1, not d images of r,
+	   and the output can be used easily to determine the max d
+	   such that {\tt r in R} is in {\tt C(I^d)}.
+	   It calls qthIdealClosure once for each d, as long as
+	   {\tt C(I^d)\neq C(I^(d-1)C(I)}."
+    }
+}
+-------------------------------------------------------------------------------
+--document {
+--	Key => { Exponent },
+--	Headline => "runs the algorithm with Q = q^Exponent; default is 1",
+--	Usage => "reesalgebra(wt,R,J,I, Exponent => n)"
+--}
+-------------------------------------------------------------------------------
+--document {
+--	Key => { Idealsize },
+--	Headline => "upper bound on number of ideal generators; default is 30",
+--	Usage => "reesalgebra(wt,R,J,I, Idealsize => n)"
+--}
+-------------------------------------------------------------------------------
+--document {
+--	Key => { Modulesize },
+--	Headline => "upper bound on number of module generators; default is 40",
+--	Usage => "reesalgebra(wt,R,J,I, Modulesize => n)"
+--}
+-------------------------------------------------------------------------------
+--document {
+--	Key => { Units },
+--	Headline => "declares the last n variables as units; default is 0",
+--	Usage => "reesalgebra(wt,R,J,I, Units => n)"
+--}
+-------------------------------------------------------------------------------
+--document {
+--	Key => { Verb },
+--	Headline => "prints bases for intermediate modules if greater than 0; default is 0",
+--	Usage => "reesalgebra(wt,R,J,I, Verb => n)"
+--}
+----------------------------------------------------------------------------
+document {
+     Key => {
+	  reesring, (reesring, List, Ring)
+	  },
+     Headline => "computes a polynomial ring with weights as given,
+                  with variable names reflecting thos weights,
+		  over the coeffecient ring given, with Global false",
+     Usage => "(mat,Mat,R) = reesring(wt,kk)",
+     Inputs => {
+	  "wt" => "list of weights used for local monomial ordering",
+	  "kk" => "ZZ/q or QQ"
+	  },
+     Outputs => {
+--	  "mat" => Matrix => "wt as a matrix",
+--	  "Mat" => "mat extended to give induced weights to the ideal generator names as well",
+	  "R" => "with proper variable names and induced weights"
+	  },
+     EXAMPLE {
+	       "wt := {{-9,-4,-4},{-3,-4,0}}",
+               "kk := ZZ/5",
+	       "(reesring(wt,kk))"
+	 },
+    PARA { "This sets up the initial rees algebra_0
+	   for the reesalgebra method above."
+         },
 }
 -----------------------------------------------------------------------------------
 -----------------------------------------------------------------
