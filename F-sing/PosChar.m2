@@ -1939,7 +1939,7 @@ canonicalIdeal ={FullMap=> false} >> o -> (R1) -> (
 		};
 	});
 	
-	if (o.FullMap == true) then (ideal answer, answer2, canModuleMatrix) else ideal answer
+	if (o.FullMap == true) then (ideal answer, map(R1^1, coker(canModuleMatrix**R1), matrix {answer2}), canModuleMatrix) else ideal answer
 )
 
 moduleToIdeal = (M1, R1) -> (--turns a module to an ideal of a ring, it returns the lift of the ideal to the ambient ring
