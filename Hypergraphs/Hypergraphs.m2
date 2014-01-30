@@ -36,6 +36,7 @@ export {
 	"hypergraphDual",
 	"edgeIdeal",
 	"EdgeIdealCoefficientRing",
+	"isCM",
 	
 	--Other functions
 	"equalSets"
@@ -53,8 +54,8 @@ export {
 	- Rewrite the hypergraphVertexContainments and hypergraphNeighbors properties into lists, instead of hash tables; the hypergraphVertexContainments#0 should be the list of
 		edge numbers to which hypergraphVertices#0 belongs
 	- Add a hash table hypergraphVertexIndices to Hypergraph satisfying: 1 - its keys are the members of hypergraphVertices, and 2 - hypergraphVertexIndices#v returns the 
-		position of vertex v in hypergraphVertices (done)
-	- Add a function returning the index of a vertex in hypergraphVertices
+		position of vertex v in hypergraphVertices  (done)
+	- Add a function returning the index of a vertex in hypergraphVertices  (done)
 	- Overload the net function for the Hypergraph class
 	- Add accessors:
 		- vertices(Hypergraph)			- done
@@ -191,6 +192,12 @@ edgeIdeal(Hypergraph) := MonomialIdeal => opts -> (H) -> (
 	x := local x;
 	R := (opts#EdgeIdealCoefficientRing)[x_0 .. x_(#H.hypergraphVertices-1)];
 	monomialIdeal apply(H.hypergraphEdges, e -> product apply(e, z -> x_(H.hypergraphVertexIndices#z)))
+)
+
+isCM = method(TypicalValue => Boolean);
+isCM(Hypergraph) := Boolean => (H) -> (
+	I := edgeIdeal H;
+	dim I == #(ring I)_* - ((pdim module I)+1)
 )
 
 --------------------------------------------------
