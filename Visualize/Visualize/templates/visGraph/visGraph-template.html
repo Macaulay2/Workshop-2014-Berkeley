@@ -60,6 +60,7 @@
 
       #popupMenu {
         display:none;
+        visibility:hidden;
         position:absolute;
         left:69%;
         top:4%;
@@ -67,6 +68,8 @@
         height:220px;
         background-color:#000000;
         opacity:.6;
+        z-index:6;
+        padding-bottom: 30px;
 
       }
 
@@ -96,6 +99,7 @@
         cursor: default;
         display:inline;
         z-index:2;
+        padding-bottom: 10px;
       }
 
       #canvasElement2d:not(.active):not(.shift) {
@@ -150,15 +154,31 @@
         cursor: default;
         display:none;
         z-index: 0;
+        padding-bottom: 10px;
       }
       #constructorString {
-        z-index: 10;
+        -o-user-select: text;
+        -moz-user-select: text;
+        -webkit-user-select: text;
+        user-select: text;
+        z-index: 100;
+        padding-bottom: 5px;
       }
       #incString {
-        z-index: 10;
+        -o-user-select: text;
+        -moz-user-select: text;
+        -webkit-user-select: text;
+        user-select: text;
+        z-index: 100;
+        padding-bottom: 5px;
       }
       #adjString {
-        z-index: 10;
+        -o-user-select: text;
+        -moz-user-select: text;
+        -webkit-user-select: text;
+        user-select: text;
+        z-index: 100;
+        padding-bottom: 5px;
       }
     </style>
     <script type="text/javascript">
@@ -182,7 +202,7 @@
           <button id = "exportToggle" onclick="exportTikz();">export tikz</button>
         </div>
         <div id="canvasElement3d"></div>
-  </body>
+
 
   <script src="js/d3.v3.js"></script>
   <script src="js/visGraph2d.js"></script>
@@ -227,8 +247,8 @@
                 }
                 var c = document.getElementById("moreOptions");
                 c.onclick = function() {
-                    //resetGraph();
                     document.getElementById("popupMenu").style.display = "inline";
+                    document.getElementById("popupMenu").style.visibility = "visible";
                     menuOpen = true;
                 }
 
@@ -278,19 +298,20 @@
     }
 
     window.addEventListener("mousedown", function(e) {
-      
-      e.preventDefault();
 
       if (!menuOpen) return;
-
-      var tempMenu = document.getElementById("popupMenu");
-
+      tempMenu = document.getElementById("popupMenu");
       if ( (e.clientX < tempMenu.offsetLeft) || (e.clientY > tempMenu.offsetTop + tempMenu.offsetHeight) ) {
-        document.getElementById("popupMenu").style.display = "none";
+        tempMenu.style.display = "none";
+        tempMenu.style.visibility = "hidden";
         menuOpen = false;
       }
 
     }, false);
   	window.addEventListener('resize', updateWindowSize2d, false);
-  </script>
+    </script>
+
+  </body>
+
+
 </html>
