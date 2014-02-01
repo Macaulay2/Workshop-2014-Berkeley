@@ -57,7 +57,9 @@ export { NCRing, NCQuotientRing, NCPolynomialRing,
 	 isExterior,
 	 coordinates,
 	 Basis,
-	 sparseCoeffs
+	 sparseCoeffs,
+	 kernelComponent,
+	 gddKernel
 }
 
 
@@ -2475,6 +2477,27 @@ oreExtension (NCRing,NCRingMap,NCRingElement) := (B,sigma,X) -> (
    C := ring I;
    C/I
 )
+
+kernelComponent = method()
+kernelComponent (ZZ,NCRingMap) := (d,f) -> (
+   -- computes the kernel of a homogeneous ring map in a specified degree
+   if not isHomogeneous f then error "Expected degree 0 map.";
+   R := source f;
+   bas := basis(d,R);
+   K := mingens ker f_d;
+   if K == 0 then return ncMatrix{{promote(0,R)}} else bas*K
+)
+
+gddKernel = method()
+gddKernel (ZZ,NCRingMap) := (d,f) -> (
+  -- computes a generating set for the kernel of a homogeneous ring map up to a specified degree
+  K := {};
+  for i from 1 to d do (
+     K = K | flatten entries kernelComponent(i,f);
+  );
+  minimizeRelations(select(K,r-> r!=0))
+)
+
 
 ---------------------------------------
 ----NCMatrix Commands -----------------
