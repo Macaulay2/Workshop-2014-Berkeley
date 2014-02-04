@@ -1333,7 +1333,7 @@ writeBergmanInputFile (List, String) := opts -> (genList, tempInput) -> (
    B := ring first genList;
    charB := char coefficientRing B;
    degList := (genList / degree) | {0};
-   maxDeg := min(opts#DegreeLimit, 2*(max degList));
+   maxDeg := max(opts#DegreeLimit, 2*(max degList));
    genListString := makeGenListString genList;
    writeBergmanInputFile(B,
                          genListString,
@@ -2266,12 +2266,12 @@ NCRingMap NCRingElement := (f,x) -> (
 		 if class s===Symbol or class s===IndexedVariable then putInRing({s},C,1) else s
 		 )
 	    );
-         promote((t#1)*monImage,C) -- an empty sum is 0, which we need to promote 
+         promote(sub(t#1,coefficientRing target f)*monImage,C) -- an empty sum is 0, which we need to promote 
       )
    else
       sum for t in pairs x.terms list (
          monImage := promote(product apply(t#0#monList, v -> f.functionHash#v),target f);
-         (t#1)*monImage
+         sub(t#1,coefficientRing target f)*monImage
       )
 )
 

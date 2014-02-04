@@ -621,9 +621,13 @@ first (D.vertexSet)
 vertexSet D
 
 --- all paths of length 4 ---
-findPaths(D,first (D,vertexSet),4)
+findPaths(D,first (D.vertexSet),4)
 --- verify... ---
 nChains(4,D)
+--------------
+--- code to build init file for anick resolution
+--- code to build .bi file for anick
+
 ///
 
 
