@@ -2241,7 +2241,8 @@ ncMap (NCRing,NCRing,List) := opts -> (B,C,imageList) -> (
    new NCRingMap from hashTable {(symbol functionHash) => hashTable apply(#genCSymbols, i -> (genCSymbols#i,imageList#i)),
                                  (symbol source) => C,
                                  (symbol target) => B,
-				 (symbol Derivation) => opts#Derivation}
+				 (symbol Derivation) => opts#Derivation,
+				 (symbol cache) => new CacheTable from {}}
 )
 
 source NCRingMap := f -> f.source
@@ -2344,6 +2345,8 @@ isHomogeneous NCRingMap := f -> (
 
 NCRingMap _ ZZ := (f,n) -> (
    if not isHomogeneous f then error "Expected a homogeneous NCRingMap.";
+   if f.cache#?"DegreeMatrices" and f.cache#"DegreeMatrices"#?n then
+      return f.cache#"DegreeMatrices"#n;
    B := source f;
    C := target f;
    srcBasis := flatten entries basis(n,B);
@@ -2351,7 +2354,10 @@ NCRingMap _ ZZ := (f,n) -> (
    imageList := srcBasis / f;
    if #(unique (select(imageList, g -> g != 0) / degree)) != 1 then
       error "Expected the image of degree " << n << " part of source to lie in single degree." << endl;
-   sparseCoeffs(imageList,Monomials=> tarBasis)
+   retVal := sparseCoeffs(imageList,Monomials=> tarBasis);
+   if not f.cache#?"DegreeMatrices" then f.cache#"DegreeMatrices" = new CacheTable from {};
+   f.cache#"DegreeMatrices"#n = retVal;
+   retVal
 )
 
 NCRingMap @@ NCRingMap := (f,g) -> (
