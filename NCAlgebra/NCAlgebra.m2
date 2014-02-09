@@ -284,6 +284,12 @@ Ring List := (R, varList) -> (
                             (symbol terms, newHash)}   
    );
 
+   A ? A := (f,g) -> (
+      m := first pairs (leadMonomial f).terms;
+      n := first pairs (leadMonomial g).terms;
+      m ? n
+   );
+
    A * A := (f,g) -> (
       -- new way
       --newHash := removeZeroes combine(f.terms,g.terms,multKeys,multVals,addVals);
@@ -425,6 +431,12 @@ NCPolynomialRing / NCIdeal := (A, I) -> (
    ZZ + B := (r,f) -> f + r;
    B + QQ := (f,r) -> push((lift f) + r);
    QQ + B := (r,f) -> f + r;
+
+   B ? B := (f,g) -> (
+      m := first pairs (leadMonomial f).terms;
+      n := first pairs (leadMonomial g).terms;
+      m ? n
+   );
 
    B == B := (f,g) -> (lift(f - g) % ncgb) == 0;
    B == ZZ := (f,n) -> (
@@ -2351,6 +2363,8 @@ NCRingMap _ ZZ := (f,n) -> (
    retVal
 )
 
+NCRingMap ? NCRingMap := (f,g) -> (matrix f) ? (matrix g)
+
 NCRingMap @@ NCRingMap := (f,g) -> (
    if target g =!= source f then error "Expected composable maps.";
    ncMap(target f, source g, apply(gens source g, x -> f g x))
@@ -2583,6 +2597,8 @@ ncMatrix List := ncEntries -> (
 ring NCMatrix := NCRing => M -> M.ring
 
 lift NCMatrix := NCMatrix => opts -> M -> ncMatrix applyTable(M.matrix, entry -> promote(entry,(M.ring.ambient)))
+
+NCMatrix ? NCMatrix := (M,N) -> (flatten entries M) ? (flatten entries N)
 
 NCMatrix * NCMatrix := (M,N) -> (
    if M.ring =!= N.ring then error "Expected matrices over the same ring.";
