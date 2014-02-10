@@ -3284,6 +3284,10 @@ H = identifyParameters R;
 H#(p_(2,4))_0
 
 ///
+
+restart
+ installPackage ("GraphicalModels",FileName=>"/Users/lgp/Software/Macaulay2/Workshop2014-Berkeley/GraphicalModels/GraphicalModels-Luis.m2") 
+
  restart
  loadPackage("GraphicalModels", FileName => "/Users/lgp/Software/Macaulay2/Workshop-2014-Berkeley/GraphicalModels/GraphicalModels-Mike.m2")
  f = () -> (
