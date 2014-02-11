@@ -231,7 +231,7 @@ Ring List := (R, varList) -> (
    varList = varList / baseName;
    A := new NCPolynomialRing from {(symbol generators) => {},
                                    (symbol generatorSymbols) => varList,
-                                   (symbol degreesRing) => ZZ[getSymbol("T"), Weights=>{-1}, Global => false],
+                                   (symbol degreesRing) => degreesRing 1,
 				   (symbol CoefficientRing) => R,
                                    (symbol cache) => new CacheTable from {},
 				   (symbol baseRings) => {ZZ},
@@ -366,7 +366,7 @@ NCPolynomialRing / NCIdeal := (A, I) -> (
                                  (symbol generatorSymbols) => A.generatorSymbols,
                                  (symbol CoefficientRing) => A.CoefficientRing,
                                  BergmanRing => false,
-                                 (symbol degreesRing) => ZZ[getSymbol("T"), Weights=>{-1}, Global => false],
+                                 (symbol degreesRing) => degreesRing 1,
 				 (symbol ambient) => A,
                                  (symbol cache) => new CacheTable from {},
           		         (symbol baseRings) => {ZZ},    -- this will be for quotients of quotients
@@ -1454,8 +1454,18 @@ twoSidedNCGroebnerBasisBergman = method(Options=>{DegreeLimit=>10,
                                                   CacheBergmanGB=>true})
 twoSidedNCGroebnerBasisBergman List := opts -> fList -> twoSidedNCGroebnerBasisBergman(ncIdeal fList,opts)
 twoSidedNCGroebnerBasisBergman NCIdeal := opts -> I -> (
+  local phi;
+  oldI := I;
   if not I.ring#BergmanRing then
-     error "Bergman interface can only handle coefficients over QQ or ZZ/p at the present time." << endl;
+  (
+     -- If the coefficients of the gens of I only use QQ or ZZ/p, then compute
+     -- gb over the ring with QQ or ZZ/p coefficients, then sub back into the
+     -- right ring.
+     k := bergmanCoefficientRing gens I;
+     if k === null then error "Bergman interface can only handle coefficients over QQ or ZZ/p at the present time.";
+     I = newBergmanIdealRing(I,k);
+     phi = ncMap(ring oldI, ring I, gens ring oldI);
+  );
   -- call Bergman for this, at the moment
   tempInit := temporaryFileName() | ".init";      -- init file
   tempInput := temporaryFileName() | ".bi";       -- gb input file
@@ -1469,10 +1479,41 @@ twoSidedNCGroebnerBasisBergman NCIdeal := opts -> I -> (
   writeGBInitFile(tempInit,tempInput,tempOutput);
   stderr << "--Calling Bergman for NCGB calculation." << endl;
   runCommand("bergman -i " | tempInit | " -on-error exit --silent > " | tempTerminal);
-  gbFromOutputFile(ring I,
-                   tempOutput,
-                   MakeMonic=>opts#MakeMonic,
-                   CacheBergmanGB=>opts#CacheBergmanGB)
+  retVal := gbFromOutputFile(ring I,
+                             tempOutput,
+                             MakeMonic=>opts#MakeMonic,
+                             CacheBergmanGB=>opts#CacheBergmanGB);
+  -- at this point, if we are not a BergmanRing, then we could compute over QQ or ZZ/p
+  -- sub the retVal back to the original ring.
+  if not oldI.ring#BergmanRing then phi retVal else retVal
+)
+
+bergmanCoefficientRing = method()
+bergmanCoefficientRing List := L -> (
+   --- this function returns true if all the coefficients
+   --- of all the elements in the list L are in either QQ or FF_p
+   coeffs := flatten apply(L, f -> (pairs f.terms) / last);
+   if all(coeffs, c -> sub(sub(c,QQ),ring c) == c) then
+   (
+      QQ
+   )
+   else
+   (
+      p := char ring first coeffs;
+      if all(coeffs, c -> sub(sub(c,ZZ/p),ring c) == c) then ZZ/p else null
+   )
+)
+
+newBergmanIdealRing = method()
+
+newBergmanIdealRing (NCIdeal,Ring) := (I,k) -> (
+   if k =!= QQ and k =!= ZZ/(char k) then
+      error "Expected a coefficient ring of QQ or ZZ/p for some p";
+   n := numgens ring I;
+   XX := getSymbol("XX");
+   tempRing := k{XX_1..XX_n};
+   phi := ncMap(tempRing,ring I, gens tempRing);
+   phi I
 )
 
 ------------------------------------------------------
@@ -2375,8 +2416,7 @@ NCRingMap NCIdeal := (phi, I) -> ncIdeal ((gens I) / phi)
 NCRingMap NCGroebnerBasis := (phi,Igb) -> (
    I := ncIdeal gens Igb;
    Iphi := phi I;
-   ncGroebnerBasis(Iphi, InstallGB => true);
-   Iphi
+   ncGroebnerBasis(Iphi, InstallGB => true)
 )
 
 NCRingMap + NCRingMap := (f,g) -> (
