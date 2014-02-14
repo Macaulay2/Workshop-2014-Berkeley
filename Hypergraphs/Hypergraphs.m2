@@ -8,7 +8,8 @@ newPackage(
 		{  Name => "Nicholas Armenoff", Email => "nicholas.armenoff@uky.edu" }
 	},
 	DebuggingMode => true,
-	Reload => true
+	Reload => true,
+	PackageExports => { "SimplicialComplexes" }
 )
 
 export {
@@ -37,6 +38,7 @@ export {
 	"edgeIdeal",
 	"EdgeIdealCoefficientRing",
 	"isCM",
+	"isGraph",
 	
 	--Other functions
 	"equalSets"
@@ -87,7 +89,7 @@ export {
 	- vertexCovers
 	- vertexCoverNumber
 	- isGraph
-	- isCM
+	- isCM		- done
 	- isSCM
 	- isConnected
 	- isForest
@@ -198,6 +200,11 @@ isCM = method(TypicalValue => Boolean);
 isCM(Hypergraph) := Boolean => (H) -> (
 	I := edgeIdeal H;
 	dim I == #(ring I)_* - ((pdim module I)+1)
+)
+
+isGraph = method(TypicalValue => Boolean);
+isGraph((Hypergraph) := Boolean => (H) -> (
+	H.hypergraphEdges == {} or all(H.hypergraphEdges, e -> #e == 2)
 )
 
 --------------------------------------------------
