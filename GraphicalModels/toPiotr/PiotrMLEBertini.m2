@@ -65,7 +65,11 @@ Mparam := entries gaussianParametrization R;
 L0 := Mparam#0;
 Lu := flatten toList apply (1..#Mparam-1,i->drop(Mparam#i,{0,i-1})); 
 Lparam := L0|Lu;
-S := gaussianRing(4);
+    use R;
+    L := directedEdgesMatrix R;
+    -- d is equal to the number of vertices in G
+    d := numRows L;
+S := gaussianRing(d);
 F := map(R,S,Lparam);
 SJ := preimage (F,J);
 NN:=numgens S;
