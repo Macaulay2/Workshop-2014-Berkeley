@@ -13,8 +13,9 @@ newPackage("NCAlgebra",
      DebuggingMode => true
      )
 
+
 export { NCRing, NCQuotientRing, NCPolynomialRing,
-         NCRingMap, NCRingElement, isReduced,
+         NCRingMap, NCRingElement,
          NCGroebnerBasis, ncGroebnerBasis,
          NCIdeal, NCLeftIdeal, NCRightIdeal,
          ncIdeal, ncLeftIdeal, ncRightIdeal,
@@ -56,8 +57,12 @@ export { NCRing, NCQuotientRing, NCPolynomialRing,
 	 isExterior,
 	 coordinates,
 	 Basis,
-	 sparseCoeffs
+	 sparseCoeffs,
+	 kernelComponent,
+	 gddKernel
 }
+
+
 
 --- symbols in hash tables of exported types
 protect generatorSymbols
@@ -83,10 +88,10 @@ MAXSIZE = 1000
 -- Andy's bergman path
 -- bergmanPath = "/usr/local/bergman1.001"
 -- Andy's other bergman path
-bergmanPath = "/cygdrive/d/userdata/Desktop/bergman1.001"
---bergmanPath = "/usr/local/bergman1.001"
+-- bergmanPath = "/cygdrive/d/userdata/Desktop/bergman1.001"
+-- bergmanPath = "/usr/local/bergman1.001"
 -- Frank's bergman path
--- bergmanPath = "~/bergman"
+bergmanPath = "~/bergman"
 -- Courtney's bergman path
 --bergmanPath = "/Users/crgibbon/Downloads/bergman1.001"
 
@@ -111,7 +116,7 @@ globalAssignment NCRing
 removeNulls = xs -> select(xs, x -> x =!= null)
 
 removeZeroes = myHash -> select(myHash, c -> c != 0)
-
+ 
 minUsing = (xs,f) -> (
    n := min (xs / f);
    first select(1,xs, x -> f x == n)
@@ -226,7 +231,7 @@ Ring List := (R, varList) -> (
    varList = varList / baseName;
    A := new NCPolynomialRing from {(symbol generators) => {},
                                    (symbol generatorSymbols) => varList,
-                                   (symbol degreesRing) => ZZ[getSymbol("T"), Weights=>{-1}, Global => false],
+                                   (symbol degreesRing) => degreesRing 1,
 				   (symbol CoefficientRing) => R,
                                    (symbol cache) => new CacheTable from {},
 				   (symbol baseRings) => {ZZ},
@@ -266,36 +271,40 @@ Ring List := (R, varList) -> (
 
    A + A := (f,g) -> (
       -- new way
-      newHash := merge(f.terms,g.terms,addVals);
+      --newHash := merge(f.terms,g.terms,addVals);
       -- old way
-      --newHash := new MutableHashTable from pairs f.terms;
-      --for s in pairs g.terms do (
-      --   newMon := s#0;
-      --   if newHash#?newMon then newHash#newMon = newHash#newMon + s#1 else newHash#newMon = s#1;
-      --);
-      --newHash = removeZeroes hashTable pairs newHash;
+      newHash := new MutableHashTable from pairs f.terms;
+      for s in pairs g.terms do (
+         newMon := s#0;
+         if newHash#?newMon then newHash#newMon = newHash#newMon + s#1 else newHash#newMon = s#1;
+      );
+      newHash = removeZeroes hashTable pairs newHash;
       new A from hashTable {(symbol ring, f.ring),
-	                    (symbol isReduced, false),
-                            (symbol cache, new CacheTable from {}),
+                            (symbol cache, new CacheTable from {("isReduced",false)}),
                             (symbol terms, newHash)}   
+   );
+
+   A ? A := (f,g) -> (
+      m := first pairs (leadMonomial f).terms;
+      n := first pairs (leadMonomial g).terms;
+      m ? n
    );
 
    A * A := (f,g) -> (
       -- new way
-      newHash := combine(f.terms,g.terms,multKeys,multVals,addVals);
+      --newHash := removeZeroes combine(f.terms,g.terms,multKeys,multVals,addVals);
       -- old way
-      --newHash := new MutableHashTable;
-      --for t in pairs f.terms do (
-      --   for s in pairs g.terms do (
-      --      newMon := t#0 | s#0;
-      --      newCoeff := (t#1)*(s#1);
-      --      if newHash#?newMon then newHash#newMon = newHash#newMon + newCoeff else newHash#newMon = newCoeff;
-      --   );
-      --);
-      --newHash = removeZeroes hashTable pairs newHash;
+      newHash := new MutableHashTable;
+      for t in pairs f.terms do (
+         for s in pairs g.terms do (
+            newMon := t#0 | s#0;
+            newCoeff := (t#1)*(s#1);
+            if newHash#?newMon then newHash#newMon = newHash#newMon + newCoeff else newHash#newMon = newCoeff;
+         );
+      );
+      newHash = removeZeroes hashTable pairs newHash;
       new A from hashTable {(symbol ring, f.ring),
-  	                    (symbol isReduced, false),
-                            (symbol cache, new CacheTable from {}),
+                            (symbol cache, new CacheTable from {("isReduced",false)}),
                             (symbol terms, newHash)}
    );
 
@@ -357,15 +366,14 @@ NCPolynomialRing / NCIdeal := (A, I) -> (
                                  (symbol generatorSymbols) => A.generatorSymbols,
                                  (symbol CoefficientRing) => A.CoefficientRing,
                                  BergmanRing => false,
-                                 (symbol degreesRing) => ZZ[getSymbol("T"), Weights=>{-1}, Global => false],
+                                 (symbol degreesRing) => degreesRing 1,
 				 (symbol ambient) => A,
                                  (symbol cache) => new CacheTable from {},
           		         (symbol baseRings) => {ZZ},    -- this will be for quotients of quotients
                                  (symbol ideal) => I};
    newGens := apply(B.generatorSymbols, v -> v <- new B from {(symbol ring) => B,
-	    	    	    	    	    	    	      (symbol isReduced) => false,
-                                                              (symbol cache) => new CacheTable from {},
-                                                              (symbol terms) => new HashTable from {(ncMonomial({v},B),1)}});
+                                                              (symbol cache) => new CacheTable from {("isReduced",true)},
+                                                              (symbol terms) => new HashTable from {(ncMonomial({v},B),1_(coefficientRing A))}});
    B#(symbol weights) = A.weights;
       
    B#(symbol generators) = newGens;
@@ -376,13 +384,11 @@ NCPolynomialRing / NCIdeal := (A, I) -> (
 
    --- all these promotes will need to be written between this ring and all base rings.
    promote (A,B) := (f,B) -> new B from {(symbol ring) => B,
-            	    	    	    	 (symbol isReduced) => f.isReduced,
-                                         (symbol cache) => new CacheTable from {},
+                                         (symbol cache) => new CacheTable from {("isReduced",f.cache#"isReduced")},
                                          (symbol terms) => promoteHash((f % ncgb).terms,B)};
                                      
    promote (B,A) := (f,A) -> new A from {(symbol ring) => A,
-            	    	    	    	 (symbol isReduced) => f.isReduced,
-                                         (symbol cache) => new CacheTable from {},
+                                         (symbol cache) => new CacheTable from {("isReduced",f.cache#"isReduced")},
                                          (symbol terms) => promoteHash(f.terms,A)};
 
    promote (ZZ,B) := (n,B) -> putInRing({},B,promote(n,A.CoefficientRing));
@@ -403,10 +409,9 @@ NCPolynomialRing / NCIdeal := (A, I) -> (
 
    lift B := opts -> f -> promote(f,A);
    push := f -> (
-      temp := if f.isReduced then f else f % ncgb;
+      temp := if f.cache#"isReduced" then f else f % ncgb;
       new B from {(symbol ring) => B,
-	          (symbol isReduced) => true,
-                  (symbol cache) => new CacheTable from {},
+                  (symbol cache) => new CacheTable from {("isReduced",f.cache#"isReduced")},
                   (symbol terms) => promoteHash(temp.terms,B)}
    );
    B * B := (f,g) -> push((lift f)*(lift g));
@@ -426,6 +431,12 @@ NCPolynomialRing / NCIdeal := (A, I) -> (
    ZZ + B := (r,f) -> f + r;
    B + QQ := (f,r) -> push((lift f) + r);
    QQ + B := (r,f) -> f + r;
+
+   B ? B := (f,g) -> (
+      m := first pairs (leadMonomial f).terms;
+      n := first pairs (leadMonomial g).terms;
+      m ? n
+   );
 
    B == B := (f,g) -> (lift(f - g) % ncgb) == 0;
    B == ZZ := (f,n) -> (
@@ -710,7 +721,7 @@ newBasis (ZZ,NCIdeal) := NCMatrix => opts -> (n,I) -> (
 	activeGensList = select(activeGensList, g-> degree g <= n - doneToDeg);
    );
 
--- now we need to minimize the spanning set
+   -- now we need to minimize the spanning set
    terms := flatten entries newBasis(n,R,CumulativeBasis=>opts#CumulativeBasis);
    asCoeffs := sparseCoeffs(doneBasis, Monomials=>terms);  
    minGens := mingens image asCoeffs;
@@ -924,16 +935,14 @@ putInRing (NCMonomial, ZZ) :=
 putInRing (NCMonomial, QQ) :=
 putInRing (NCMonomial, RingElement) := (mon,coeff) ->
       new (mon.ring) from {(symbol ring) => mon.ring,
-                           (symbol isReduced) => false,
-			   (symbol cache) => new CacheTable from {},
+			   (symbol cache) => new CacheTable from {("isReduced",false)},
                            (symbol terms) => new HashTable from {(mon,promote(coeff,coefficientRing (mon.ring)))}}
 putInRing (List, NCRing, ZZ) := 
 putInRing (List, NCRing, QQ) :=
 putInRing (List, NCRing, RingElement) := (monList,A,coeff) -> (
     mon := ncMonomial(monList,A);
     new A from {(symbol ring) => A,
-                (symbol isReduced, false),
-                (symbol cache) => new CacheTable from {},
+                (symbol cache) => new CacheTable from {("isReduced",false)},
                 (symbol terms) => new HashTable from {(mon,promote(coeff,coefficientRing A))}}
 )
 
@@ -1053,8 +1062,7 @@ baseName NCRingElement := x -> (
 ring NCRingElement := NCRing => f -> f.ring
 
 flagReduced := f -> new (ring f) from {(symbol ring) => ring f,
-      	    	    	    	       (symbol isReduced) => true,
-                                       (symbol cache) => new CacheTable from {},
+                                       (symbol cache) => new CacheTable from {("isReduced",true)},
                                        (symbol terms) => f.terms}
 
 
@@ -1327,7 +1335,7 @@ writeBergmanInputFile (List, String) := opts -> (genList, tempInput) -> (
    B := ring first genList;
    charB := char coefficientRing B;
    degList := (genList / degree) | {0};
-   maxDeg := min(opts#DegreeLimit, 2*(max degList));
+   maxDeg := max(opts#DegreeLimit, 2*(max degList));
    genListString := makeGenListString genList;
    writeBergmanInputFile(B,
                          genListString,
@@ -1446,8 +1454,18 @@ twoSidedNCGroebnerBasisBergman = method(Options=>{DegreeLimit=>10,
                                                   CacheBergmanGB=>true})
 twoSidedNCGroebnerBasisBergman List := opts -> fList -> twoSidedNCGroebnerBasisBergman(ncIdeal fList,opts)
 twoSidedNCGroebnerBasisBergman NCIdeal := opts -> I -> (
+  local phi;
+  oldI := I;
   if not I.ring#BergmanRing then
-     error "Bergman interface can only handle coefficients over QQ or ZZ/p at the present time." << endl;
+  (
+     -- If the coefficients of the gens of I only use QQ or ZZ/p, then compute
+     -- gb over the ring with QQ or ZZ/p coefficients, then sub back into the
+     -- right ring.
+     k := bergmanCoefficientRing gens I;
+     if k === null then error "Bergman interface can only handle coefficients over QQ or ZZ/p at the present time.";
+     I = newBergmanIdealRing(I,k);
+     phi = ncMap(ring oldI, ring I, gens ring oldI);
+  );
   -- call Bergman for this, at the moment
   tempInit := temporaryFileName() | ".init";      -- init file
   tempInput := temporaryFileName() | ".bi";       -- gb input file
@@ -1461,10 +1479,41 @@ twoSidedNCGroebnerBasisBergman NCIdeal := opts -> I -> (
   writeGBInitFile(tempInit,tempInput,tempOutput);
   stderr << "--Calling Bergman for NCGB calculation." << endl;
   runCommand("bergman -i " | tempInit | " -on-error exit --silent > " | tempTerminal);
-  gbFromOutputFile(ring I,
-                   tempOutput,
-                   MakeMonic=>opts#MakeMonic,
-                   CacheBergmanGB=>opts#CacheBergmanGB)
+  retVal := gbFromOutputFile(ring I,
+                             tempOutput,
+                             MakeMonic=>opts#MakeMonic,
+                             CacheBergmanGB=>opts#CacheBergmanGB);
+  -- at this point, if we are not a BergmanRing, then we could compute over QQ or ZZ/p
+  -- sub the retVal back to the original ring.
+  if not oldI.ring#BergmanRing then phi retVal else retVal
+)
+
+bergmanCoefficientRing = method()
+bergmanCoefficientRing List := L -> (
+   --- this function returns true if all the coefficients
+   --- of all the elements in the list L are in either QQ or FF_p
+   coeffs := flatten apply(L, f -> (pairs f.terms) / last);
+   if all(coeffs, c -> sub(sub(c,QQ),ring c) == c) then
+   (
+      QQ
+   )
+   else
+   (
+      p := char ring first coeffs;
+      if all(coeffs, c -> sub(sub(c,ZZ/p),ring c) == c) then ZZ/p else null
+   )
+)
+
+newBergmanIdealRing = method()
+
+newBergmanIdealRing (NCIdeal,Ring) := (I,k) -> (
+   if k =!= QQ and k =!= ZZ/(char k) then
+      error "Expected a coefficient ring of QQ or ZZ/p for some p";
+   n := numgens ring I;
+   XX := getSymbol("XX");
+   tempRing := k{XX_1..XX_n};
+   phi := ncMap(tempRing,ring I, gens tempRing);
+   phi I
 )
 
 ------------------------------------------------------
@@ -1806,6 +1855,7 @@ minimizeMatrixKerGens(NCPolynomialRing,NCMatrix,List) := opts -> (C,M,kerGens) -
 ------------------------------------------------------------------
 ------- NCGroebnerBasis methods
 ------------------------------------------------------------------
+ring NCGroebnerBasis := Igb -> ring first gens Igb
 
 generators NCGroebnerBasis := opts -> ncgb -> (pairs ncgb.generators) / last
 
@@ -1925,9 +1975,41 @@ leftMultiplicationMap(NCRingElement,ZZ,ZZ) := (f,n,m) -> (
 )
 
 leftMultiplicationMap(NCRingElement,List,List) := (f,fromBasis,toBasis) -> (
+   local retVal;
    if not isHomogeneous f then error "Expected a homogeneous element.";
-   sparseCoeffs(f*fromBasis, Monomials=>toBasis)
+   if fromBasis == {} and toBasis == {} then (
+      retVal = ncMatrix {};
+      retVal
+   )
+   else if fromBasis == {} then (
+      retVal = ncMatrix {{}:(#toBasis)};
+      assignDegrees(retVal,apply(toBasis, b -> degree b), {});
+      retVal
+   )
+   else if toBasis == {} then (
+      retVal = ncMatrix {};
+      assignDegrees(retVal,{},apply(fromBasis, b -> degree b));
+      retVal
+   )
+   else sparseCoeffs(f*fromBasis, Monomials=>toBasis)
 )
+
+{*
+TEST ///
+restart
+needsPackage "NCAlgebra"
+A = QQ{a,b}
+I = ncIdeal {a*a*a,a*a*b,a*b*a,a*b*b,b*a*a,b*a*b,b*b*a,b*b*b}
+B = A/I
+basis(0,B)
+basis(1,B)
+basis(2,B)
+basis(3,B)
+leftMultiplicationMap(a,-1,0)
+leftMultiplicationMap(a,-1,0)
+leftMultiplicationMap(a,-1,0)
+///
+*}
 
 rightMultiplicationMap = method()
 rightMultiplicationMap(NCRingElement,ZZ) := (f,n) -> (
@@ -2203,9 +2285,9 @@ ncMap (NCRing,NCRing,List) := opts -> (B,C,imageList) -> (
    new NCRingMap from hashTable {(symbol functionHash) => hashTable apply(#genCSymbols, i -> (genCSymbols#i,imageList#i)),
                                  (symbol source) => C,
                                  (symbol target) => B,
-				 (symbol Derivation) => opts#Derivation}
+				 (symbol Derivation) => opts#Derivation,
+				 (symbol cache) => new CacheTable from {}}
 )
-
 
 source NCRingMap := f -> f.source
 target NCRingMap := f -> f.target
@@ -2216,7 +2298,6 @@ matrix NCRingMap := opts -> f -> (
         matrix {(gens source f) / f}
 )
 --id _ NCRing := B -> ncMap(B,B,gens B)
-
 
 NCRingMap NCRingElement := (f,x) -> (
    if x == 0 then return promote(0, target f);
@@ -2230,12 +2311,12 @@ NCRingMap NCRingElement := (f,x) -> (
 		 if class s===Symbol or class s===IndexedVariable then putInRing({s},C,1) else s
 		 )
 	    );
-         promote((t#1)*monImage,C) -- an empty sum is 0, which we need to promote 
+         promote(sub(t#1,coefficientRing target f)*monImage,C) -- an empty sum is 0, which we need to promote 
       )
    else
       sum for t in pairs x.terms list (
          monImage := promote(product apply(t#0#monList, v -> f.functionHash#v),target f);
-         (t#1)*monImage
+         sub(t#1,coefficientRing target f)*monImage
       )
 )
 
@@ -2308,6 +2389,8 @@ isHomogeneous NCRingMap := f -> (
 
 NCRingMap _ ZZ := (f,n) -> (
    if not isHomogeneous f then error "Expected a homogeneous NCRingMap.";
+   if f.cache#?"DegreeMatrices" and f.cache#"DegreeMatrices"#?n then
+      return f.cache#"DegreeMatrices"#n;
    B := source f;
    C := target f;
    srcBasis := flatten entries basis(n,B);
@@ -2315,12 +2398,53 @@ NCRingMap _ ZZ := (f,n) -> (
    imageList := srcBasis / f;
    if #(unique (select(imageList, g -> g != 0) / degree)) != 1 then
       error "Expected the image of degree " << n << " part of source to lie in single degree." << endl;
-   sparseCoeffs(imageList,Monomials=> tarBasis)
+   retVal := sparseCoeffs(imageList,Monomials=> tarBasis);
+   if not f.cache#?"DegreeMatrices" then f.cache#"DegreeMatrices" = new CacheTable from {};
+   f.cache#"DegreeMatrices"#n = retVal;
+   retVal
 )
+
+NCRingMap ? NCRingMap := (f,g) -> (matrix f) ? (matrix g)
 
 NCRingMap @@ NCRingMap := (f,g) -> (
    if target g =!= source f then error "Expected composable maps.";
    ncMap(target f, source g, apply(gens source g, x -> f g x))
+)
+
+NCRingMap NCIdeal := (phi, I) -> ncIdeal ((gens I) / phi)
+
+NCRingMap NCGroebnerBasis := (phi,Igb) -> (
+   I := ncIdeal gens Igb;
+   Iphi := phi I;
+   ncGroebnerBasis(Iphi, InstallGB => true)
+)
+
+NCRingMap + NCRingMap := (f,g) -> (
+    if source f =!= source g and target f =!= target g then
+       error "Expected maps between the same source and target.";
+    ncMap(target f, source f, apply(gens source f, x -> f x + g x))
+)
+
+ZZ * NCRingMap := 
+QQ * NCRingMap := 
+RingElement * NCRingMap := (a,f) -> (
+    ncMap(target f, source f, apply(gens source f, x -> a*(f x)))
+)
+
+NCRingMap ^ ZZ := (f,n) -> (
+   if source f =!= target f then
+      error "Expected a ring endomorphism.";
+   A := source f;
+   if n < 0 then (
+      M := f_1;
+      if (rank M != numgens A) then 
+         error "Expected an invertible ring map.";
+      gensA := ncMatrix {gens A};
+      g := ncMap(A, A, flatten entries (gensA*(M^(-1))));
+      fold(abs(n):g, (a,b) -> a @@ b)
+   )
+   else if n == 0 then ncMap(A, A, gens A)
+   else fold(n:f, (a,b) -> a @@ b)
 )
 
 oppositeElement = method()
@@ -2442,6 +2566,27 @@ oreExtension (NCRing,NCRingMap,NCRingElement) := (B,sigma,X) -> (
    C/I
 )
 
+kernelComponent = method()
+kernelComponent (ZZ,NCRingMap) := (d,f) -> (
+   -- computes the kernel of a homogeneous ring map in a specified degree
+   if not isHomogeneous f then error "Expected degree 0 map.";
+   R := source f;
+   bas := basis(d,R);
+   K := mingens ker f_d;
+   if K == 0 then return ncMatrix{{promote(0,R)}} else bas*K
+)
+
+gddKernel = method()
+gddKernel (ZZ,NCRingMap) := (d,f) -> (
+  -- computes a generating set for the kernel of a homogeneous ring map up to a specified degree
+  K := {};
+  for i from 1 to d do (
+     K = K | flatten entries kernelComponent(i,f);
+  );
+  minimizeRelations(select(K,r-> r!=0))
+)
+
+
 ---------------------------------------
 ----NCMatrix Commands -----------------
 ---------------------------------------
@@ -2492,6 +2637,8 @@ ncMatrix List := ncEntries -> (
 ring NCMatrix := NCRing => M -> M.ring
 
 lift NCMatrix := NCMatrix => opts -> M -> ncMatrix applyTable(M.matrix, entry -> promote(entry,(M.ring.ambient)))
+
+NCMatrix ? NCMatrix := (M,N) -> (flatten entries M) ? (flatten entries N)
 
 NCMatrix * NCMatrix := (M,N) -> (
    if M.ring =!= N.ring then error "Expected matrices over the same ring.";
@@ -2706,6 +2853,7 @@ assignDegrees NCMatrix := M -> (
 
 assignDegrees (NCMatrix, List, List) := (M,targetDeg,sourceDeg) -> (
    -- this function is for manual assignment of degrees
+--   R := M.ring;
    if (#(targetDeg) != #(entries M)) then error "Target degree list does not match number of rows of matrix";
    if (#(sourceDeg) != #(first entries M)) then error "Source degree list does not match number of columns of matriix";
    M#(symbol source) = sourceDeg;
@@ -2750,7 +2898,7 @@ NCMatrix // NCMatrix := (N,M) -> (
    -- handle trivial cases now:
    
    -------------------------------
-   gbDegree := max N.source;   -- is this high enough of a degree to factor?
+   gbDegree := max N.source + 1;   -- what is the right degree here?
    matrixRelsM := buildMatrixRelations M;
    CM := ring first matrixRelsM;
    matrixRelsN := buildMatrixRelations N;

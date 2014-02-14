@@ -35,7 +35,7 @@ export{
   	 "divideFraction",
   	 "estFPT",
      "ethRoot",
----     "ethRootSafe", 		MK
+     "ethRootSafe", 		--MK
 ---     "fancyEthRoot",		MK
      "fastExp",
      "findGeneratingMorphisms",     --MK
@@ -48,8 +48,10 @@ export{
      "canonicalIdeal",
      "firstCarry", 
      "FPTApproxList",     
+     "FPT2VarHomog",     
      "frobeniusPower",
      "fSig",
+     "FullMap",--specifies whether the full data should be returned
      "guessFPT",
 	"HSL",
      "isBinomial",
@@ -58,7 +60,9 @@ export{
      "isFPTPoly",
      "isFRegularPoly",
      "isFRegularQGor",
+     "isJToAInIToPe",
      "isSharplyFPurePoly",
+     "MaxExp",
 	"minimalCompatible",		--- MK
 ---	"Mstar",			--- MK
      "MultiThread",
@@ -85,7 +89,7 @@ export{
 --This file has "finished" functions from the Macaulay2 workshop at Wake Forest
 --August 2012.  Sara Malec, Karl Schwede and Emily Witt contributed to it.
 --Some functions, are based on code written by Eric Canton and Moty Katzman
-
+--UPDATE January 2014.  Daniel Hernandez, Moty Katzman, Karl Schwede, Pedro Teixeira, Emily Witt added more functionality.
 
 ----------------------------------------------------------------
 --************************************************************--
@@ -285,9 +289,76 @@ fastExp = (f,N) ->
 --***********************************************************--
 ---------------------------------------------------------------
 
+isJToAInIToPe = (J1, a1, I1, e1) -> (--checks whether or not f1^a1 is in I1^(p^e1).  It seems to be much faster than raising f1 to a power
+	root := ethRoot(J1, a1, e1); 
+	
+	isSubset(root, I1)
+)
+
+nuListFast = (I1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
+	d1 := 0;
+	p1 := char ring I1;
+	local top;--for the binary search
+	local bottom;--for the binary search
+	local middle;--for the binary search
+	local answer; --a boolean for determining if we go up, or down
+	mIdeal := ideal(first entries vars ring I1); 
+	N := 0;
+	myList := new MutableList;
+	curPower := 0;
+	
+	for d1 from 1 to e1 do (
+--		if (curPower == 0) then curPower = 1 else curPower = p1^(d1-1)*curPower;
+		top = p1;
+		bottom = 0;
+		
+		while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
+			middle := floor((top + bottom)/2);
+			answer = isJToAInIToPe(I1, curPower + middle, mIdeal, d1);
+--			print "Here we are";
+--			print (bottom, top);
+			if (answer == false) then bottom = middle else top = middle
+			--print "Here we are"
+		);
+	--	print (bottom, top, curPower);
+		curPower = curPower + bottom;
+		myList#(d1-1) = curPower;
+		curPower = curPower*p1;
+	);
+	myList
+)
+
+nuFast = (I1, e1) -> ( --this does a fast nu computation
+	p1 := char ring I1;
+	local top;--for the binary search
+	local bottom1;--for the binary search
+	local middle;--for the binary search
+	local answer; --a boolean for determining if we go up, or down
+	mIdeal := ideal(first entries vars ring I1); 
+	N := 0;
+	myList := new MutableList;
+	curPower := 0;
+	
+	bottom1 = 0;
+	top = p1^e1;		
+	while (top - 1 > bottom1) do (--the bottom value is always not in m, the top is always in m
+		middle = floor((top + bottom1)/2);
+		answer = isJToAInIToPe(I1, middle, mIdeal, e1);
+		if (answer == false) then bottom1 = middle else top = middle;
+	);
+	bottom1
+)
+
+
+
 --Lists \nu_I(p^d) for d = 1,...,e 
 nuList = method();
-nuList (Ideal,ZZ) := (I,e) ->
+
+nuList (Ideal, ZZ) := (I, e) -> (nuListFast(I, e) )
+
+nuListOld = method();
+
+nuListOld (Ideal,ZZ) := (I,e) -> --an obsolete way to compute nu's
 (
      p := char ring I;
      m := ideal(first entries vars ring I); 
@@ -298,17 +369,19 @@ nuList (Ideal,ZZ) := (I,e) ->
      (	  
 	  J = ideal(apply(first entries gens I, g->fastExp(g, N)));
 	  N=N+1;
-	  while isSubset(I*J, frobeniusPower(m,d))==false do (N = N+1; J = I*J);
-     	  L#(d-1) = N-1;
+	  while isSubset(I*J, frobeniusPower(m,d))==false do (N = N+1; J = I*J); 
+     	  L#(d-1) = N-1; 
 	  N = p*(N-1)
      );
      L
 )
 nuList(RingElement,ZZ) := (f,e) -> nuList(ideal(f),e)
 
+
+
 --Gives \nu_I(p^e)
 nu = method();
-nu(Ideal,ZZ) := (I,e) -> (nuList(I,e))#(e-1)
+nu(Ideal,ZZ) := (I,e) -> nuFast(I,e)
 nu(RingElement, ZZ) := (f,e) -> nu(ideal(f),e)
 
 --Gives a list of \nu_I(p^d)/p^d for d=1,...,e
@@ -414,6 +487,9 @@ digit = (e, x, p) ->
 truncation = method()
 
 truncation (ZZ,QQ,ZZ) := (e,x,p) -> (ceiling(p^e*x)-1)/p^e
+
+--truncation (ZZ,List,ZZ) threads over lists.
+truncation (ZZ,List,ZZ) := (e,uu,p) -> apply(uu,x->truncation(e,x,p))
 
 --Gives the first e digits of the non-terminating base p expansion of x in [0,1]
 --as a list
@@ -731,6 +807,304 @@ isBinomial = f ->
      alert
 )
 
+---------------------------------------------------------------------
+--*****************************************************************--
+--Functions for computing F-thresholds of forms in two variables   --
+--over finite fields. Based on the work of Hernandez and Teixeira. -- 	                                           --                      
+--*****************************************************************--
+---------------------------------------------------------------------
+
+{*
+    Remark: At this point, only commands for computations of F-pure thresholds are
+    implemented. Eventually computations of F-thresholds with respect to more general
+    ideals will be implemented, and perhaps of more general polynomials. Some structures 
+    and functions below are already designed to handle such greater generality. 
+*}
+    
+{*
+    Types and auxiliary commands
+*}
+
+--FTData is a HashTable that stores the data necessary in F-threshold calculations
+--(for conveniently passing those data from one function to another).
+--It contains the following keys:
+--    "ring": the ring of the polynomial in question;
+--    "char": the characteristic of ring;
+--    "ideal": the ideal with respect to which we want to compute the F-threshold;
+--    "gens": the generators of the ideal;
+--    "polylist": a list of the (non-associated) factors of the polynomial in question;
+--    "numpolys": the number of factors.
+FTData = new Type of HashTable
+
+--setFTData takes a list of generators of the ideal or the ideal itself and a list
+--    of polynomials, and builds an FTData from them.
+setFTData = method()
+
+setFTData (List,List) := (gen,polylist) -> 
+(
+    	A:=ring gen_0;
+    	p:= char A;	
+	new FTData from {"char"=>p,"ring"=>A, "ideal"=>ideal gen, "gens" => gen,
+	    "numpolys"=>#polylist,"polylist"=>polylist}
+)
+
+setFTData (Ideal,List) := (I,polylist) -> setFTData(I_*,polylist)
+
+{*
+    Tests and auxiliary functions
+*}
+
+--isInUpperRegion(aa,q,S)/isInUpperRegion(uu,S) tests if the point uu=aa/q is in the
+--upper region attached to S. Suppose I is the ideal of the FTData S under consideration 
+--and L={L_1,...,L_n} is the "polylist". Then a point aa/q (where aa=(a_1,...,a_n) is a 
+--nonnegative integer vector and q a power of "char") is in the "upper region" if 
+--L_1^(a_1)...L_n^(a_n) is in I^[q]; otherwise it is in the lower region.
+isInUpperRegion = method()
+
+isInUpperRegion (List,ZZ,FTData) := (aa,q,S) -> 
+(
+    frob:=ideal apply(S#"gens",f->f^q);
+    L:=S#"polylist";
+    F:=product(L,aa,(f,i)->fastExp(f,i));
+    (F % frob) == 0
+)
+
+isInUpperRegion (List,FTData) := (uu,S) ->
+    isInUpperRegion append(getNumAndDenom(uu),S)
+
+--isInLoweRegion(aa,q,S)/isInLoweRegion(uu,S) tests if the point uu=aa/q is in the
+--lower region attached to S.
+isInLowerRegion = method()
+
+isInLowerRegion (List,ZZ,FTData) := (aa,q,S) -> not isInUpperRegion(aa,q,S)
+
+isInLowerRegion (List,FTData) := (uu,S) -> not isInUpperRegion(uu,S)
+
+--neighborInUpperRegion(aa,q,S)/neighborInUpperRegion(uu,S): an auxiliary command that, 
+--given a point uu=aa/q in the upper region, tries to find a "neighbor" of the form 
+--(aa-e_i)/q that also lies in the upper region. If the search is successful, it retuns
+--the first such neighbor found; otherwise it returns nothing.
+neighborInUpperRegion = method()
+
+neighborInUpperRegion (List,ZZ,FTData) := (aa,q,S) ->
+(
+    if isInLowerRegion(aa,q,S) then (error "Expected point in the upper region.");
+    n := S#"numpolys";
+    posEntries := positions(aa,k->(k>0));
+    found := false;
+    i:=0;
+    local candidate;
+    local neighbor;
+    while ((not found) and (i<#posEntries)) do 
+    (
+	candidate=aa-canVector(posEntries_i,n);
+	if isInUpperRegion(candidate,q,S) then (found=true; neighbor=candidate);
+	i=i+1;
+    );
+    if (not found) then null else (neighbor,q)
+)
+
+neighborInUpperRegion (List,FTData) := (uu,S) -> 
+(
+    nbr:=neighborInUpperRegion append(getNumAndDenom(uu),S);
+    if nbr===null then nbr else (nbr_0)/(nbr_1)
+)
+
+--isCP(aa,q,S)/isCP(uu,S) tests if uu=aa/q is a critical point, that is, if uu is in the
+--upper region but each neighbor (aa-e_i)/q (where a_i>0) is not.
+isCP = method()
+
+isCP (List,ZZ,FTData) := (aa,q,S) -> 
+(
+    if isInLowerRegion(aa,q,S) then return false;
+    neighborInUpperRegion(aa,q,S)===null
+)
+
+isCP (List,FTData) := (uu,S) -> isCP append(getNumAndDenom(uu),S)
+
+--findCPBelow(uu,S) takes a point uu in the upper region attached to S and finds a 
+--critical point <= uu with the same denominator.
+findCPBelow = method()
+
+findCPBelow (List,FTData) := (pt,S) ->
+(
+    if isInLowerRegion(pt,S) then (error "The point must be in the upper region.");
+    nbr:=neighborInUpperRegion(pt,S);
+    if nbr===null then return pt else findCPBelow(nbr,S)
+)
+
+{*
+    Computation of FPTs
+*}
+
+--FPT2VarHomogNontrivial({a1,...an},S): if S#"polylist={L1,...,Ln} is a list of linear
+--forms, FPT2VarHomogNontrivial({a1,...an},S) finds the FPT of the polynomial
+--F=L1^(a1)...Ln^(an), assuming this FPT is not the LCT. 
+FPT2VarHomogNontrivial = method(Options => {MaxExp => infinity})
+
+FPT2VarHomogNontrivial (List,FTData) := opt -> (aa,S) ->
+(    
+    p:=S#"char";
+    u:=2*aa/taxicabNorm(aa);
+    e:=0;
+    trunc:=truncation(e,u,p);
+    while (isInLowerRegion(trunc,S) and e<(opt.MaxExp)) 
+        do (e=e+1; trunc=truncation(e,u,p));
+    if isInLowerRegion(trunc,S) then (error "Reached MaxExp.");
+    cc:=findCPBelow(trunc,S);
+    max apply(cc,aa,(c,a)->c/a)
+)
+
+--FPT2VarHomogInternal({a1,...an},S): if S#"polylist={L1,...,Ln} is a list of linear
+--forms, FPT2VarHomogInternal({a1,...an},S) finds the FPT of the polynomial
+--F=L1^(a1)...Ln^(an).
+FPT2VarHomogInternal = method(Options => {MaxExp => infinity})
+
+FPT2VarHomogInternal (List,FTData) := opt -> (a,S) ->  
+(    
+    F:=product(S#"polylist",a,(f,i)->f^i);
+    deg:=taxicabNorm(a);
+    if isFPTPoly(F,2/deg) 
+        then (2/deg) 
+	else FPT2VarHomogNontrivial(a,S,MaxExp=>(opt.MaxExp))
+)
+
+-----------------------
+FPT2VarHomog = method(Options => {MaxExp => infinity})
+
+--FPT2VarHomog(RingElement)
+--FPT(F) computes the F-pure threshold of a form F in two variables. 
+--KNOWN ISSUE: if the splitting field of F is too big, factor will not work.
+FPT2VarHomog (RingElement) :=  opt ->  F ->
+(    
+   if not isNonConstantBinaryForm(F) then (
+	error "FPT2VarHomog expects a nonconstant homogeneous polynomial in 2 variables."
+    );
+    -- check if fpt=lct
+    deg:=(degree F)_0;
+    if isFPTPoly(F,2/deg) then return 2/deg;
+    R:=ring F;
+    vv:=R_*;
+    kk:=splittingField(F);
+    a:= symbol a;
+    b:= symbol b;
+    S:=kk[a,b];
+    G:=sub(F,{(vv#0)=>a,(vv#1)=>b});
+    (L,m):=toSequence transpose factorList(G);
+    FPT2VarHomogNontrivial(m,setFTData(S_*,L),MaxExp=>(opt.MaxExp))
+)
+
+--FPT2VarHomog(List,List)
+--Given a list L={L_1,...,L_n} of linear forms in 2 variables and a list m={m_1,...,m_n}
+--of multiplicities, FPT2VarHomog(L,m) returns the F-pure threshold of the polynomial 
+--L_1^(m_1)*...*L_n^(m_n). 
+FPT2VarHomog (List,List) :=  opt -> (L,m) -> 
+    FPT2VarHomogInternal(m,setFTData(gens ring L_0,L),MaxExp=>(opt.MaxExp))
+
+
+{*
+    Miscellaneous.
+*}
+
+-- Some commands for dealing with vectors --
+
+--canVector(i,n) returns the i-th canonical basis vector in dimension n
+--Warning: for convenience, this uses Macaulay2's convention of indexing lists starting 
+--with 0; so, for example, {1,0,0,0} is canVector(0,4), not canVector(1,4).
+canVector = method()
+
+canVector (ZZ,ZZ) := (i,n) -> 
+(
+    if ((i<0) or (i>=n)) 
+        then (error "canVector(i,n) expects integers i and n with 0<=i<n.");   
+    apply(n,j->if i==j then 1 else 0)
+)
+ 
+-- getNumAndDenom(uu) takes a rational vector uu and returns a pair (aa,q), where aa 
+--is an integer vector and q an integer such that uu=aa/q.
+getNumAndDenom = method()
+
+getNumAndDenom (List) := uu -> 
+(
+    den := lcm apply(uu,n->denom n);
+    aa := apply(uu,n->lift(n*den,ZZ));
+    (aa,den)        
+)
+
+--Computes the taxicab norm of a vector.
+taxicabNorm = method()
+
+taxicabNorm (List) := uu -> sum(uu,x->abs(x))
+
+-- Factorization of polynomials and splitting fields --
+
+--factorList(F) factors the RingElement F and returns a list of pairs of the form
+--{factor,multiplicity}.
+factorList = method()
+
+factorList (RingElement) := F ->  
+(
+    prod := factor F;
+    apply(#prod, i -> {(prod#i)#0,(prod#i)#1}) 
+)
+
+--splittingField returns the splittingField of a polynomial over a finite field
+splittingField = method()
+
+splittingField (RingElement) := F -> 
+(
+    if not isPolynomialOverFiniteField(F) 
+        then (error "splittingField expects a polynomial over a finite field");
+    p:=char ring F;
+    ord:=(coefficientRing(ring F))#order;
+    factors:=first transpose factorList(F);
+    deg:=lcm select(flatten apply(factors,degree),i->i>0);
+    GF(p,deg*floor(log_p ord))
+)
+
+-- Some tests
+
+--isBinaryForm(F) checks if F is a homogeneous polynomial in two variables.
+--WARNING: what we are really testing is if the *ring* of F is a polynomial ring in two 
+--variables, and not whether F explicitly involves two variables. (For example, if F=x+y 
+--is an element of QQ[x,y,z], this test will return "false"; if G=x is an element of 
+--QQ[x,y], this test will return "true".)
+isBinaryForm = method()
+
+isBinaryForm (RingElement) := F ->
+(
+    R:=ring F;
+    isPolynomialRing(R) and numgens(R)==2 and isHomogeneous(F)
+)
+
+--isNonconstantBinaryForm(F) checks if F is a nonconstant homogeneous polynomial in two 
+--variables. See warning under "isBinaryForm".
+isNonConstantBinaryForm = method()
+
+isNonConstantBinaryForm (RingElement) := F ->
+(
+    isBinaryForm(F) and (degree(F))_0>0
+)
+
+--isLinearBinaryForm(F) checks if F is a linearform in two variables. See warning 
+--under "isBinaryForm".
+isLinearBinaryForm = method()
+
+isLinearBinaryForm (RingElement) := F ->
+(
+    isBinaryForm(F) and (degree(F))_0==1
+)
+
+--isPolynomialOverFiniteField(F) checks if F is a polynomial over a finite field.
+isPolynomialOverFiniteField = method()
+
+isPolynomialOverFiniteField (RingElement) := F ->
+(
+    R:=ring F;
+    kk:=coefficientRing(R);
+    try kk#order then (isPolynomialRing(R) and isField(kk))
+    	else false   
+)    
 
 ----------------------------------------------------------------
 --************************************************************--
@@ -771,9 +1145,10 @@ ethRootSafe = (f, I, a, e) -> (
 	
 	expOfA := basePExpMaxE(aRem,p1,e); --this gives "a base p", with the left-most term the smallest "endian".
 	
-	IN1 := I*ideal(f^(expOfA#0));
+	IN1 := I;
 	
 	if (e > 0) then (
+		IN1 = IN1*ideal(f^(expOfA#0));
 		IN1 = ethRoot(IN1, 1);
 		i := 1;
 	
@@ -1017,7 +1392,7 @@ findAllCompatibleIdealsInnards = (u,L,P) ->(
 	});
 ---
 	C2:=(P1+ideal(u)):(P1:P);
-	JB:=C1*C2; 
+---	JB:=C1*C2; ---MK
 ---print(mingens P, mingens JB);
 ---tau=ideal mingens star(C2,u,1) ;  --- OLD VERSION
 	tau=ideal mingens ascendIdeal  (C2, u, 1);
@@ -1206,7 +1581,7 @@ ascendIdealSafe = (Jk, hk, ak, ek) -> (
      while (isSubset(IN, IP) == false) do(
      	  IP = IN;
 --	  error "help";
-	  IN = ethRootSafe(hk, IP, ak, ek)+IP
+	  	IN = ethRootSafe(hk, IP, ak, ek)+IP
      );
 
      --trim the output
@@ -1537,28 +1912,55 @@ sigmaAOverPEMinus1QGor  ={HSL=> false}>> o -> (fk, a1, e1, gg) -> (
 --This function computes the parameter test module of a ring, it returns it as a submodule of a canonical ideal.
 --this is a slightly modified function originally written by Moty Katzman for "Parameter test ideals of Cohen Macaulay rings"
 --it returns the lift of the canonical module to the ambient ring
-canonicalIdeal = (R1) -> (
+
+canonicalIdeal ={FullMap=> false} >> o -> (R1) -> (
 	S1 := ambient R1;
 	I1 := ideal(R1);
 	d1 := (dim S1) - (dim R1);
+	local answer2;
 	
-	canModuleMatrix := relations(prune( Ext^d1(S1^1/I1, S1^1)));
+	degShift := sum degrees S1;
+	
+	canModuleMatrix := relations(prune( Ext^d1(S1^1/I1, S1^{degShift})));
 	
 	answer:=0;
 	s1:=syz transpose substitute(canModuleMatrix,R1);
 	s2:=entries transpose s1;
-	use S1;
+	--use S1;
 	apply(s2, t->
 	{
 		s3:=substitute(syz gens ideal t,S1);
 ---		print(s3%canModuleMatrix);
 		if ((s3%canModuleMatrix)==0) then
 		{
+			answer2 = t;
 			answer=substitute(mingens ideal t,S1);
 			break;
 		};
 	});
-ideal answer
+	
+	if (o.FullMap == true) then (ideal answer, map(R1^1, coker(canModuleMatrix**R1), matrix {answer2}), canModuleMatrix) else ideal answer
+)
+
+moduleToIdeal = (M1, R1) -> (--turns a module to an ideal of a ring, it returns the lift of the ideal to the ambient ring
+	S1 := ambient R1;
+	myMatrix := substitute(relations prune M1, S1);
+	
+	answer:=0;
+	s1:=syz transpose substitute(myMatrix,R1);
+	s2:=entries transpose s1;
+	
+	apply(s2, t->
+	{
+		s3:=substitute(syz gens ideal t,S1);
+---		print(s3%canModuleMatrix);
+		if ((s3%myMatrix)==0) then
+		{
+			answer=substitute(mingens ideal t,S1);
+			break;
+		};
+	});
+	ideal answer	
 )
 
 --the following function computes the u of a canonical ideal in a polynomial ring
@@ -1873,6 +2275,7 @@ estFPT={FinalCheck=> true, Verbose=> false, MultiThread=>false, DiagonalCheck=>t
 
 --isFPTPoly, determines if a given rational number is the FPT of a pair in a polynomial ring. 
 --if Origin is specified, it only checks at the origin. 
+
 isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
 	pp := char ring f1;
 	if (o.Origin == true) then org := ideal(vars (ring f1));
@@ -1882,7 +2285,53 @@ isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
 	bb := funList#1;
 	cc := funList#2;
 	mySigma := ideal(f1);
+	myTau := ideal(sub(1, ring f1));
+	myA := aa;
+	myA2 := 0;
+	
+	if (cc != 0) then (
+		myA = floor(aa / (pp^cc - 1));
+		myTau = tauPoly( f1, (aa%(pp^cc-1))/(pp^cc-1) )
+	);
+	
+	if (o.Verbose==true) then print "higher tau Computed";
+
+	--first we check whether this is even a jumping number.
+	if (cc == 0) then (
+		myA2 = aa-1;
+		mySigma = sigmaAOverPEMinus1Poly(f1, (pp-1), 1)
+	)
+	else (
+		myA2 = floor((aa-1)/(pp^cc-1));
+		mySigma = (sigmaAOverPEMinus1Poly(f1, ((aa-1)%(pp^cc-1))+1, cc))
+	);
+	if (o.Verbose==true) then print "higher sigma Computed";
+
+	returnValue := false;
+	
+	if ( isSubset(ideal(sub(1, ring f1)), ethRootSafe(f1, mySigma, myA2, bb) )) then (
+		if (o.Verbose==true) then print "we know t1 <= FPT";
+		if (not isSubset(ideal(sub(1, ring f1)), ethRootSafe(f1, myTau, myA, bb) ))  then returnValue = true 
+	);
+		
+	returnValue
+)
+
+
+--********************************************
+--	--This next function should be deleted, it is just here for now for comparison
+--********************************************
+isFPTPolyOld ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> ( --this is obsolete
+	pp := char ring f1;
+	if (o.Origin == true) then org := ideal(vars (ring f1));
+	funList := divideFraction(t1, pp);
+	--this writes t1 = a/(p^b(p^c-1))
+	aa := funList#0;
+	bb := funList#1;
+	cc := funList#2;
+	mySigma := ideal(f1);
 	myTau := tauPoly(f1, t1*pp^bb);
+	
 	if (o.Verbose==true) then print "higher tau Computed";
 
 	--first we check whether this is even a jumping number.
@@ -1913,7 +2362,12 @@ isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
 	returnValue
 )
 
+
+
 --isFJumpingNumberPoly determines if a given rational number is an F-jumping number
+--***************************************************************************
+--This needs to be speeded up, like the above function
+--***************************************************************************
 isFJumpingNumberPoly ={Verbose=> false}>> o -> (f1, t1) -> (
 	pp := char ring f1;
 	funList := divideFraction(t1, pp);
@@ -2692,19 +3146,26 @@ doc ///
 doc ///
      Key
      	truncation
+	(truncation,ZZ,QQ,ZZ)
+	(truncation,ZZ,List,ZZ)
      Headline
-        Gives the first e digits of the non-terminating base p expansion of x.
+        Truncations of base p expansions of rational numbers
      Usage
-     	 truncation(e,x,p)
+     	 t=truncation(e,x,p), T=truncation(e,X,p)
      Inputs 
-		e:ZZ
+	e:ZZ
 	x:QQ
 	p:ZZ
+	X:List
+	   which contains rational numbers
      Outputs
-         :List
+        t:QQ
+	    which is the e-th truncation of the non-terminating base p expansion of x
+	T:List
+	    which contains the e-th truncations of the entries of the list X
      Description
 	Text
-	     Gives the first e digits of the non-terminating base p expansion of x in [0,1], as a fraction.
+	     Gives the first e digits of the non-terminating base p expansion of a nonnegative rational number x, as a fraction; threads over lists of rational numbers.
 ///
 
 doc ///
@@ -2808,6 +3269,32 @@ doc ///
 	    Returns the largest exponent e such that p^e divides x.
 ///
 
+doc ///
+     Key
+     	FPT2VarHomog
+	(FPT2VarHomog,RingElement)
+	(FPT2VarHomog,List,List)
+     Headline
+        F-pure threshold of a form in two variables
+     Usage
+     	  fpt=FPT2VarHomog(G), fpt=FPT2VarHomog(factors,multiplicities)
+     Inputs 
+	factors:List
+	    which contains the linear factors of a form G in two variables 
+	multiplicities:List
+	    which contains the multiplicities of those linear factors in G
+	G:RingElement
+	    a form in two variables
+     Outputs
+        fpt:QQ
+     Description
+	Text
+	    FPT2VarHomog computes the F-pure threshold of a homogeneous polynomial G
+	    	in two variables. 
+	    The polynomial G can be entered directly, or if the user knows a factorization
+	    	G=L1^(a1)...Ln^(an) into linear forms, that can be used for improved 
+		performance: FPT2VarHomog({L1,...,Ln},{a1,...,an}).
+///
 
 
 end

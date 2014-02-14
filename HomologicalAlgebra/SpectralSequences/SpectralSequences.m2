@@ -19,7 +19,7 @@ newPackage(
   "SpectralSequences",
 --  AuxiliaryFiles => true,
   Version => "0.6",
-  Date => "7 January 2014",
+  Date => "10 January 2014",
   Authors => {
        {
       Name => "David Berlekamp", 
@@ -43,8 +43,8 @@ newPackage(
       HomePage => "http://math.berkeley.edu/~thanh"}},
   Headline => "spectral sequences",
   DebuggingMode => true,
-  PackageImports => {"SimplicialComplexes", "ChainComplexExtras"},
-  PackageExports => {"SimplicialComplexes", "ChainComplexExtras"}
+  PackageImports => {"SimplicialComplexes", "ChainComplexExtras", "PushForward"},
+  PackageExports => {"SimplicialComplexes", "ChainComplexExtras", "PushForward"}
   )
 
 export {
@@ -52,23 +52,14 @@ export {
   "filteredComplex",
   "SpectralSequence",
   "spectralSequence", 
---  "computeErModules",
---  "computeErMaps", 
-"ErMaps",
   "spots",
   "SpectralSequencePage", 
   "spectralSequencePage",
---  "rpqHomology",
   "homologyIsomorphism",
   "Shift",
   "ReducedHomology",
-  --"project",
   "SpectralSequencePageMap",
  "spectralSequencePageMap",
- -- "pprune",
- -- "epqrMaps",
- -- "pruneEpqrMaps",
- -- "epq",
   "connectingMorphism",
   "sourcePruningMap",
   "targetPruningMap",
@@ -76,9 +67,8 @@ export {
    "PageMap", 
    "pageMap", 
    "page" ,
-  -- "InfiniteSequence",
   "prunningMaps", "edgeComplex",
-  "filteredHomologyObject", "associatedGradedHomologyObject"  --, "xHom", "yHom" --, "xTensor", "yTensor"
+  "filteredHomologyObject", "associatedGradedHomologyObject", "changeOfRingsTor", "pushFwdChainComplex"  
   }
 
 
@@ -98,7 +88,7 @@ ReverseDictionary = value Core#"private dictionary"#"ReverseDictionary"
 -- CODE
 --------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------
--- ChainComplexExtraExtras 
+-- ChainComplexExtraExtras -- Several people have worked on this portion of the code
 --------------------------------------------------------------------------------------
 
 -- since things are mutable we don't want to cache spots
@@ -114,8 +104,7 @@ support ChainComplex := List => (
      C -> sort select (spots C, i -> C_i != 0))
 
 
-
-  -- Computes the graded pieces of the total complex of a Hom double complex 
+-- Computes the graded pieces of the total complex of a Hom double complex 
 -- (just as a graded module, so no maps!)
 Hom (GradedModule, GradedModule) := GradedModule => (C,D) -> (
   R := C.ring;  if R =!= D.ring then error "expected graded modules over the same ring";
@@ -227,7 +216,6 @@ support FilteredComplex := List => (
      K -> sort select (spots K, i -> K#i != 0))
 
 
-
 FilteredComplex _ InfiniteNumber :=
 FilteredComplex _ ZZ := ChainComplex => (K,p) -> (
   if K#?p then K#p 
@@ -289,15 +277,9 @@ filteredComplex(List) := FilteredComplex => opts -> L -> (
     if any(#maps, p -> target maps#p != C) then (
       error "expected all map to have the same target"));     
   Z := image map(C, C, i -> 0*id_(C#i)); -- make zero subcomplex as a subcomplex of ambient complex 
-   --   P :=  {(#maps-opts.Shift) => C} ; 
    P := {};
--- apply (#maps,  p -> #maps - (p+1) -opts.Shift => image maps#p); 
  myList := {};
  for p from 0 to #maps - 1 do (
---	 if(image maps#p != C) then -- Why do we want to omit redundant pieces?? -- In any
--- event if we want to omit redundant pieces then we need to fix the max value.
--- i.e. count the number of redundant pieces and the subtract... 
--- see scratch examples below.
 	 myList = myList |
 	  {#maps - (p+1) -opts.Shift => image maps#p};
 	  );
@@ -310,7 +292,6 @@ filteredComplex(List) := FilteredComplex => opts -> L -> (
 --------------------------------------------------------------------------------
 -- constructing filtered complexes ---------------------------------------------
 --------------------------------------------------------------------------------
-
 
 
 -- make the filtered complex associated to the "naive truncation of a chain complex"
@@ -457,12 +438,7 @@ yComplex := (T,n) ->
 		    K.dd_i = inducedMap(directSum(ymodules(n,i-1,T)),directSum(ymodules(n,i,T)),T.dd_i));
 	       K
 	       )
---Hom (ChainComplex, FilteredComplex) := FilteredComplex => (C,K) -> ( 
- --   yHom(complete C, K)
-  --  )
 
---yHom = method()
---yHom(ChainComplex, FilteredComplex) := FilteredComplex => (C,K) -> (
   Hom (ChainComplex, FilteredComplex) := FilteredComplex => (D,K) -> (
       C := complete D; 
      supp := support K_infinity;
@@ -727,7 +703,8 @@ SpectralSequencePage ^ List := Module => (E,i)-> (E_(-i))
 
 support SpectralSequencePage := E -> (
      new HashTable from apply(spots E.dd, i -> i=> source E.dd #i) )
- 
+
+-- this can problably be made more efficient....   
 page SpectralSequencePage := Page => opts -> E -> ( 
     	K := E.filteredComplex;
 	s := E.number;
@@ -736,6 +713,7 @@ page SpectralSequencePage := Page => opts -> E -> (
     if min K_(infinity) < infinity and max K_infinity > - infinity then (
 	    for p from min K to max K do (
 	  	for q from -p + min K_(infinity) to max K_(infinity) do (
+--		    H#{p,q} = E^s_{p,q}
 	       	    if E.Prune == false then H#{p,q} = epq(K,p,q,s)
 	       	    else H#{p,q} = prune epq(K,p,q,s)
 	       )
@@ -971,6 +949,26 @@ associatedGradedHomologyObject(ZZ,ZZ,FilteredComplex) := (p,n,K) -> (
 
 -----------------------------------------------------------
 -----------------------------------------------------------
+-- change of rings scratch experimental code --
+
+pushFwdChainComplex = method()
+pushFwdChainComplex(ChainComplex,RingMap) := (C,f) -> (
+    D := new ChainComplex;
+    D.ring = source f;
+    for i from min C to max C do
+    D.dd _i = pushFwd(C.dd_i,f);    
+    D
+    )
+
+changeOfRingsTor = method()
+changeOfRingsTor(Module,Module,RingMap) := (M,N,f) -> (
+    -- f : R --> S, N an S module, M an R module
+    F := complete res N;
+    FR := pushFwdChainComplex(F,f);
+    G := complete res M;
+    spectralSequence((G) ** (filteredComplex FR) )
+    )
+
 -----------------------------------------------------------
 -----------------------------------------------------------
 
@@ -1131,7 +1129,7 @@ doc ///
 	      C = complete res monomialCurveIdeal(B,{1,3,4})
 	      K = filteredComplex(J,C,4)
 	 Text
-	      Here are higher some pages of the associated spectral sequence:
+	      Here are some higher pages of the associated spectral sequence:
 	 Example
 	       E = prune spectralSequence K
 	       E^2
@@ -1317,8 +1315,8 @@ doc ///
 	    two chain complex maps, $d : D \rightarrow C$ 
 	    and $e : E \rightarrow C$, and then
 	    compute the resulting filtration of $C$.
-	    When then consider a boundary case by considering the filtered complex obtained
-	    from a single chain complex map, that is the identity of $C$.
+--	    When then consider a boundary case by considering the filtered complex obtained
+--	    from a single chain complex map, that is the identity of $C$.
      	  Text
 	     Let's make our chain complexes $C$, $D$, and $E$.	     
      	  Example	       	 
@@ -1350,16 +1348,16 @@ doc ///
      	  Example	       	       
 	       K = filteredComplex({d,e})
 	  Text
-	     If we want to specify a specify minimum filtration degree
+	     If we want to specify a minimum filtration degree
              we can use the Shift option.
       	  Example	       	     
 	       L = filteredComplex({d,e},Shift =>1)
 	       M = filteredComplex({d,e},Shift =>-1)
-	  Text
-	     We now explain a boundary case in which the list consists of a single map $\{\phi_0\}$.
-	  Example
-	      P = filteredComplex {id_C}   
-    	      P_1	  
+--	  Text
+--	     We now explain a boundary case in which the list consists of a single map $\{\phi_0\}$.
+--	  Example
+--	      P = filteredComplex {id_C}   
+--    	      P_1	  
 ///	  
 
 ---
@@ -1445,7 +1443,7 @@ doc ///
 	      S = ZZ[v1,v2,v3,v4,v5,v6,v15,v12,v36,v34,v46,v25];
 	      twoSphere = simplicialComplex {v3*v4*v5, v5*v4*v15, v15*v34*v4, v15*v34*v1, v34*v1*v6, v34*v46*v6, v36*v46*v6, v3*v4*v46, v4*v46*v34, v3*v46*v36, v1*v6*v2, v6*v2*v36, v2*v36*v12,v36*v12*v3, v12*v3*v5, v12*v5*v25, v25*v5*v15, v2*v12*v25, v1*v2*v25, v1*v25*v15};	   
 	  Text
-	     We can check that the homology of the simplicial compllex twoSphere agrees with that of $\mathbb{S}^2$.
+	     We can check that the homology of the simplicial complex twoSphere agrees with that of $\mathbb{S}^2$.
 	  Example
 	      C = truncate(chainComplex twoSphere,1)	
 	      prune HH C
@@ -3724,350 +3722,3 @@ end
 ---
 -- scratch code --
 ---
-
--- Now are trying to start debuging --
--- and check all the boundary cases --
- 
-restart
-uninstallPackage"SpectralSequences"
-installPackage"SpectralSequences"
-installPackage("SpectralSequences", RemakeAllDocumentation => true)
-check "SpectralSequences";
-
-
-restart
-needsPackage"SpectralSequences"
-
--- these examples show that the few added lines to the 
--- filtered complex constructor handles the case of a one term complex
--- and the zero complex the way that we want it to
-
-A = QQ[x]
-M = A^1
-D = M[0]
-C = new ChainComplex
-C.ring = A
-E = koszul vars A
-filteredComplex D
-filteredComplex C
-filteredComplex E
-d = (filteredComplex D) ** D
-filteredComplex{id_C}
-filteredComplex{id_D}
-
-e = spectralSequence d
-e^0
-e^0 .dd
-e^infinity
-e = prune spectralSequence d
-e^0
-e^0 . dd
--- maybe we are displaying two many maps ??
-
-d = D ** (filteredComplex D)
-e = spectralSequence d
-e^0
-e^1 
-e^1 .dd
-
-c = C ** (filteredComplex C)
-e = spectralSequence c
-e^0
-
-spots C
-
-min C
-min c_infinity
-
-(filteredComplex C) ** C
-
-Hom(filteredComplex E, E)
-Hom(E, filteredComplex E)
-
-
-restart
-needsPackage"SpectralSequences"
-
-A = QQ[x]
-M = A^1
-D = M[0]
-C = new ChainComplex
-C.ring = A
-H = koszul vars A
-
-Hom(filteredComplex C, C)
-Hom(C, filteredComplex C)
-
-e = spectralSequence Hom(filteredComplex C, C)
-e^0
-e^10
-
-ee = spectralSequence Hom(C, filteredComplex C)
-
-ee^0
-ee^10
-
-Hom(filteredComplex D, D)
-Hom(D, filteredComplex D)
-
-e = spectralSequence xHom(filteredComplex D, D)
-e^0
-e^10
-
-Hom(filteredComplex H, H)
-Hom(H, filteredComplex H)
-
-ee = spectralSequence Hom(H, filteredComplex H)
-
-ee^0
-ee^10
-
-restart
-installPackage"SpectralSequences"
-needsPackage"SpectralSequences"
-A = QQ[x]
-M = A^1
-C = M[10]
-K = filteredComplex C
-E = spectralSequence K
-E^0
-E^1
-E^infinity
-c = new ChainComplex 
-c.ring = A
-k = filteredComplex c
-e = spectralSequence k
-e^0
-e^10
-e^infinity
--- so now e^infinity of the zero complex seems to be OK.
-
-restart
-needsPackage"SpectralSequences"
-A = QQ[x,y,z]
-
-C = koszul vars A
-
-filteredComplex C
-
-K = (filteredComplex C) ** C
-
-E = spectralSequence K
-
-E^2
-prune E^2
-
----
----
--- Here is a scratch example which seems 
--- to illustrate the acyclic "edge complex".
---
-restart
-needsPackage "SpectralSequences";
-
-A = QQ[a,b,c,d]
-D = simplicialComplex {a*d*c, a*b, a*c, b*c}
-F2D = D
-F1D = simplicialComplex {a*c, d}
-F0D = simplicialComplex {a,d}
-K = filteredComplex({F2D, F1D, F0D},ReducedHomology => false)
-E = spectralSequence(K)
-e = prune E
-E^0
-E^1
-E^2
-E^3
-E^infinity
-e^0
-e^1
-e^2
-e^3
-prune HH K_infinity
-e^2 .dd
-
---
--- the acyclic edge complex for this example
--- will take the form
--- H_1 --> E^2_{2,-1} --> E^2_{0,0} --> H_0 --> E^2_{1, -1} --> 0
--- It is given by:
-edgeComplex E
-
-prune HH edgeComplex E
-
-prune edgeComplex E
-
-edgeComplex prune E
-
-
-
-testEdgeComplex = chainComplex {inducedMap(E^2_{1,-1}, HH_0 K_infinity, id_(K_infinity _0)),
-     inducedMap(HH_0 K_infinity, E^2_{0,0}, id_(K_infinity _0)), E^2 .dd_{2,-1}, inducedMap(E^2_{2,-1}, HH_1 K_infinity, id_(K_infinity _1))}
-prune HH edgeComplex
-prune edgeComplex
-
---
--- Can we write a short script in general to compute the edge complex?
--- Ans: yes.
--- code below has been rewritten above to handle the zero chain complex
-edgeComplex = method()
-
-edgeComplex(SpectralSequence) := (E) -> (
-    if E.Prune == true then error "not currently implemented for pruned spectral sequences";
-    M := select(spots E^2 .dd, i -> E^2_i != 0);
-    l := min apply(M, i -> i#0);
-    m := min apply(M, i -> i#1);
-    C := chainComplex E;
-    chainComplex {inducedMap(E^2_{l + 1, m}, HH_(l + m + 1) C, id_(C_(l + m + 1))),
-     inducedMap(HH_(l + m + 1) C, E^2_{l,m + 1}, id_(C_(l + m + 1))), 
-     E^2 .dd_{l + 2,m}, inducedMap(E^2_{l + 2, m}, HH_(l + m + 2) C, id_(C_(l + m + 2)))}
-    )
-
-edgeComplex E
-
-prune HH edgeComplex E
-
-prune edgeComplex E
-
-edgeComplex prune E
-
-viewHelp
-
-restart
-needsPackage "SpectralSequences";
-
--- the following script allows us to multiply a chain complex by an ideal
-Ideal * ChainComplex := ChainComplex => (I,C) -> (
-    D = new ChainComplex;
-    D.ring = C.ring;
-    apply(drop(spots C, 1), i -> D.dd_i = inducedMap(I * C_(i-1), I * C_i, C.dd_i));
-    D
-    )
-
-A = QQ[x,y]
-C = koszul vars A
-I = ideal vars A
-
-I * C
-
-
-filteredComplex(Ideal,ChainComplex,ZZ) := FilteredComplex => opts -> (I,C,n) ->(
-    if n < 0 then error "expected a non-negative integer"
-    else
-    filteredComplex(apply(n, i -> inducedMap(C, I^(i+1) * C)), Shift => n)   
-    )
-
-
-K = filteredComplex(I,C,5)
-
-E = prune spectralSequence K
-
-E^0
-E^1
-E^2
-
-B = QQ[a..d]
-
-J = ideal vars B
-
-C = complete res monomialCurveIdeal(B,{1,3,4})
-
-k = filteredComplex(J,C,4)
-
-e = prune spectralSequence k
-
-e^0
-e^1
-e^2
-e^3
-e^3 .dd
-e^4
-e^4 .dd
-
-assert(all(keys support e^0, j -> isIsomorphism homologyIsomorphism(e,j#0,j#1,0)))
-assert(all(keys support e^1, j -> isIsomorphism homologyIsomorphism(e,j#0,j#1,1)))
-assert(all(keys support e^2, j -> isIsomorphism homologyIsomorphism(e,j#0,j#1,2)))
-assert(all(keys support e^3, j -> isIsomorphism homologyIsomorphism(e,j#0,j#1,3)))
-assert(all(keys support e^4, j -> isIsomorphism homologyIsomorphism(e,j#0,j#1,4)))
--- cool --
-
---
---
--- the following showed that there is/was a bug in the filtered complex constructor...
--- the issue seemed to be the fact that the ambient complex could be the image of say the first
--- 2 or 3 maps in the list.  I.e., redundances are allowed.
--- one way to "fix the bug" was to comment out the offensive line.
--- the problem seems to be that C is repeated several times.
--- See line 296--300 of the code.
---  There is really no problem if we remember the redundances explicitly...
--- On the other hand, we could rewrite that portion of code.
-K = filteredComplex(apply(3, i -> inducedMap(C, I^i * C)), Shift =>3)
-L = apply(3, i -> inducedMap(C, I^i * C))
-apply(L, i -> isChainComplexMap i)
-K = filteredComplex{id_C, inducedMap(C, I^0 * C), inducedMap(C, I^1 * C)}
-
-K_1
-
-K_2
-
-K_3
-
-
--- some scratch code related to filtered homology modules and their associated graded objects
-
-restart
-uninstallPackage"SpectralSequences"
-installPackage"SpectralSequences"
-installPackage("SpectralSequences", RemakeAllDocumentation => true)
-check "SpectralSequences";
-
-
-restart
-needsPackage"SpectralSequences"
-
-
--- maybe better to make new type ?!  
-filteredHomologyObject = method()
-
-filteredHomologyObject(ZZ, ZZ,FilteredComplex) := (p,n,K) -> (
-    image(inducedMap(HH_n K_infinity, HH_n K_p, id_(K_infinity _n)))
-    )
-
-
-associatedGradedHomologyObject = method()
-
-associatedGradedHomologyObject(ZZ,ZZ,FilteredComplex) := (p,n,K) -> (
-    filteredHomologyObject(p,n,K) / filteredHomologyObject(p-1,n,K)
-    )
-
-A = QQ[a,b,c,d]
-D = simplicialComplex {a*d*c, a*b, a*c, b*c}
-F2D = D
-F1D = simplicialComplex {a*c, d}
-F0D = simplicialComplex {a,d}
-K = filteredComplex({F2D, F1D, F0D},ReducedHomology => false)
-filteredHomologyObject(0,0,K)
-filteredHomologyObject(1,0,K)
-filteredHomologyObject(1,1,K)
-filteredHomologyObject(10,15,K)
-filteredHomologyObject(-10,-10,K)
-associatedGradedHomologyObject(0,0,K)
-associatedGradedHomologyObject(1,0,K)
-associatedGradedHomologyObject(1,1,K)
-associatedGradedHomologyObject(10,15,K)
-associatedGradedHomologyObject(-10,-10,K)
--- so the above seems to be OK.
-
-
-
-E = spectralSequence(K)
-e = prune E
-E^0
-E^1
-E^2
-E^3
-E^infinity
-e^0
-e^1
-e^2
-e^3
-prune HH K_infinity

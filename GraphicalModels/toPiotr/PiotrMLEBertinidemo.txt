@@ -1,0 +1,24 @@
+Macaulay2, version 1.6
+with packages: ConwayPolynomials, Elimination, IntegralClosure, LLLBases, PrimaryDecomposition, ReesAlgebra, TangentCone
+
+i1 : load "PiotrMLEBertini.m2"
+--loading configuration for package "Bertini" from file /Users/davids/Library/Application Support/Macaulay2/init-Bertini.m2
+
+i2 : G = mixedGraph(digraph {{1,{2}},{2,{3,4}}},bigraph {{1,3},{2,4}});
+
+i3 : U = {matrix{{1,2,1,-1}}, matrix{{2,1,3,0}}, matrix{{-1, 0, 1, 1}}, matrix{{-5, 3, 4, -6}}};
+
+i4 : solveScoreEquationsInBertini(G,U)
+warning: clearing value of symbol zz to allow access to subscripted variables based on it
+       : debug with expression   debug 6274   or with command line option   --debug 6274
+Temporary directory for input and output files:/var/folders/93/0ltyt89x74g8qb5qd_68ppnr0000gp/T/M2-24423-0/0
+
+The version of Bertini you have installed on your computer was used for this run. 
+Bertini is under ongoing development by D. Bates, J. Hauenstein, A. Sommese, and C. Wampler.
+
+
+o4 = {{7.1875, -1.625, -1.8125, 5.875, 1.25, .875, -2.75, 1.6875, -2.23091, 7.25}, {7.1875, -1.2649e-21+1.33727e-21*ii, -.955973,
+     ----------------------------------------------------------------------------------------------------------------------------------
+     3.67244e-21-1.54307e-20*ii, 1.25, .658867, -2.75, 1.45966, -1.44951, 7.25}}
+
+o4 : List

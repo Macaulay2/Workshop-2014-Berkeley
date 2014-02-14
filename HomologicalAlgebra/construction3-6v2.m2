@@ -65,18 +65,25 @@ liftModuleMap (Module, Module, Matrix) := (N,M,A) -> (
 --there is a way around this issue in the case that (at least one of?)
 --the modules (is/)are free, but we can't count on that to occur in
 --practice
+
+-- example for testing constructionV2
+R = QQ[x,y,z]/ideal(x*y*z)
+M = coker map(R^1,,{gens R})
+g=3
+n=5
+
 constructionV2 = 
 method(TypicalValue => ChainComplex
---     , Options => {LengthLimit => "2"}
+     , Options => {LengthLimit => 2}
      )
 constructionV2 (ZZ,Module):= 
---     opts -> 
+     opts -> 
      (g,M) -> (
      if g <= 0
      then error "expected g>0 for a syzygy of positive degree";
---     n:= opts.LengthLimit;
---     P := resolution(M, LengthLimit=>max(n,g+2));
-     P := resolution(M, LengthLimit=>g+2);
+     n:= opts.LengthLimit;
+     P := resolution(M, LengthLimit=>max(n,g+2));
+--     P := resolution(M, LengthLimit=>g+2);
      G := omega(g,P);
      Pd := dual P;
      toLiftFirstFactor := map(image(Pd.dd_(-g+1)), omega(1-g, Pd), id_(Pd_(1-g)));
@@ -92,46 +99,69 @@ constructionV2 (ZZ,Module):=
      kappaLifted = liftModuleMap(kappa.target,kappa.source,kappa);
      w := map(G, P_g, id_(P_g));
      d := bidualityMap(G);
---     L := resolution(Gd, LengthLimit => max(g+2, n));
      Gd := dual G;
-     L := resolution(Gd, LengthLimit => g+2);
+     L := resolution(Gd, LengthLimit => max(g+2, n));
+     Ld := dual L;
+--     L := resolution(Gd, LengthLimit => g+2);
 --     lambda := map(HH_0(L), L_0, id_(L_0));
 -- L is a resolution of Gd, so that Gd (up to a prune) == the homology
 -- in degree 0, but Gd =!== HH_0(L); this could cause problems for the
 -- compositions necessary in the j=g case below. Hence lambda as defined above
 -- needs to be adjusted
 -- is it appropriate to prune Gd first?
-     lambdaDual := dual lambda; --not yet implemented in M2 Core !
+    lambda := map(Gd, L_0, id_(L_0));
+    lambdaDual := dual lambda; -- now implement in M2 1.6
 --nothing below here has been tested using the example below  
      
      cRes := id_(resolution (ring M)^0);
      
      --Jason's portion
---     for j from (g-1-max(g+2, n)) to g-1 do (
-     for j from (g-1-max(g+2)) to g-1 do (
-	  cRes.target_j = P_j;
+     for j from (g-1-max(g+2, n)) to g-1 do (
+--     for j from (g-1-max(g+2)) to g-1 do (
+--	  cRes.target_j = P_j;
 	  cRes.target.dd_j = P.dd_j;
-	  cRes.source_j = Ld_(g-1-j);
-	  cRes.source.dd_j = Ld.dd_(g-1-j);
-	  cRes_j = kappaLifted_(g-1-j);
+--	  cRes.source_j = Ld_(g-1-j);
+	  cRes.source.dd_j = Ld.dd_(g-1-j); 
+--	  cRes_j = kappaLifted_(g-1-j);
 	  );     
      --Kat's portion
---     for i from g+1 to max(g+2,n) do (
-     for i from g+1 to max(g+n) do (
+     for i from g+1 to max(g+2,n) do (
+--     for i from g+1 to max(g+n) do (
 	  cRes.source.dd_i=P.dd_i;
 	  cRes.target.dd_i=P.dd_i;
-	  cRes_i=id_(P_i);
+--	  cRes_i=id_(P_i);
 	  );
      
      --for portion in middle (i.e. the degree g part)
-     cRes.target.dd_g=P.dd_i;
-     cRes.source.dd_g=lambdaDaul*d*w;
-     cRes_g=id_(P_g);
+     cRes.target.dd_g=P.dd_g;
+     cRes.source.dd_g=lambdaDual*d*w;
+--     cRes_g=id_(P_g);
      cRes
      )
      
+
 
 -- example for testing constructionV2
 R = QQ[x,y,z]/ideal(x*y*z)
 M = coker map(R^1,,{gens R})
 g=3
+n=2
+C = constructionV2(g,M)
+P = resolution(M, LengthLimit=>max(g+2,n))
+--neither C.source or C.target has differentials that square to 0.
+--something is wrong. At least one source of the error is the following:
+  --i86 : for j from -4 to 5 do(
+  --	  print(j, source C.source.dd_j === source C.target.dd_(j+1))
+  --	  )
+  --(-4, true)
+  --(-3, true)
+  --(-2, true)
+  --(-1, true)
+  --(0, true)
+  --(1, false)
+  --(2, false)
+  --(3, false)
+  --(4, false)
+  --stdio:415:59:(3):[1]: error: wrong number of rows or columns
+--Moreover, C.target should be exactly P = res M in all degrees;
+--this fails for degrees less than g-1.
