@@ -3574,8 +3574,7 @@ doc ///
 	 normalFormBergman(z^17,Igb)
 ///
 
-
-
+{*
 doc ///
    Key
       isReduced
@@ -3601,7 +3600,7 @@ doc ///
 	 w'=w % Igb
 	 w'.isReduced
 ///
-
+*}
 
 doc ///
    Key

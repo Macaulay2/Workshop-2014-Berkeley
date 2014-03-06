@@ -472,7 +472,7 @@ function spliceLinksForNode(node) {
 var lastKeyDown = -1;
 
 function keydown() {
-  d3.event.preventDefault();
+  //d3.event.preventDefault();
 
   if(lastKeyDown !== -1) return;
   lastKeyDown = d3.event.keyCode;
@@ -503,34 +503,8 @@ function keydown() {
 
       restart();
       break;
-    case 66: // B
-      if(selected_link) {
-        // set link direction to both left and right
-        selected_link.left = true;
-        selected_link.right = true;
-      }
-      restart();
-      break;
-    case 76: // L
-      if(selected_link) {
-        // set link direction to left only
-        selected_link.left = true;
-        selected_link.right = false;
-      }
-      restart();
-      break;
-    case 82: // R
-      if(selected_node) {
-        // toggle node reflexivity
-        selected_node.reflexive = !selected_node.reflexive;
-      } else if(selected_link) {
-        // set link direction to right only
-        selected_link.left = false;
-        selected_link.right = true;
-      }
-      restart();
-      break;
   }
+  restart();
 }
 
 function keyup() {

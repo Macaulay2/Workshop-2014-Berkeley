@@ -4,8 +4,8 @@ needsPackage "Graphs"
 
 newPackage(
      "GraphicalModels",
-     Version => "1.0",
-     Date => "April, 2013",
+     Version => "1.1",
+     Date => "February 14, 2014",
      Authors => {
 	  {Name => "Luis Garcia-Puente",
 	   Email => "lgarcia@shsu.edu",
@@ -23,20 +23,20 @@ newPackage(
 	  -- Email=> "",
 	  -- HomePage=>""}      
 	  },
-     Headline => "A package for discrete and Gaussian graphical models" --,
-     -- Certification => {
-     -- 	  "journal name" => "The Journal of Software for Algebra and Geometry",
-     -- 	  "journal URI" => "http://j-sag.org/",
-     -- 	  "article title" => "Graphical Models",
-     -- 	  "acceptance date" => "2013-03-05",
-     -- 	  "published article URI" => "http://j-sag.org/Volume5/jsag-1-2013.pdf",
-     -- 	  "published code URI" => "http://j-sag.org/Volume5/GraphicalModels.m2",
-     -- 	  "repository code URI" => "http://github.com/Macaulay2/M2/blob/master/M2/Macaulay2/packages/GraphicalModels.m2",
-     -- 	  "release at publication" => "68f41d641fadb0a1054023432eb60177f1d7cbd9",
-     -- 	  "version at publication" => "1.0",
-     -- 	  "volume number" => "5",
-     -- 	  "volume URI" => "http://j-sag.org/Volume5/"
-     -- 	  }
+     Headline => "A package for discrete and Gaussian graphical models"{*,
+     Certification => {
+	  "journal name" => "The Journal of Software for Algebra and Geometry",
+	  "journal URI" => "http://j-sag.org/",
+	  "article title" => "Graphical Models",
+	  "acceptance date" => "2013-03-05",
+	  "published article URI" => "http://j-sag.org/Volume5/jsag-1-2013.pdf",
+	  "published code URI" => "http://j-sag.org/Volume5/GraphicalModels.m2",
+	  "repository code URI" => "http://github.com/Macaulay2/M2/blob/master/M2/Macaulay2/packages/GraphicalModels.m2",
+	  "release at publication" => "68f41d641fadb0a1054023432eb60177f1d7cbd9",
+	  "version at publication" => "1.0",
+	  "volume number" => "5",
+	  "volume URI" => "http://j-sag.org/Volume5/"
+	  }*}
      --DebuggingMode => true
      )
 export {"bidirectedEdgesMatrix",
@@ -3284,12 +3284,8 @@ H = identifyParameters R;
 H#(p_(2,4))_0
 
 ///
-
-restart
-installPackage ("GraphicalModels",FileName=>"/Users/lgp/Software/Macaulay2/Workshop-2014-Berkeley/GraphicalModels/GraphicalModels.m2", RemakeAllDocumentation => true) 
-
  restart
- loadPackage("GraphicalModels", FileName => "/Users/lgp/Software/Macaulay2/Workshop-2014-Berkeley/GraphicalModels/GraphicalModels.m2")
+ loadPackage("GraphicalModels", FileName => "/Users/lgp/Software/Macaulay2/Workshop-2014-Berkeley/GraphicalModels/GraphicalModels-Mike.m2")
  f = () -> (
    R := gaussianRing G;
    gaussianVanishingIdeal R)

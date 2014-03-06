@@ -205,7 +205,8 @@ i7 : solveScoreEquationsInPHCpack = (G,U) -> (
      F := map(R,S,Lparam);
      SJ := preimage (F,J);
      NN:=numgens S;
-     tempR := CC[local zz_1 .. local zz_NN];
+     --zz := local zz;
+     tempR := CC[zz_1..zz_NN];
      tempF := map(tempR,S,vars tempR);
      tempL := flatten entries gens tempF SJ;
      solveSystem(tempL)

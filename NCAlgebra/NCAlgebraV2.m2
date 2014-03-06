@@ -112,17 +112,17 @@ subquotient(NCMatrix,Nothing) := (subgens,null) -> (
 
 subquotient(NCMatrix,NCMatrix) := (subgens,relns) -> (
      R := ring relns;
---     E := target subgens;
---     if E != target relns then error "expected maps with the same target"; -- we used to have =!=, but Schreyer orderings of free modules are discarded by "syz"
+--     E := subgens.target;
+--     if E != relns.target then error "expected maps with the same target"; -- we used to have =!=, but Schreyer orderings of free modules are discarded by "syz"
 --     rE := E.RawFreeModule;
---     n := rawRank rE;
+--     n := E.numgens;
      if subgens.target != relns.target then error "expected maps with the same target";
      n := #subgens.target;
      if n == 0 then new NCModule from (R,n)
      else (
 {*
-          relns = align matrix relns;
-          subgens = align matrix subgens;
+--          relns = align matrix relns;
+--          subgens = align matrix subgens;
           if E.?generators then (
                relns = E.generators * relns;
                subgens = E.generators * subgens;
@@ -143,7 +143,7 @@ subquotient(NCMatrix,NCMatrix) := (subgens,relns) -> (
           new NCModule of Vector from hashTable Mparts))
 
 -- The following checks will go in when NCMatrices have modules as source and target.
-{*
+
 subquotient(NCModule,NCMatrix,NCMatrix) := (F,g,r) -> (
      if F =!= target g or F =!= target r then error "expected module to be target of maps";
      subquotient(g,r))
@@ -154,7 +154,7 @@ subquotient(NCModule,NCMatrix,Nothing) := (F,g,r) -> (
      if F =!= target g then error "expected module to be target of maps";
      subquotient(g,r))
 subquotient(NCModule,Nothing,Nothing) := (F,g,r) -> F
-*}
+
 
 
 isNCModule = method(TypicalValue => Boolean)
@@ -167,6 +167,72 @@ isFreeModule NCModule := M -> not M.?relations and not M.?generators
 isSubmodule NCModule := M -> not M.?relations
 
 isQuotientModule NCModule := M -> not M.?generators
+
+{*
+NCModule == NCModule := (M,N) -> (
+     ring M === ring N
+     and degrees ambient M === degrees ambient N
+     and (
+          if M.?relations 
+          then N.?relations and (
+               -- if isHomogeneous N.relations and isHomogeneous M.relations
+               -- then gb N.relations == gb M.relations
+               -- else 
+                    (
+                    -- temporary
+                    isSubset(image M.relations, image N.relations)
+                    and
+                    isSubset(image N.relations, image M.relations)
+                    )
+               )
+               else not N.?relations
+          )
+     and (
+	  if M.?generators then (
+               if N.?generators then (
+                    f := (
+                         if M.?relations 
+                         then M.relations|M.generators
+                             else M.generators);
+                    g := (
+                         if N.?relations
+                         then N.relations|N.generators
+                         else N.generators);
+                    -- if isHomogeneous f and isHomogeneous g
+                    -- then gb f == gb g
+                    -- else 
+                         (
+                         -- temporary
+                             isSubset(image f, image g)
+                             and
+                             isSubset(image g, image f)
+                         )
+                    )
+               else (
+                    f = (
+                         if M.?relations
+                         then M.relations|M.generators
+                         else M.generators
+                         );
+                    if isHomogeneous f then f = substitute(f,0);
+                    isSubset(ambient N, image f)))
+          else (
+               if N.?generators then (
+                    g = (
+                         if N.?relations 
+                         then N.relations|N.generators 
+                         else N.generators
+                         );
+                    if isHomogeneous g then g = substitute(g,0);
+                    isSubset(ambient M, image g))
+               else true)))
+*}
+basis (ZZ, NCModule) := (d,M) -> (
+   -- the basis is the cokernel of the degree d part of the presentation matrix
+   P := if M.cache.?presentation then M.cache.presentation else presentation M;
+   degdP := P_d;
+   
+)
 
 
 ----------------------------------------------------------------------------
@@ -555,9 +621,13 @@ first (D.vertexSet)
 vertexSet D
 
 --- all paths of length 4 ---
-findPaths(D,first (D,vertexSet),4)
+findPaths(D,first (D.vertexSet),4)
 --- verify... ---
 nChains(4,D)
+--------------
+--- code to build init file for anick resolution
+--- code to build .bi file for anick
+
 ///
 
 

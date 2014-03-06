@@ -36,70 +36,27 @@ truncateComplex(ZZ,ChainComplex) := (g,P) -> (
 	  )
 )
 
---from a module, build and augment a resolution of the module
-augmentChainComplex = 
-     method(TypicalValue => ChainComplex, Options => {LengthLimit =>2}
-	  )
-augmentChainComplex (Module) := opts -> M -> (
-     Q := resolution(M, LengthLimit => opts.LengthLimit);
---    augQ := Q;     
-     mapsList = ();
-     mapsList = append(mapsList, map(M, Q_0,id_(Q_0)));
-     for j from 1 to max Q do (
-	 f_j = Q.dd_j;
-	 mapsList = append(mapsList, f_j); );
-     augQ := chainComplex(mapsList)[1];
---     augQ.dd_(0) = map(M, Q_0,id_(Q_0);
-     augQ
-)
-
---a new method which takes the chain complex as input and outputs the
---complex obtained by augmenting the complex with HH_0 in degree -1,
---then shft.
-augmentChainComplex (ChainComplex) := C -> (
-     mapsList = ();
-     mapsList = append(mapsList, map(HH_0(Q), Q_0,id_(Q_0)));
-     for j from 1 to max Q do (
-	 f_j = Q.dd_j;
-	 mapsList = append(mapsList, f_j); );
-     augQ := chainComplex(mapsList)[1];
---     augQ.dd_(0) = map(M, Q_0,id_(Q_0);
-     augQ
-)
-
--- given a map between modules, lift the map to a chain map between
--- the resolutions
-liftModuleMap = method(TypicalValue => ChainComplexMap, Options => {LengthLimit => 2})
-liftModuleMap (Module, Module, Matrix) := opts ->(N,M,A) -> (
-     n := opts.LengthLimit;
-     Q := (augmentChainComplex(N, LengthLimit => n))[-1];
-     P := (augmentChainComplex(M, LengthLimit => n))[-1];
-     tempLift := (extend(Q,P,A))[1]; 
---     tempLift_0 = 0*tempLift_0;
-     tempLift
-     )
- 
- specialAugmentChainComplex = method(TypicalValue => ChainComplex);
- specialAugmentChainComplex (Module,ChainComplex) := (M,C) -> (
-     if not (prune M)== (prune (coker C.dd_1)) then error "expected module
-     to be the homology in degree 0";
-     if not min C==0 then error "expected complex concentrated 
-     in non-negative degrees";
-     mapsList = ();
-     mapsList = append(mapsList, map(M, C_0,id_(C_0)));
-     for j from 1 to max C do (
-	 f_j = C.dd_j;
-	 mapsList = append(mapsList, f_j); );
-     augC := chainComplex(mapsList);
-     augC
-     )
-
---version 3 is below, implementing a better way of constructing
---the final chain complex map from the constructed pieces.
-buildCR = 
-method(TypicalValue => ChainComplex
-    , Options => {LengthLimit => 2}
+--take a resolution of a module, append the module in degree -1
+augmentResolution = method(TypicalValue => ChainComplex);
+augmentResolution (Module,ChainComplex) := (M,C) -> (
+    if not (prune M)== (prune (coker C.dd_1)) then error "expected module
+    to be the homology in degree 0";
+    if not min C==0 then error "expected complex concentrated 
+    in non-negative degrees";
+    mapsList = ();
+    mapsList = append(mapsList, map(M, C_0,id_(C_0)));
+    for j from 1 to max C do (
+        f_j = C.dd_j;
+        mapsList = append(mapsList, f_j); 
+    );
+    augC := chainComplex(mapsList);
+    augC
     )
+
+--latest version of consruction 3.6
+buildCR = 
+method(TypicalValue => ChainComplex, 
+    Options => {LengthLimit => 2})
 buildCR (ZZ,Module):= opts -> (g,M) -> (
     if g <= 0
     then error "expected g>0 for a syzygy of positive degree";
@@ -131,11 +88,11 @@ buildCR (ZZ,Module):= opts -> (g,M) -> (
 --Step 2.1: build source of lifting
     D = truncateComplex(g,resolution(source kappa, LengthLimit => g));
 --Step 2.1.1: augment with source kappa
-    D' = specialAugmentChainComplex(source kappa, D);
+    D' = augmentResolution(source kappa, D);
 --Step 2.2: build target of lifting
     E = resolution(target kappa, LengthLimit => max(g+2, n));
 --Step 2.2.1: augment with target kappa
-    E' = specialAugmentChainComplex(target kappa, E);
+    E' = augmentResolution(target kappa, E);
 --and lift kappa     
     kappaLifted = extend(E', D', kappa)[1];
 --==========================
@@ -239,16 +196,6 @@ sign(ZZ) := j -> (
 
 end
 --------Test Code----------
-
---test augmentChainComplex; it shouldn't override res M
-restart
-load "construction3-6v3.m2"
-R = QQ[x,y,z]/ideal(x*y*z)
-M = coker vars R
-P = res M
-Q = augmentChainComplex M
-P == Q --returns false, as desired
-
 restart
 load "construction3-6v3.m2"
 R = QQ[x,y,z]/ideal(x*y*z)
@@ -256,28 +203,14 @@ M = coker vars R
 g = 3
 n = 5
 C = buildCR(g,M) --the output, as a chain complex map
---for i from (g-1-max(g+2,n)) to max(g+2,n) do (
---    print(i, C.ff#i)) --checks the syntax for calling the maps f_i
-CR = map(C.target, C.source, i -> C.ff#i)
---This code here checks if the source and target of the 
---f_i maps are what they should be; updated to reflect the
---new output of buildCR as a hash table
+--it works, that is it runs without errors, but it remains to check
+--that the lifting kappaLifted in degrees 0, 1, 2 is correct.
+
+--a test for strict equality of sources/targets
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
-      print (i, source C.ff#i === C.source_i, target C.ff#i === C.target_i)
+      print (i, source C_i === C.source_i, target C_i === C.target_i)
       )
 --a less strict test;
 for i from (g-1-max(g+2,n)) to max(g+2,n) do (
-      print (i, source C.ff#i == C.source_i, target C.ff#i == C.target_i)
-      )  
-
---a process to test the buildMaps and buildComplex code;
---designed to create a chain complex using
---map(ChainComplex,ChainComplex,Matrix) with only one interesteing
---differential in the hope of narrowing down which differential(s)
---is(/are) causing problems.
-mapsList = ()
-for i from (g-1-max(g+2,n)) to max(g+2,n) do (
-    mapsList = append(mapsList,-(sign i)*(id_(R^1))))
---    mapsList = append(mapsList,id_(R^(1))))
-mapsList
-P = chainComplex(mapsList)[g]
+      print (i, source C_i == C.source_i, target C_i == C.target_i)
+      )
