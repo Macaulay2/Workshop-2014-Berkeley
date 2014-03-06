@@ -27,6 +27,7 @@ export{
   	 "basePExpMaxE",
   	 "BinomialCheck",
   	 "binomialFPT",
+  	 "canonicalIdeal",
   	 "carryTest",
      "digit", 	 
      "denom",
@@ -45,7 +46,6 @@ export{
 	"findAllCompatibleIdeals", 	--- MK
      "findQGorGen",
      "finduOfIdeal",
-     "canonicalIdeal",
      "firstCarry", 
      "FPTApproxList",     
      "FPT2VarHomog",     
@@ -63,6 +63,7 @@ export{
      "isJToAInIToPe",
      "isSharplyFPurePoly",
      "MaxExp",
+     "moduleToIdeal",
 	"minimalCompatible",		--- MK
 ---	"Mstar",			--- MK
      "MultiThread",
@@ -1920,8 +1921,8 @@ canonicalIdeal ={FullMap=> false} >> o -> (R1) -> (
 	local answer2;
 	
 	degShift := sum degrees S1;
-	
-	canModuleMatrix := relations(prune( Ext^d1(S1^1/I1, S1^{degShift})));
+	myExt := prune( Ext^d1(S1^1/I1, S1^{-degShift}));
+	canModuleMatrix := relations(myExt);
 	
 	answer:=0;
 	s1:=syz transpose substitute(canModuleMatrix,R1);
@@ -1939,7 +1940,7 @@ canonicalIdeal ={FullMap=> false} >> o -> (R1) -> (
 		};
 	});
 	
-	if (o.FullMap == true) then (ideal answer, map(R1^1, coker(canModuleMatrix**R1), matrix {answer2}), canModuleMatrix) else ideal answer
+	if (o.FullMap == true) then (ideal answer, map(R1^1, myExt**R1, matrix {answer2}), myExt) else ideal answer
 )
 
 moduleToIdeal = (M1, R1) -> (--turns a module to an ideal of a ring, it returns the lift of the ideal to the ambient ring
