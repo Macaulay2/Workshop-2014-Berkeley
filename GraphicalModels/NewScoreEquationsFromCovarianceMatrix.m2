@@ -78,6 +78,9 @@ JacobianMatrixOfRationalFunction(RingElement) := (F) -> (
     matrix({{(1/g)^2}})*answer
 );
 
+needsPackage "Graphs"
+needsPackage "GraphicalModels"
+
 -----------------------------------
 -- This function takes a mixed graph and a permutation and
 -- creates the same graph but with permuted vertices.
