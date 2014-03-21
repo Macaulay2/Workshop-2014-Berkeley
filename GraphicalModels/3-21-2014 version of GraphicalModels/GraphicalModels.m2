@@ -573,11 +573,11 @@ gaussianRing Digraph :=  Ring => opts -> (G) -> (
 
 
 gaussianRing MixedGraph := Ring => opts -> (g) -> (
-     --Test that the graph satisfies all the right conditions
+     --Need to add test that the graph satisfies all the right conditions (is ordered correctly)
      G := graph collateVertices g;
      dd := graph G#Digraph;
      bb := graph G#Bigraph;
-     uu := G#Graph;
+     uu := G#Graph#graph;
      vv := sort vertices g;
      s := toSymbol opts.sVariableName;
      l := toSymbol opts.lVariableName;
@@ -593,7 +593,7 @@ gaussianRing MixedGraph := Ring => opts -> (g) -> (
      kL := join(apply(vv, i->k_(i,i)),delete(null, flatten apply(vv, x-> apply(toList uu#x, y->if pos(vv,x)>pos(vv,y) then null else k_(x,y)))));
      m := #lL+#pL+#kL;
      R := kk(monoid [lL,pL,kL,sL,MonomialOrder => Eliminate m, MonomialSize=>16]);
-     -- create gaussianVariables hash table: (symbol s)_(i,j) => ring var with the same name, same for l, p.
+     -- create gaussianVariables hash table: (symbol s)_(i,j) => ring var with the same name, same for l, p, k
      H := new MutableHashTable;
      nextvar := 0;
      for v in lL do (H#v = R_nextvar; nextvar = nextvar+1);
