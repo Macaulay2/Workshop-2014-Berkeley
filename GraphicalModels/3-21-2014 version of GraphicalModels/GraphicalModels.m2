@@ -577,7 +577,8 @@ gaussianRing MixedGraph := Ring => opts -> (g) -> (
      G := graph collateVertices g;
      dd := graph G#Digraph;
      bb := graph G#Bigraph;
-     uu := G#Graph#graph;
+     --uu := G#Graph#graph;
+     uu := graph G#Graph;
      vv := sort vertices g;
      s := toSymbol opts.sVariableName;
      l := toSymbol opts.lVariableName;
@@ -589,8 +590,8 @@ gaussianRing MixedGraph := Ring => opts -> (g) -> (
      sL := delete(null, flatten apply(vv, x-> apply(vv, y->if pos(vv,x)>pos(vv,y) then null else s_(x,y))));
      lL := delete(null, flatten apply(vv, x-> apply(toList dd#x, y->l_(x,y))));	 
      pL := join(apply(vv, i->p_(i,i)),delete(null, flatten apply(vv, x-> apply(toList bb#x, y->if pos(vv,x)>pos(vv,y) then null else p_(x,y)))));
-     --Check the definition of kL
-     kL := join(apply(vv, i->k_(i,i)),delete(null, flatten apply(vv, x-> apply(toList uu#x, y->if pos(vv,x)>pos(vv,y) then null else k_(x,y)))));
+     --Check the definition of kL (CHANGE MUST HAPPEN HERE)
+     if #(edges uu) > 0 then kL := join(apply(vv, i->k_(i,i)),delete(null, flatten apply(vv, x-> apply(toList uu#x, y->if pos(vv,x)>pos(vv,y) then null else k_(x,y)))));
      m := #lL+#pL+#kL;
      R := kk(monoid [lL,pL,kL,sL,MonomialOrder => Eliminate m, MonomialSize=>16]);
      -- create gaussianVariables hash table: (symbol s)_(i,j) => ring var with the same name, same for l, p, k
@@ -3311,5 +3312,8 @@ restart
      gaussianVanishingIdeal R)
  G = mixedGraph(digraph {{1,{2,3}},{2,{3}},{3,{4}}},bigraph {{1,2},{2,4}});
  f()
+
+ installPackage("GraphicalModels", RemakeAllDocumentation => true, UserMode=>true, DebuggingMode => true, FileName => "/Users/lgp/Software/Macaulay2/Workshop-2014-Berkeley/GraphicalModels/3-21-2014 version of GraphicalModels/GraphicalModels.m2")
+
 
 ///
