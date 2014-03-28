@@ -320,6 +320,7 @@ scoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
     d := numRows L;
     -- Omega
     W := bidirectedEdgesMatrix R;
+    Z := undirectedEdgesMatrix R;
     -- move to a new ring, lpR, which does not have the s variables
     numSvars:=lift(d*(d+1)/2,ZZ);
     --lp rings is the ring without the s variables
@@ -330,9 +331,22 @@ scoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
     F:=map(lpR,R,lpRTarget);
     L = matRtolpR(L,F);
     W = matRtolpR(W,F);
+    Z = matRtolpR(Z, F);
     FR := frac(lpR);
+    Zinv := inverse Z;
+    M := mutableMatrix(F, numgens source L, numgens source L);
+    for i to (numgens source Z)-1 do (
+	for j to (numgens source Z) - 1 do (
+	    M_(i,j) = Zinv_(i,j);
+	);
+    );
+    for i to (numgens source W)-1 do (
+	for j to (numgens source W)-1 do (
+	    M_(i + numgens source Z, j + numgens source Z) = W_(i,j);
+	);
+    );
     K := inverse (id_(lpR^d)-L);
-    Sigma := (transpose K) * W * K;
+    Sigma := (transpose K) * matrix(M) * K;
     SigmaInv := inverse substitute(Sigma, FR);    
     C1 := trace(SigmaInv * V)/2;
     C1derivative := JacobianMatrixOfRationalFunction(trace(SigmaInv * V)/2);
