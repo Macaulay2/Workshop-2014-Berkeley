@@ -133,9 +133,6 @@ orderingOfMixedGraphUndirectedBidirectedSeparation(MixedGraph) := (G) -> (
 	for j to #(edges(Di))-1 do (
 	    ed = (edges(Di))#j;
 	    if (ed#1 == vertRest#i and isSubset(set{ed#0}, set(vertBi))) then (
-		print(vertRest#i);
-		print(ed);
-		print("vertRest#i = ed#1 and ed#0 is in vertBi");
 		vertBi = append(vertBi, ed#1);
 		flag = false;
 		break;
@@ -179,9 +176,6 @@ orderingOfMixedGraphDirectedOrdering(MixedGraph) := (G) -> (
 	for j to #(edges(Di))-1 do (
 	    ed = (edges(Di))#j;
 	    if (ed#1 == vertRest#i and isSubset(set{ed#0}, set(vertBi))) then (
-		print(vertRest#i);
-		print(ed);
-		print("vertRest#i = ed#1 and ed#0 is in vertBi");
 		vertBi = append(vertBi, ed#1);
 		flag = false;
 		break;
@@ -201,7 +195,6 @@ orderingOfMixedGraphDirectedOrdering(MixedGraph) := (G) -> (
     UnM = mutableMatrix(ZZ, 1, numUn);
     for i to (#edges(Di)-1) do (
 	ed = (edges(Di))#i;
-	print(ed);
 	if (ed#0 <= numUn and ed#1 <= numUn) then (
     	    UnM_(0, ed#1-1) = UnM_(0, ed#1-1) + 1;
 	);
@@ -235,7 +228,6 @@ orderingOfMixedGraphDirectedOrdering(MixedGraph) := (G) -> (
     BiM = mutableMatrix(ZZ, 1, numBi);
     for i to (#edges(Di)-1) do (
 	ed = (edges(Di))#i;
-	print(ed);
 	if (ed#0 <= numBi+numUn and numUn < ed#0 and ed#1 <= numBi+numUn and numUn < ed#1) then (
     	    BiM_(0, ed#1-numUn-1) = BiM_(0, ed#1-numUn-1) + 1;
 	);
@@ -244,7 +236,6 @@ orderingOfMixedGraphDirectedOrdering(MixedGraph) := (G) -> (
     for i to numBi-1 do (
     	S = S + set{{i+numUn+1, BiM_(0, i)}};
     );
-    print (S);
     -- this is not as efficient as it could be; for example we can use a heap
     numS = #S;
     for s to numS-1 do (
@@ -279,7 +270,7 @@ orderingOfMixedGraph(MixedGraph) := (G) -> (
     l1 = orderingOfMixedGraphUndirectedBidirectedSeparation(G);
     l2 = orderingOfMixedGraphDirectedOrdering(l1#0);
     perm = {};
-    for i to (#l1-1) do (
+    for i to (#(l1#1)-1) do (
 	perm = append(perm, l2#1#(l1#1#i - 1));
     );
     return {l2#0, perm};
