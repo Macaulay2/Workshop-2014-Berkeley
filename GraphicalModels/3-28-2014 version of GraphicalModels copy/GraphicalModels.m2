@@ -717,17 +717,21 @@ gaussianRing Digraph :=  Ring => opts -> (G) -> (
      gaussianRingList#((kk,s,vv))
      )
 
---3/27: For now, the function will reorder g using the function orderingOfMixedGraph
---Future work: 
 
 
 gaussianRing MixedGraph := Ring => opts -> (g) -> (
+     if vertices(g#graph#Bigraph) == {} and vertices(g#graph#Graph) == {} then (
+         return gaussianRing(g#graph#Digraph)    	 
+     );
+     if vertices(g#graph#Bigraph) == {} and vertices(g#graph#Digraph) == {} then (
+         return gaussianRing(g#graph#Graph)    	 
+     );
      b:=checkSullivantTalaskaDraismaConditions(g);
      if b==false then error "The Sullivant-Talaska-Draisma conditions are not satisfied";
      G := graph collateVertices g;
      dd := graph G#Digraph;
      bb := graph G#Bigraph;
-     uu := graph G#Graph;    
+     uu := graph G#Graph;  
      vv := sort vertices g;
      UW := UWDecomposition(g);
      verticesInU:=UW_0;
@@ -737,13 +741,14 @@ gaussianRing MixedGraph := Ring => opts -> (g) -> (
      p := toSymbol opts.pVariableName;
      k := toSymbol opts.kVariableName;     
      kk := opts.Coefficients;          
-     if (not gaussianRingList#?(kk,s,l,p,k,vv)) then ( 
-	  --(kk,s,l,p,k,vv) uniquely identifies gaussianRing in case of MixedGraph input.
+     if (not gaussianRingList#?(kk,s,l,p,k,g)) then ( 
+	  --(kk,s,l,p,k,g) uniquely identifies gaussianRing in case of MixedGraph input.
      sL := delete(null, flatten apply(vv, x-> apply(vv, y->if pos(vv,x)>pos(vv,y) then null else s_(x,y))));
      lL := delete(null, flatten apply(vv, x-> apply(toList dd#x, y->l_(x,y))));	 
-     pL := join(apply(verticesInW, i->p_(i,i)),delete(null, flatten apply(vv, x-> apply(toList bb#x, y->if pos(vv,x)>pos(vv,y) then null else p_(x,y)))));
-     --Check the definition of kL 
-     if #(edges (G#Graph)) > 0 then kL := join(apply(verticesInU, i-> k_(i,i)),delete(null, flatten apply(vv, x-> apply(toList uu#x, y->if pos(vv,x)>pos(vv,y) then null else k_(x,y)))));
+     pL := {};
+     kL := {};
+     if #(edges (G#Bigraph)) > 0 then pL = join(apply(verticesInW, i->p_(i,i)),delete(null, flatten apply(vv, x-> apply(toList bb#x, y->if pos(vv,x)>pos(vv,y) then null else p_(x,y)))));
+     if #(edges (G#Graph)) > 0 then kL = join(apply(verticesInU, i-> k_(i,i)),delete(null, flatten apply(vv, x-> apply(toList uu#x, y->if pos(vv,x)>pos(vv,y) then null else k_(x,y)))));
      m := #lL+#pL+#kL;
      R := kk(monoid [lL,pL,kL,sL,MonomialOrder => Eliminate m, MonomialSize=>16]);
      -- create gaussianVariables hash table: (symbol s)_(i,j) => ring var with the same name, same for l, p, k
@@ -755,10 +760,10 @@ gaussianRing MixedGraph := Ring => opts -> (g) -> (
      for v in kL do (H#v = R_nextvar; nextvar = nextvar+1);
      R.gaussianVariables = new HashTable from H;
      R#numberOfEliminationVariables = m;
-     R.gaussianRingData = {#vv,s,l,p,k};
+     R.gaussianRingData = {#vv,s,l,p,k,g};
      R.mixedGraph = g;
-     gaussianRingList#((kk,s,l,p,k,vv)) = R;); 
-     gaussianRingList#((kk,s,l,p,k,vv))
+     gaussianRingList#((kk,s,l,p,k,g)) = R;); 
+     gaussianRingList#((kk,s,l,p,k,g))
      )
 
 
@@ -775,19 +780,24 @@ gaussianRing MixedGraph := Ring => opts -> (g) -> (
 
 undirectedEdgesMatrix = method()
 undirectedEdgesMatrix Ring := Matrix =>  R -> (
-     if not (R.?graph and R.?gaussianRingData) then error "expected a ring created with gaussianRing of a Graph";
-     g := R.graph;
-     bb:= graph g;
-     vv := sort vertices g;
-     n := R.gaussianRingData#0; --number of vertices
-     k := R.gaussianRingData#2; 
-     H := R.gaussianVariables;
-     PM := mutableMatrix(R,n,n);
-     scan(vv,i->PM_(pos(vv,i),pos(vv,i))=H#(k_(i,i)));
-     scan(vv,i->scan(toList bb#i, j->PM_(pos(vv,i),pos(vv,j))=if pos(vv,i)<pos(vv,j) then H#(k_(i,j)) else H#(k_(j,i))));
-     matrix PM) 
-
-
+    if not ((R.?graph or R.?mixedGraph) and R.?gaussianRingData) then error "expected a ring created with gaussianRing of a Graph or MixedGraph";
+    g:={};
+    if R.?graph then g=R.graph else g=R.mixedGraph;
+    bb:= graph g;
+    vv := {};
+    if R.?graph then vv= sort vertices g else (
+	UW := UWDecomposition(g);
+        verticesInU:=UW_0;
+	vv=verticesInU
+    );
+    n := R.gaussianRingData#0; --number of vertices
+    k := R.gaussianRingData#2; 
+    H := R.gaussianVariables;
+    PM := mutableMatrix(R,n,n);
+    scan(vv,i->PM_(pos(vv,i),pos(vv,i))=H#(k_(i,i)));
+    scan(vv,i->scan(toList bb#i, j->PM_(pos(vv,i),pos(vv,j))=if pos(vv,i)<pos(vv,j) then H#(k_(i,j)) else H#(k_(j,i))));
+    return matrix PM
+);
 
 ------------------------------------------------------------------
 -- directedEdgesMatrix Ring 
@@ -795,7 +805,7 @@ undirectedEdgesMatrix Ring := Matrix =>  R -> (
 
 directedEdgesMatrix = method()
 directedEdgesMatrix Ring := Matrix => R -> (
-     if not (R.?mixedGraph and R.?gaussianRingData) then error "expected a ring created with gaussianRing of a MixedGraph";     
+     if not (R.?mixedGraph and R.?gaussianRingData) then error "expected a ring created with gaussianRing of a Digraph or MixedGraph";     
      g := R.mixedGraph;
      G := graph collateVertices g;
      dd := graph G#Digraph;
