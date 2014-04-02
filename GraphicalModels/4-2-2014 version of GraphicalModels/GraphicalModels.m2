@@ -722,9 +722,6 @@ gaussianRing Digraph :=  Ring => opts -> (G) -> (
 
 
 gaussianRing MixedGraph := Ring => opts -> (g) -> (
-     if vertices(g#graph#Bigraph) == {} and vertices(g#graph#Graph) == {} then (
-         return gaussianRing(g#graph#Digraph)    	 
-     );
      if vertices(g#graph#Bigraph) == {} and vertices(g#graph#Digraph) == {} then (
          return gaussianRing(g#graph#Graph)    	 
      );
@@ -807,17 +804,20 @@ undirectedEdgesMatrix Ring := Matrix =>  R -> (
 
 directedEdgesMatrix = method()
 directedEdgesMatrix Ring := Matrix => R -> (
-     if not (R.?mixedGraph and R.?gaussianRingData) then error "expected a ring created with gaussianRing of a Digraph or MixedGraph";     
-     g := R.mixedGraph;
-     G := graph collateVertices g;
-     dd := graph G#Digraph;
-     vv := sort vertices g;
-     n := R.gaussianRingData#0;
-     l := R.gaussianRingData#2;
-     H := R.gaussianVariables;
-     LM := mutableMatrix(R,n,n);
-     scan(vv,i->scan(toList dd#i, j->LM_(pos(vv,i),pos(vv,j))=H#(l_(i,j))));
-     matrix LM) 
+    if not (R.?mixedGraph and R.?gaussianRingData) then error "expected a ring created with gaussianRing of a Digraph or MixedGraph";     
+    g:=R.mixedGraph;
+    G := graph collateVertices g;
+    dd := graph G#Digraph;
+    UW := UWDecomposition(g);
+    verticesInW:=UW_1;
+    vv:=verticesInW;
+    n := R.gaussianRingData#0;
+    l := R.gaussianRingData#2;
+    H := R.gaussianVariables;
+    LM := mutableMatrix(R,n,n);
+    scan(vv,i->scan(toList dd#i, j->LM_(pos(vv,i),pos(vv,j))=H#(l_(i,j))));
+    matrix LM
+) 
 
 
 ------------------------------------------------------------------
