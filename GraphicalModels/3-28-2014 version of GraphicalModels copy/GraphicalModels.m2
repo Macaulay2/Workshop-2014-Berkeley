@@ -3458,14 +3458,14 @@ restart
  f()
  
  restart
- loadPackage("GraphicalModels", FileName => "/Users/lgp/Software/Macaulay2/Workshop-2014-Berkeley/GraphicalModels/GraphicalModels.m2")
+ loadPackage("GraphicalModels", FileName => "/Users/lgp/Software/Macaulay2/Workshop-2014-Berkeley/GraphicalModels/3-28-2014 version of GraphicalModels copy/GraphicalModels.m2")
  f = () -> (
      R := gaussianRing G;
      gaussianVanishingIdeal R)
  G = mixedGraph(digraph {{1,{2,3}},{2,{3}},{3,{4}}},bigraph {{1,2},{2,4}});
  f()
 
- installPackage("GraphicalModels", RemakeAllDocumentation => true, UserMode=>true, DebuggingMode => true, FileName => "/Users/lgp/Software/Macaulay2/Workshop-2014-Berkeley/GraphicalModels/3-21-2014 version of GraphicalModels/GraphicalModels.m2")
+ installPackage("GraphicalModels", RemakeAllDocumentation => true, UserMode=>true, DebuggingMode => true, FileName => "/Users/lgp/Software/Macaulay2/Workshop-2014-Berkeley/GraphicalModels/3-28-2014 version of GraphicalModels copy/GraphicalModels.m2")
 
 
 ///
