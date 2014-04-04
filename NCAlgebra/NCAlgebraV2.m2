@@ -23,7 +23,6 @@ export {NCModule,
 	identityMap,
 	subquotientAsCokernel,
 	NCChainComplex,
-	e,
 	qTensorProduct,
 	freeProduct,
 	--- Anick methods
@@ -154,8 +153,6 @@ subquotient(NCModule,NCMatrix,Nothing) := (F,g,r) -> (
      if F =!= target g then error "expected module to be target of maps";
      subquotient(g,r))
 subquotient(NCModule,Nothing,Nothing) := (F,g,r) -> F
-
-
 
 isNCModule = method(TypicalValue => Boolean)
 isNCModule Thing := M -> false
@@ -519,11 +516,12 @@ Hom (ZZ,NCMatrix,NCMatrix) := (d,M,N) -> (
    K4ent := entries K4;
    K5ent := entries K5;
    myZeroMapEnt := entries myZeroMap;
-   --K := K1|K2;
+   --K := K1 | K2;
    --H := (K3 | myZeroMap) || (K4 | K5);
    --H = K3 || K4   -- do this if Nsyz == 0
    K1' := matrix apply(#(K1.target), i -> apply(#(K1.source), j -> 
 	leftMultiplicationMap(K1ent#i#j, d - (K1.source)#j, d - (K1.target)#i)));
+   error "err";
    K2' := matrix apply(#(K2.target), i -> apply(#(K2.source), j -> 
 	rightMultiplicationMap(-K2ent#i#j, d - (K2.source)#j, d - (K2.target)#i)));
    K3' := matrix apply(#(K3.target), i -> apply(#(K3.source), j -> 
@@ -533,7 +531,7 @@ Hom (ZZ,NCMatrix,NCMatrix) := (d,M,N) -> (
    K5' := matrix apply(#(K5.target), i -> apply(#(K5.source), j -> 
 	rightMultiplicationMap(-K5ent#i#j, d - (K5.source)#j, d - (K5.target)#i)));
    myZeroMap' := matrix apply(#(myZeroMap.target), i -> apply(#(myZeroMap.source), j -> 
-   	   rightMultiplicationMap(-myZeroMapEnt#i#j, d - (myZeroMap.source)#j, d - (myZeroMap.target)#i)));
+        rightMultiplicationMap(-myZeroMapEnt#i#j, d - (myZeroMap.source)#j, d - (myZeroMap.target)#i)));
    K' := K1'|K2';
    H' := matrix {{K3',myZeroMap'},{K4',K5'}};
    --H' = matrix {{K3'},{K4'}}  -- do this if Nsyz == 0
@@ -556,15 +554,29 @@ subQuotientAsCokernel(M,N)
 ///
 
 TEST ///
+--- a serious 'production' example of a Hom computation
 restart
-needsPackage "NCAlgebraV2"
 needsPackage "NCAlgebra"
-B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
-R = coefficientRing B
-M = ncMatrix {{x,y,0},{0,y,z}}
-N = ncMatrix {{x,y},{x,y}}
-Hom(M,N,2)
+needsPackage "NCAlgebraV2"
+A = skewPolynomialRing(QQ,(-1)_QQ,{x,y,z})
+B = QQ{p,q,r}
+setWeights(B,{1,3,5})
+f = ncMap(A,B,{x+y+z,x^3+y^3+z^3,x^5+y^5+z^5})
+relList = {p^2*q - q*p^2, p*q^2-q^2*p, 2*q^2-r*p-p*r,
+          4*p^8-12*p*q*p^4+3*p*q*p*q-12*q*p^5+3*q*p*q*p+38*q^2*p^2-12*q*r-12*r*q,
+	  12*r^2-5*q*p*q^2-5*p*q^3-10*p^4*q^2+5*p^6*q*p+5*p^7*q-2*p^10}
+C = B/(ncIdeal relList)
+M = ncMatrix {{p,q,0},{0,q,r}}
+assignDegrees(M,{0,0},{1,3,5})
+N = ncMatrix {{p,q^5},{p,r^3}}
+assignDegrees(N,{0,0},{1,15})
+Hom(2,M,N)
 ///
+
+TEST ///
+restart
+///
+
 
 -------------------------------------------
 --- Anick Resolution Methods --------------

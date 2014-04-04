@@ -2516,7 +2516,9 @@ threeDimSklyanin (Ring, List, List) := opts -> (R, params, varList) -> (
    I := ncIdeal {params#0*gensA#1*gensA#2+params#1*gensA#2*gensA#1+params#2*(gensA#0)^2,
                  params#0*gensA#2*gensA#0+params#1*gensA#0*gensA#2+params#2*(gensA#1)^2,
 		 params#0*gensA#0*gensA#1+params#1*gensA#1*gensA#0+params#2*(gensA#2)^2};
-   Igb := ncGroebnerBasis(I, InstallGB=>(not A#BergmanRing), DegreeLimit=>opts#DegreeLimit);
+   --Igb := ncGroebnerBasis(I, InstallGB=>(not A#BergmanRing), DegreeLimit=>opts#DegreeLimit);
+   installGB := not (A#BergmanRing or bergmanCoefficientRing gens I =!= null);
+   Igb := ncGroebnerBasis(I, InstallGB=>installGB, DegreeLimit=>opts#DegreeLimit);
    B := A/I;
    B
 )
@@ -2581,6 +2583,7 @@ gddKernel (ZZ,NCRingMap) := (d,f) -> (
   -- computes a generating set for the kernel of a homogeneous ring map up to a specified degree
   K := {};
   for i from 1 to d do (
+     << "Computing kernel in degree " << i << endl;
      K = K | flatten entries kernelComponent(i,f);
   );
   minimizeRelations(select(K,r-> r!=0))
@@ -2632,6 +2635,19 @@ ncMatrix List := ncEntries -> (
                                    	    (symbol cache, new CacheTable from {})};
    );
    assignDegrees retVal
+)
+
+--- adding new constructors for ncMatrix for maps to/from the zero module
+ncMatrix(NCRing,List,List) := (A,tar,src) -> (
+   --- this function defines the map to/from the zero module from/to a free module with the given degree vector
+   if tar != {} and src != {} then error "This ncMatrix constructor is used to create maps to/from the zero module.";
+   ncEntries := toList ((#tar):{});
+   M := new NCMatrix from hashTable {(symbol ring, A),
+                                         (symbol matrix, ncEntries),
+                                         (symbol cache, new CacheTable from {})};
+   M#(symbol source) = src;
+   M#(symbol target) = tar;
+   M
 )
 
 ring NCMatrix := NCRing => M -> M.ring
@@ -2846,14 +2862,13 @@ assignDegrees NCMatrix := M -> (
    -- set the isHomogeneous flag
    setIsHomogeneous M;
    -- for matrices that are not homogeneous with these degrees, the user may use assignDegrees
-   -- below.  An attempt to find a set of degrees for which the map is homogeneous requires
+   -- below.  An attempt to find a (nontrivial) set of degrees for which the map is homogeneous requires
    -- integer programming.  I may implement this in the future.
    M
 )
 
 assignDegrees (NCMatrix, List, List) := (M,targetDeg,sourceDeg) -> (
    -- this function is for manual assignment of degrees
---   R := M.ring;
    if (#(targetDeg) != #(entries M)) then error "Target degree list does not match number of rows of matrix";
    if (#(sourceDeg) != #(first entries M)) then error "Source degree list does not match number of columns of matriix";
    M#(symbol source) = sourceDeg;
