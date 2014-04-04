@@ -133,9 +133,6 @@ orderingOfMixedGraphUndirectedBidirectedSeparation(MixedGraph) := (G) -> (
 	for j to #(edges(Di))-1 do (
 	    ed = (edges(Di))#j;
 	    if (ed#1 == vertRest#i and isSubset(set{ed#0}, set(vertBi))) then (
-		print(vertRest#i);
-		print(ed);
-		print("vertRest#i = ed#1 and ed#0 is in vertBi");
 		vertBi = append(vertBi, ed#1);
 		flag = false;
 		break;
@@ -179,9 +176,6 @@ orderingOfMixedGraphDirectedOrdering(MixedGraph) := (G) -> (
 	for j to #(edges(Di))-1 do (
 	    ed = (edges(Di))#j;
 	    if (ed#1 == vertRest#i and isSubset(set{ed#0}, set(vertBi))) then (
-		print(vertRest#i);
-		print(ed);
-		print("vertRest#i = ed#1 and ed#0 is in vertBi");
 		vertBi = append(vertBi, ed#1);
 		flag = false;
 		break;
@@ -201,7 +195,6 @@ orderingOfMixedGraphDirectedOrdering(MixedGraph) := (G) -> (
     UnM = mutableMatrix(ZZ, 1, numUn);
     for i to (#edges(Di)-1) do (
 	ed = (edges(Di))#i;
-	print(ed);
 	if (ed#0 <= numUn and ed#1 <= numUn) then (
     	    UnM_(0, ed#1-1) = UnM_(0, ed#1-1) + 1;
 	);
@@ -235,7 +228,6 @@ orderingOfMixedGraphDirectedOrdering(MixedGraph) := (G) -> (
     BiM = mutableMatrix(ZZ, 1, numBi);
     for i to (#edges(Di)-1) do (
 	ed = (edges(Di))#i;
-	print(ed);
 	if (ed#0 <= numBi+numUn and numUn < ed#0 and ed#1 <= numBi+numUn and numUn < ed#1) then (
     	    BiM_(0, ed#1-numUn-1) = BiM_(0, ed#1-numUn-1) + 1;
 	);
@@ -244,7 +236,6 @@ orderingOfMixedGraphDirectedOrdering(MixedGraph) := (G) -> (
     for i to numBi-1 do (
     	S = S + set{{i+numUn+1, BiM_(0, i)}};
     );
-    print (S);
     -- this is not as efficient as it could be; for example we can use a heap
     numS = #S;
     for s to numS-1 do (
@@ -279,7 +270,7 @@ orderingOfMixedGraph(MixedGraph) := (G) -> (
     l1 = orderingOfMixedGraphUndirectedBidirectedSeparation(G);
     l2 = orderingOfMixedGraphDirectedOrdering(l1#0);
     perm = {};
-    for i to (#l1-1) do (
+    for i to (#(l1#1)-1) do (
 	perm = append(perm, l2#1#(l1#1#i - 1));
     );
     return {l2#0, perm};
@@ -329,6 +320,7 @@ scoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
     d := numRows L;
     -- Omega
     W := bidirectedEdgesMatrix R;
+    Z := undirectedEdgesMatrix R;
     -- move to a new ring, lpR, which does not have the s variables
     numSvars:=lift(d*(d+1)/2,ZZ);
     --lp rings is the ring without the s variables
@@ -339,9 +331,22 @@ scoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
     F:=map(lpR,R,lpRTarget);
     L = matRtolpR(L,F);
     W = matRtolpR(W,F);
+    Z = matRtolpR(Z, F);
     FR := frac(lpR);
+    Zinv := inverse Z;
+    M := mutableMatrix(F, numgens source L, numgens source L);
+    for i to (numgens source Z)-1 do (
+	for j to (numgens source Z) - 1 do (
+	    M_(i,j) = Zinv_(i,j);
+	);
+    );
+    for i to (numgens source W)-1 do (
+	for j to (numgens source W)-1 do (
+	    M_(i + numgens source Z, j + numgens source Z) = W_(i,j);
+	);
+    );
     K := inverse (id_(lpR^d)-L);
-    Sigma := (transpose K) * W * K;
+    Sigma := (transpose K) * matrix(M) * K;
     SigmaInv := inverse substitute(Sigma, FR);    
     C1 := trace(SigmaInv * V)/2;
     C1derivative := JacobianMatrixOfRationalFunction(trace(SigmaInv * V)/2);
