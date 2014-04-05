@@ -1,0 +1,58 @@
+This file contains a list of the methods that take or return NCMatrices 
+still needing to be updated to handle the zero module.
+
+"Lower the zero module!"
+
+ Methods that use an object of class NCMatrix :
+     ==============================================
+
+       * "- NCMatrix" -- Negates NCMatrices
+       * assignDegrees(NCMatrix), see "assignDegrees" -- Weights entries of a matrix to make
+         associated map of free modules graded
+       * assignDegrees(NCMatrix,List,List), see "assignDegrees" -- Weights entries of a matrix
+         to make associated map of free modules graded
+       * "entries(NCMatrix)" -- Returns the entries of the NCMatrix
+       * isHomogeneous(NCMatrix), see "isHomogeneous(NCIdeal)" -- Determines whether the input
+         defines a homogeneous object
+       * "Matrix * NCMatrix" -- Product of NCMatrices
+       * "NCMatrix % NCGroebnerBasis" -- Reduces the entries of an NCMatrix with respect to an
+         NCGroebnerBasis
+       * "NCMatrix * Matrix" -- Product of NCMatrices
+       * "NCMatrix * NCMatrix" -- Product of NCMatrices
+       * "NCMatrix * NCRingElement" -- Product of NCMatrices
+       * "NCMatrix * QQ" -- Product of NCMatrices
+       * "NCMatrix * RingElement" -- Product of NCMatrices
+       * "NCMatrix * ZZ" -- Product of NCMatrices
+       * "NCMatrix + NCMatrix" -- Add NCMatrices
+       * "NCMatrix - NCMatrix" -- Subtract NCMatrices
+       * "NCMatrix // NCMatrix" -- Factor one map through another
+       * "NCMatrix == NCMatrix" -- Test equality of matrices
+       * NCMatrix == ZZ, see "NCMatrix == NCMatrix" -- Test equality of matrices
+       * ZZ == NCMatrix, see "NCMatrix == NCMatrix" -- Test equality of matrices
+       * "NCMatrix ? NCMatrix"
+       * "NCMatrix ^ List" -- Select some rows of an NCMatrix
+       * "NCMatrix ^ ZZ" -- Exponentiate an NCMatrix
+       * "NCMatrix _ List" -- Select some columns of an NCMatrix
+       * "NCMatrix | NCMatrix" -- Join NCMatrices horizontally
+       * "NCMatrix || NCMatrix" -- Join NCMatrices vertically
+       * "NCRingElement * NCMatrix" -- Product of NCMatrices
+       * NCRingMap NCMatrix, see "NCRingMap NCRingElement" -- Apply an NCRingMap to an element
+         or matrix
+       * "QQ * NCMatrix" -- Product of NCMatrices
+       * rightKernel(NCMatrix,ZZ), see "rightKernel" -- Method for computing kernels of
+         matrices over noncommutative rings in a given degree without using Bergman
+       * rightKernelBergman(NCMatrix), see "rightKernelBergman" -- Methods for computing
+         kernels of matrices over noncommutative rings using Bergman
+       * "ring(NCMatrix)" -- Gives the ring of the NCMatrix
+       * "RingElement * NCMatrix" -- Product of NCMatrices
+       * "transpose(NCMatrix)" -- Transposes an NCMatrix
+       * "ZZ * NCMatrix" -- Product of NCMatrices
+
+ Functions and methods returning an object of class NCMatrix :
+     =============================================================
+
+       * "basis(ZZ,NCIdeal)" -- Returns a basis of an NCIdeal in a particular degree.
+       * "basis(ZZ,NCLeftIdeal)" -- Returns a basis of an NCLeftIdeal in a particular degree.
+       * "basis(ZZ,NCRightIdeal)" -- Returns a basis of an NCRightIdeal in a particular degree.
+       * "basis(ZZ,NCRing)" -- Returns a basis of an NCRing in a particular degree.
+       * "lift(NCMatrix)" -- Lifts an NCMatrix
