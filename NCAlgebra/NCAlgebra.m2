@@ -252,10 +252,14 @@ Ring List := (R, varList) -> (
    promote (R,A) := (n,A) -> putInRing({},A,n);
    
    promote (NCMatrix,A) := (M,A) -> (
-       prom := ncMatrix apply(M.matrix, row -> apply(row, entry -> promote(entry,A)));
-       if isHomogeneous M then
-          assignDegrees(prom,M.target,M.source);
-       prom
+       if M.source == {} or M.target == {} then
+          ncMatrix(A,M.target,M.source)
+       else (
+          prom := ncMatrix apply(M.matrix, row -> apply(row, entry -> promote(entry,A)));
+          if isHomogeneous M then
+             assignDegrees(prom,M.target,M.source);
+          prom
+       )
    );
 
    promote (A,A) := (f,A) -> f;
@@ -400,11 +404,15 @@ NCPolynomialRing / NCIdeal := (A, I) -> (
    promote (B,B) := (f,B) -> f;
 
    promote (NCMatrix,B) := (M,B) -> (
-      promEntries := applyTable(M.matrix, e -> promote(e,B));
-      prom := ncMatrix promEntries;
-      if isHomogeneous M then
-         assignDegrees(prom,M.target,M.source);
-      prom
+      if M.source == {} or M.target == {} then
+         ncMatrix(B,M.target,M.source)
+      else (
+         promEntries := applyTable(M.matrix, e -> promote(e,B));
+         prom := ncMatrix promEntries;
+         if isHomogeneous M then
+            assignDegrees(prom,M.target,M.source);
+         prom
+      )
    );
 
    lift B := opts -> f -> promote(f,A);
@@ -725,7 +733,7 @@ newBasis (ZZ,NCIdeal) := NCMatrix => opts -> (n,I) -> (
    terms := flatten entries newBasis(n,R,CumulativeBasis=>opts#CumulativeBasis);
    asCoeffs := sparseCoeffs(doneBasis, Monomials=>terms);  
    minGens := mingens image asCoeffs;
-   ncMatrix{terms}*minGens
+   ncMatrix{terms}*minGens 
 )
 
 ------------------------------------------------
@@ -1939,7 +1947,10 @@ newBasis(ZZ,NCRing) := NCMatrix => opts -> (n,B) -> (
       -- now only select those that will be needed to build next step
       basisList = select(newBasisList, b -> degree b + mindeg <= n);
    );
-   ncMatrix {apply(doneList, mon -> putInRing(mon,1))}   
+   if doneList != {} then 
+      ncMatrix {apply(doneList, mon -> putInRing(mon,1))}   
+   else
+      ncMatrix(B,{},{})
 )
 
 {*
@@ -2599,6 +2610,7 @@ ncMatrix List := ncEntries -> (
    if not isTable ncEntries then error "Expected a rectangular matrix.";
    rows := #ncEntries;
    cols := #(ncEntries#0);
+   if cols == 0 then error "Use ncMatrix(NCRing,List,List) for maps to/from the zero module.";
    --- here, we need to find a common ring to promote all the entries to before checking anything else.
    ringList := (flatten ncEntries) / ring;
    B := (ringList)#(position(ringList, r -> ancestor(NCRing,class r)));
@@ -2647,44 +2659,72 @@ ncMatrix(NCRing,List,List) := (A,tar,src) -> (
                                          (symbol cache, new CacheTable from {})};
    M#(symbol source) = src;
    M#(symbol target) = tar;
+   setIsHomogeneous M;
    M
 )
 
 ring NCMatrix := NCRing => M -> M.ring
 
-lift NCMatrix := NCMatrix => opts -> M -> ncMatrix applyTable(M.matrix, entry -> promote(entry,(M.ring.ambient)))
+lift NCMatrix := NCMatrix => opts -> M -> (
+   M' := if length M.source == 0 or length M.target == 0 then
+            ncMatrix(M.ring.ambient, M.target, M.source)
+         else ncMatrix applyTable(M.matrix, entry -> promote(entry,(M.ring.ambient)));
+   if isHomogeneous M then assignDegrees(M',M.target,M.source);
+   M'
+)
 
 NCMatrix ? NCMatrix := (M,N) -> (flatten entries M) ? (flatten entries N)
 
 NCMatrix * NCMatrix := (M,N) -> (
    if M.ring =!= N.ring then error "Expected matrices over the same ring.";
    B := M.ring;
-   colsM := length first M.matrix;
-   rowsN := length N.matrix;
+   colsM := length M.source;
+   rowsN := length N.target;
    if colsM != rowsN then error "Maps not composable.";
-   rowsM := length M.matrix;
-   colsN := length first N.matrix;
+   rowsM := length M.target;
+   colsN := length N.source;
    -- lift entries of matrices to tensor algebra
    local prod;
    if class B === NCQuotientRing then (
       MoverTens := lift M;
       NoverTens := lift N;
       prodOverTens := MoverTens*NoverTens;
-      ncgb := B.ideal.cache#gb;
-      reducedMatr := prodOverTens % ncgb;
-      prod = promote(reducedMatr,B);
-      if isHomogeneous M and isHomogeneous N then
-         assignDegrees(prod,M.target,N.source);
+      prod = if prodOverTens.source == {} or prodOverTens.target == {} then
+                promote(prodOverTens,B)
+             else (
+         	  ncgb := B.ideal.cache#gb;
+         	  reducedMatr := prodOverTens % ncgb;
+	 	  flagReducedMatrix(reducedMatr);
+         	  promote(reducedMatr,B)
+		  );
+--  No need to assignDegrees again. All operations preserve degrees if possible
+--      if isHomogeneous M and isHomogeneous N then
+--	    assignDegrees(prod,M.target,N.source);
       prod
    )
+   
    else
    (
-      -- not sure which of the below is faster
-      -- ncMatrix apply(toList (0..(rowsM-1)), i -> apply(toList (0..(colsN-1)), j -> sum(0..(colsM-1), k -> ((M.matrix)#i#k)*((N.matrix)#k#j))))
-      prod = ncMatrix table(toList (0..(rowsM-1)), toList (0..(colsN-1)), (i,j) -> sum(0..(colsM-1), k -> ((M.matrix)#i#k)*((N.matrix)#k#j)));
-      if isHomogeneous M and isHomogeneous N then
-         assignDegrees(prod,M.target,N.source);
-      prod
+      if rowsM == 0 or colsN == 0 then (
+--         if (M.source != N.target) then << "Warning: Graded composition undefined."<<endl; 
+         ncMatrix(M.ring,M.target,N.source))
+      else if colsM == 0 then (
+         prod = ncMatrix table(rowsM,colsN, i-> promote(0,B));
+	 if isHomogeneous M and isHomogeneous N then
+            assignDegrees(prod,M.target,N.source);
+	 prod
+      )
+      else ( 
+         -- not sure which of the below is faster
+         -- ncMatrix apply(toList (0..(rowsM-1)), i -> apply(toList (0..(colsN-1)), j -> sum(0..(colsM-1), k -> ((M.matrix)#i#k)*((N.matrix)#k#j))))
+         prod = ncMatrix table(toList (0..(rowsM-1)), toList (0..(colsN-1)), (i,j) -> sum(0..(colsM-1), k -> ((M.matrix)#i#k)*((N.matrix)#k#j)));
+         if isHomogeneous M and isHomogeneous N then (
+	    if (M.source == N.target) then
+               assignDegrees(prod,M.target,N.source);
+--	    else << "Warning: Graded composition undefined." << endl;
+	 ); 
+         prod
+      )
    )
 )
 
@@ -2716,7 +2756,9 @@ NCMatrix % NCGroebnerBasis := (M,ncgb) -> (
    		    normalFormBergman(entriesM, ncgb)
                  else
                     apply(entriesM, f -> f % ncgb);
-   ncMatrix pack(colsM,entriesMNF)
+   redMat := ncMatrix pack(colsM,entriesMNF);
+   if isHomogeneous M then assignDegrees(redMat,M.target,M.source);
+   redMat
 )
 
 -- need to make this more intelligent(hah!) via repeated squaring and binary representations.
@@ -2724,62 +2766,94 @@ NCMatrix ^ ZZ := (M,n) -> product toList (n:M)
 
 NCMatrix + NCMatrix := (M,N) -> (
    if M.ring =!= N.ring then error "Expected matrices over the same ring.";
-   colsM := length first M.matrix;
-   rowsN := length N.matrix;
-   rowsM := length M.matrix;
-   colsN := length first N.matrix;
+   colsM := length M.source;
+   rowsN := length N.target;
+   rowsM := length M.target;
+   colsN := length N.source;
    if colsM != colsN or rowsM != rowsN then error "Matrices not the same shape.";
-   MpN := ncMatrix apply(toList(0..(rowsM-1)), i -> apply(toList(0..(colsM-1)), j -> M.matrix#i#j + N.matrix#i#j));
-   if isHomogeneous M and isHomogeneous N and M.target == N.target and M.source == N.source then
+   if any({colsM,rowsN,rowsM,colsN}, n-> n==0) then M
+   else (
+      MpN :=  ncMatrix apply(toList(0..(rowsM-1)), i -> apply(toList(0..(colsM-1)), j -> M.matrix#i#j + N.matrix#i#j));
+      if isHomogeneous M and isHomogeneous N and M.target == N.target and M.source == N.source then
       assignDegrees(MpN,M.target,M.source);
-   MpN
+      MpN
+   )
 )
 
 NCMatrix - NCMatrix := (M,N) -> (
    if M.ring =!= N.ring then error "Expected matrices over the same ring.";
-   colsM := length first M.matrix;
-   rowsN := length N.matrix;
-   rowsM := length M.matrix;
-   colsN := length first N.matrix;
+   colsM := length M.source;
+   rowsN := length N.target;
+   rowsM := length M.target;
+   colsN := length N.source;
    if colsM != colsN or rowsM != rowsN then error "Matrices not the same shape.";
-   MmN := ncMatrix apply(toList(0..(rowsM-1)), i -> apply(toList(0..(colsM-1)), j -> M.matrix#i#j - N.matrix#i#j));
-   if isHomogeneous M and isHomogeneous N and M.target == N.target and M.source == N.source then
+   if any({colsM,rowsN,rowsM,colsN}, n-> n==0) then M
+   else (
+      MmN :=  ncMatrix apply(toList(0..(rowsM-1)), i -> apply(toList(0..(colsM-1)), j -> M.matrix#i#j - N.matrix#i#j));
+      if isHomogeneous M and isHomogeneous N and M.target == N.target and M.source == N.source then
       assignDegrees(MmN,M.target,M.source);
-   MmN
+      MmN
+   )
 )
 
 NCMatrix | NCMatrix := (M,N) -> (
    if M.ring =!= N.ring then error "Expected matrices over the same ring.";
-   rowsN := length N.matrix;
-   rowsM := length M.matrix;
+   rowsN := length N.target;
+   rowsM := length M.target;
    if rowsN != rowsM then error "Expected matrices with the same number of rows.";
-   pipe := ncMatrix apply(rowsN, i -> (M.matrix)#i | (N.matrix)#i);
-   if isHomogeneous M and isHomogeneous N and M.target == N.target then
+   if rowsN == 0 then
+   -- if both map to the zero module, the direct sum does as well
+      ncMatrix(M.ring,M.target,M.source|N.source)
+   else if M.source == {} then N
+   else if N.source == {} then M
+   -- if both map to a nonzero module and one is from a zero module, return the other
+   else(
+   -- otherwise, do the usual thing 
+      pipe := ncMatrix apply(rowsN, i -> (M.matrix)#i | (N.matrix)#i);
+      if isHomogeneous M and isHomogeneous N and M.target == N.target then
       assignDegrees(pipe,M.target, M.source | N.source);
-   pipe
+      pipe
+   )
 )
 
 NCMatrix || NCMatrix := (M,N) -> (
    if M.ring =!= N.ring then error "Expected matrices over the same ring.";
-   colsN := length first N.matrix;
-   colsM := length first M.matrix;
+   colsN := length N.source;
+   colsM := length M.source;
    if colsN != colsM then error "Expected matrices with the same number of columns.";
-   pipe := ncMatrix (M.matrix | N.matrix);
-   if isHomogeneous M and isHomogeneous N and M.source == N.source then
+   if colsN == 0 then
+   -- if both map from the zero module, the direct sum does as well
+      ncMatrix(M.ring, M.target|N.target, M.source)
+   else if M.target == {} then N 
+   else if N.target == {} then M
+   -- if both map from a nonzero module and one goes to a zero module, return the other
+   else (
+   --  otherwise do the usual thing
+      pipe := ncMatrix (M.matrix | N.matrix);
+      if isHomogeneous M and isHomogeneous N and M.source == N.source then
       assignDegrees(pipe,M.target | N.target, M.source);
-   pipe
+      pipe
+   )
 )
 
 NCMatrix * ZZ := (M,r) -> (
-   newM := ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)));
-   if isHomogeneous M then assignDegrees(newM,M.target,M.source);
-   newM
+   if M.source == {} or M.target == {} then
+      ncMatrix(M.ring, M.target, M.source)
+   else (
+      newM := ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)));
+      if isHomogeneous M then assignDegrees(newM,M.target,M.source);
+      newM
+   )
 )
 ZZ * NCMatrix := (r,M) -> M*r;
 NCMatrix * QQ := (M,r) -> (
-   newM := ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)));
-   if isHomogeneous M then assignDegrees(newM,M.target,M.source);
-   newM
+   if M.source == {} or M.target == {} then
+      ncMatrix(M.ring, M.target, M.source)
+   else (
+      newM := ncMatrix apply(M.matrix, row -> apply(row, entry -> entry*sub(r,M.ring.CoefficientRing)));
+      if isHomogeneous M then assignDegrees(newM,M.target,M.source);
+      newM
+   )
 )
 QQ * NCMatrix := (r,M) -> M*r
 - NCMatrix := M -> (-1)*M;
@@ -2791,15 +2865,20 @@ NCMatrix * NCRingElement := (M,r) -> (
    s := promote(r,B);
    -- lift entries of matrices to tensor algebra
    Mr := if class B === NCQuotientRing then (
-      MOverTens := lift M;
-      sOverTens := lift s;
-      prodOverTens := MOverTens*sOverTens;
-      ncgb := B.ideal.cache#gb;
-      reducedMatr := prodOverTens % ncgb;
-      promote(reducedMatr,B)
-   )
-   else 
-      ncMatrix applyTable(M.matrix, m -> m*s);
+            MOverTens := lift M;
+            sOverTens := lift s;
+            prodOverTens := MOverTens*sOverTens;
+            if M.source != {} and M.target != {} then (
+               ncgb := B.ideal.cache#gb;
+               reducedMatr := prodOverTens % ncgb;
+	       flagReducedMatrix(reducedMatr);
+               promote(reducedMatr,B)
+            ) else promote(prodOverTens, B)
+         )
+         else if M.source == {} or M.target == {} then 
+            ncMatrix(B,M.target,M.source)	 
+         else
+      	    ncMatrix applyTable(M.matrix, m -> m*s);
    --- now set the degrees properly
    
    if isHomogeneous M and isHomogeneous r then
@@ -2811,25 +2890,35 @@ NCRingElement * NCMatrix := (r,M) -> (
    B := M.ring;
    s := promote(r,B);
    -- lift entries of matrices to tensor algebra
-   if class B === NCQuotientRing then (
+   rM := if class B === NCQuotientRing then (
       MOverTens := lift M;
       sOverTens := lift s;
       prodOverTens := sOverTens*MOverTens;
-      ncgb := B.ideal.cache#gb;
-      reducedMatr := prodOverTens % ncgb;
-      flagReducedMatrix(reducedMatr);
-      promMatr := promote(reducedMatr,B);
-      promMatr
+      if M.source != {} and M.target != {} then (
+         ncgb := B.ideal.cache#gb;
+         reducedMatr := prodOverTens % ncgb;
+         flagReducedMatrix(reducedMatr);
+         promote(reducedMatr,B)
+      ) else promote(prodOverTens, B)
    )
+   else if M.source == {} or M.target == {} then
+      ncMatrix(B,M.target,M.source)
    else
-      ncMatrix applyTable(M.matrix, m -> s*m)
+      ncMatrix applyTable(M.matrix, m -> s*m);
+      
+   if isHomogeneous M and isHomogeneous r then
+      assignDegrees(rM, apply(M.target, d -> d - degree r), M.source);
+   rM   
 )
 
 entries NCMatrix := M -> M.matrix
 transpose NCMatrix := M -> (
-    Mtrans := ncMatrix transpose M.matrix;
-    assignDegrees(Mtrans,-M.source,-M.target);
-    Mtrans
+    if M.source == {} or M.target == {} then 
+       ncMatrix(M.ring,-M.source,-M.target)
+    else ( 
+       Mtrans := ncMatrix transpose M.matrix;
+       assignDegrees(Mtrans,-M.source,-M.target);
+       Mtrans)
 )
 
 --- flag an entire matrix as having reduced entries
@@ -2846,7 +2935,8 @@ expression NCMatrix := M -> MatrixExpression applyTable(M.matrix, expression)
 assignDegrees = method()
 assignDegrees NCMatrix := M -> (
    rowsM := #(M.matrix);
-   colsM := #(first (M.matrix));
+   colsM := #(first M.matrix);
+   if rowsM == 0 or colsM == 0 then error "Use assignDegrees(NCMatrix, List, List) to change degrees of maps to/from the zero module.";
    sourceDeg := toList (colsM:0);
    targetDeg := toList (rowsM:0);
    entriesM := select(flatten entries M, f -> f != 0);
@@ -2869,8 +2959,12 @@ assignDegrees NCMatrix := M -> (
 
 assignDegrees (NCMatrix, List, List) := (M,targetDeg,sourceDeg) -> (
    -- this function is for manual assignment of degrees
+   -- it's also called by the method trying to assign degrees automatically
+   -- this means an input matrix may not have "source" and "target" keys
+   -- but it will if it's a map to the zero module
    if (#(targetDeg) != #(entries M)) then error "Target degree list does not match number of rows of matrix";
-   if (#(sourceDeg) != #(first entries M)) then error "Source degree list does not match number of columns of matriix";
+   if #(entries M) !=0 and (#(sourceDeg) != #(first entries M)) then error "Source degree list does not match number of columns of matriix";   
+   if #(entries M) == 0 and (#(sourceDeg) != #(M.source)) then error "Source degree list does not match number of columns of matriix";
    M#(symbol source) = sourceDeg;
    M#(symbol target) = targetDeg;
    -- set the isHomogeneous flag.
@@ -2890,15 +2984,26 @@ setIsHomogeneous NCMatrix := M -> (
 isHomogeneous NCMatrix := M -> M.?isHomogeneous and M.isHomogeneous
 
 NCMatrix _ List := (M,ns) -> (
-    M' := ncMatrix (transpose (transpose (M.matrix))_ns);
-    assignDegrees(M',M.target, (M.source)_ns);
-    M'
+    if M.source == {} then error "There are no columns to select";
+    if M.target == {} then
+       ncMatrix(M.ring, {}, (M.source)_ns)
+    else (
+       M' := ncMatrix (transpose (transpose (M.matrix))_ns);
+       assignDegrees(M',M.target, (M.source)_ns);
+       M'
+    )
 )
 
 NCMatrix ^ List := (M,ns) -> (
-    M' := ncMatrix ((M.matrix)_ns);
-    assignDegrees(M',(M.target)_ns, M.source);
-    M'
+    if M.target == {} then error "There are no rows to select";
+    if M.source == {} then
+       ncMatrix(M.ring, (M.target)_ns, {})
+    else (
+       M' := ncMatrix ((M.matrix)_ns);
+       assignDegrees(M',(M.target)_ns, M.source);
+       M'
+    )
+    
 )
 
 NCMatrix // NCMatrix := (N,M) -> (
