@@ -1987,22 +1987,24 @@ leftMultiplicationMap(NCRingElement,ZZ,ZZ) := (f,n,m) -> (
 
 leftMultiplicationMap(NCRingElement,List,List) := (f,fromBasis,toBasis) -> (
    local retVal;
+   A := ring f;
+   R := coefficientRing A;
    if not isHomogeneous f then error "Expected a homogeneous element.";
    if fromBasis == {} and toBasis == {} then (
-      retVal = ncMatrix {};
+      retVal = map(R^0,R^0,0);
       retVal
    )
    else if fromBasis == {} then (
-      retVal = ncMatrix {{}:(#toBasis)};
-      assignDegrees(retVal,apply(toBasis, b -> degree b), {});
+      retVal = map(R^(#toBasis), R^0,0);
       retVal
    )
    else if toBasis == {} then (
-      retVal = ncMatrix {};
-      assignDegrees(retVal,{},apply(fromBasis, b -> degree b));
+      retVal = map(R^0,R^(#fromBasis), R^0,0);
       retVal
    )
-   else sparseCoeffs(f*fromBasis, Monomials=>toBasis)
+   else (
+      sparseCoeffs(f*fromBasis, Monomials=>toBasis)
+   )
 )
 
 {*
@@ -2730,8 +2732,8 @@ NCMatrix * NCMatrix := (M,N) -> (
 
 NCMatrix * Matrix := (M,N) -> (
    N' := sub(N,coefficientRing M.ring);
-   N'' := ncMatrix applyTable(entries N, e -> promote(e,M.ring));
-   M*N''
+   if entries N == {} then ncMatrix(ring M, M.target, {})
+   else M*(ncMatrix applyTable(entries N, e -> promote(e,M.ring)))
 )
 
 Matrix * NCMatrix := (N,M) -> (

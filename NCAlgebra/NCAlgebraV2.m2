@@ -645,6 +645,17 @@ nChains(4,D)
 
 end
 
+restart
+needsPackage "NCAlgebraV2"
+needsPackage "NCAlgebra"
+A = skewPolynomialRing(QQ,(-1)_QQ,{x,y,z})
+setWeights(A,{2,4,6})
+basis(5,A)
+leftMultiplicationMap(x,5)
+setWeights(A,{3,4,6})
+leftMultiplicationMap(x,5)
+basis(8,A)*leftMultiplicationMap(x,5)
+
 --- bug fix/performance/interface improvements
 ------------------------------------
 --- Testing!
