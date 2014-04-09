@@ -2732,13 +2732,19 @@ NCMatrix * NCMatrix := (M,N) -> (
 
 NCMatrix * Matrix := (M,N) -> (
    N' := sub(N,coefficientRing M.ring);
-   if entries N == {} then ncMatrix(ring M, M.target, {})
-   else M*(ncMatrix applyTable(entries N, e -> promote(e,M.ring)))
+   rkNs := rank N.source;
+   rkNt := rank N.target;
+   N'':= if (rkNs == 0) or (rkNt == 0) then ncMatrix(M.ring, toList(rkNt:0), toList(rkNs:0))
+         else ncMatrix applyTable(entries N, e -> promote(e,M.ring));
+   M*N''
 )
 
 Matrix * NCMatrix := (N,M) -> (
    N' := sub(N,coefficientRing M.ring);
-   N'' := ncMatrix applyTable(entries N, e -> promote(e,M.ring));
+   rkNs := rank N.source;
+   rkNt := rank N.target;
+   N'':= if (rkNs == 0) or (rkNt == 0) then ncMatrix(M.ring, toList(rkNt:0), toList(rkNs:0))
+         else ncMatrix applyTable(entries N, e -> promote(e,M.ring));
    N''*M
 )
 
