@@ -387,10 +387,27 @@ NCMatrix ** NCMatrix := (M,N) -> (
 
 NCMatrix ++ NCMatrix := (M,N) -> (
    B := ring M;
-   urZero := zeroMap(M.target,N.source,B);
-   lrZero := zeroMap(N.target,M.source,B);
-   ds := ncMatrix {{M,urZero},{lrZero,N}};
-   assignDegrees(ds,M.target | N.target, M.source | N.source)
+   Mtar := M.target;
+   Msrc := M.source;
+   Ntar := N.target;
+   Nsrc := N.source;
+   urZero := zeroMap(Mtar,Nsrc,B);
+   lrZero := zeroMap(Ntar,Msrc,B);
+   -- this is a hack until ncMatrix can take lists of empty matrices
+   if Msrc == {} and Mtar == {} then N
+   else if Msrc == {} and Nsrc == {} then ncMatrix(B,Mtar|Ntar,{})
+   else if Msrc == {} and Ntar == {} then urZero
+   else if Msrc == {} then ncMatrix{{urZero},{N}}
+   else if Mtar == {} and Nsrc == {} then lrZero
+   else if Mtar == {} and Ntar == {} then ncMatrix(B,{},Msrc|Nsrc)
+   else if Mtar == {} then ncMatrix{{lrZero,N}}
+   else if Nsrc == {} and Ntar == {} then M
+   else if Nsrc == {} then ncMatrix{{M},{lrZero}}
+   else if Ntar == {} then ncMatrix{{M,urZero}}
+   else (
+      ds := ncMatrix {{M,urZero},{lrZero,N}};
+      assignDegrees(ds,M.target | N.target, M.source | N.source)
+   )
 )
 
 -------------------------------------------
@@ -474,9 +491,13 @@ identityMap (ZZ,NCRing) := (n,R) -> identityMap(toList(n:0),R)
 zeroMap = method()
 zeroMap (List, List, NCRing) := (tar,src,B) -> (
    R := coefficientRing B;
-   myZero := ncMatrix applyTable(entries map(R^#tar,R^#src,0), e -> promote(e,B));
-   assignDegrees(myZero,tar,src);
-   myZero
+   if tar == {} or src == {} then
+      ncMatrix(B,tar,src)
+   else (
+      myZero := ncMatrix applyTable(entries map(R^#tar,R^#src,0), e -> promote(e,B));
+      assignDegrees(myZero,tar,src);
+      myZero
+   )
 )
 
 NCMatrix _ ZZ := (M,d) -> (
@@ -521,7 +542,7 @@ Hom (ZZ,NCMatrix,NCMatrix) := (d,M,N) -> (
    --H = K3 || K4   -- do this if Nsyz == 0
    K1' := matrix apply(#(K1.target), i -> apply(#(K1.source), j -> 
 	leftMultiplicationMap(K1ent#i#j, d - (K1.source)#j, d - (K1.target)#i)));
-   error "err";
+--   error "err";
    K2' := matrix apply(#(K2.target), i -> apply(#(K2.source), j -> 
 	rightMultiplicationMap(-K2ent#i#j, d - (K2.source)#j, d - (K2.target)#i)));
    K3' := matrix apply(#(K3.target), i -> apply(#(K3.source), j -> 

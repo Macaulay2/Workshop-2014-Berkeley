@@ -86,12 +86,12 @@ MAXDEG = 40
 MAXSIZE = 1000
 
 -- Andy's bergman path
--- bergmanPath = "/usr/local/bergman1.001"
+ bergmanPath = "/usr/local/bergman1.001"
 -- Andy's other bergman path
 -- bergmanPath = "/cygdrive/d/userdata/Desktop/bergman1.001"
 -- bergmanPath = "/usr/local/bergman1.001"
 -- Frank's bergman path
-bergmanPath = "~/bergman"
+--bergmanPath = "~/bergman"
 -- Courtney's bergman path
 --bergmanPath = "/Users/crgibbon/Downloads/bergman1.001"
 
@@ -116,6 +116,7 @@ globalAssignment NCRing
 removeNulls = xs -> select(xs, x -> x =!= null)
 
 removeZeroes = myHash -> select(myHash, c -> c != 0)
+     
  
 minUsing = (xs,f) -> (
    n := min (xs / f);
@@ -247,10 +248,11 @@ Ring List := (R, varList) -> (
    --- all these promotes will need to be written between this ring and all base rings.
    promote (ZZ,A) := (n,A) -> putInRing({},A,promote(n,R));
 
-   promote (QQ,A) := (n,A) -> putInRing({},A,promote(n,R));
-   
+
+   promote (QQ,A) := (n,A) ->  putInRing({},A,promote(n,R));
+        
    promote (R,A) := (n,A) -> putInRing({},A,n);
-   
+      
    promote (NCMatrix,A) := (M,A) -> (
        if M.source == {} or M.target == {} then
           ncMatrix(A,M.target,M.source)
@@ -283,6 +285,7 @@ Ring List := (R, varList) -> (
          if newHash#?newMon then newHash#newMon = newHash#newMon + s#1 else newHash#newMon = s#1;
       );
       newHash = removeZeroes hashTable pairs newHash;
+      if newHash === hashTable {} then newHash = (promote(0,f.ring)).terms;
       new A from hashTable {(symbol ring, f.ring),
                             (symbol cache, new CacheTable from {("isReduced",false)}),
                             (symbol terms, newHash)}   
@@ -307,6 +310,7 @@ Ring List := (R, varList) -> (
          );
       );
       newHash = removeZeroes hashTable pairs newHash;
+      if newHash === hashTable {} then newHash = (promote(0,f.ring)).terms;
       new A from hashTable {(symbol ring, f.ring),
                             (symbol cache, new CacheTable from {("isReduced",false)}),
                             (symbol terms, newHash)}
@@ -1999,7 +2003,7 @@ leftMultiplicationMap(NCRingElement,List,List) := (f,fromBasis,toBasis) -> (
       retVal
    )
    else if toBasis == {} then (
-      retVal = map(R^0,R^(#fromBasis), R^0,0);
+      retVal = map(R^0,R^(#fromBasis),0);
       retVal
    )
    else (
@@ -2043,10 +2047,28 @@ rightMultiplicationMap(NCRingElement,ZZ,ZZ) := (f,n,m) -> (
 )
 
 rightMultiplicationMap(NCRingElement,List,List) := (f,fromBasis,toBasis) -> (
+   local retVal;
+   A := ring f;
+   R := coefficientRing A;
    if not isHomogeneous f then error "Expected a homogeneous element.";
-   sparseCoeffs(fromBasis*f, Monomials=>toBasis)
-
+   if fromBasis == {} and toBasis == {} then (
+      retVal = map(R^0,R^0,0);
+      retVal
+   )
+   else if fromBasis == {} then (
+      retVal = map(R^(#toBasis), R^0,0);
+      retVal
+   )
+   else if toBasis == {} then (
+      retVal = map(R^0,R^(#fromBasis),0);
+      retVal
+   )
+   else (
+      sparseCoeffs(fromBasis*f, Monomials=>toBasis)
+   )
 )
+
+
 
 centralElements = method()
 centralElements(NCRing,ZZ) := (B,n) -> (
@@ -2235,7 +2257,8 @@ remainderFunction (NCRingElement,NCGroebnerBasis) := opts -> (f,ncgb) -> (
    newf := f;
    R := f.ring.CoefficientRing;
    hasCoeffs := not (isField R);
-   pairsf := sort pairs newf.terms;
+   pairsf := sort select(pairs newf.terms, s-> s#1 != promote(0,R));
+--   pairsf := sort pairs newf.terms;
    foundSubstr := {};
    coeff := null;
    gbHit := null;
@@ -2260,13 +2283,13 @@ remainderFunction (NCRingElement,NCGroebnerBasis) := opts -> (f,ncgb) -> (
       pref := putInRing(foundSubstr#0#0,1);
       suff := putInRing(foundSubstr#0#2,1);
       newf = newf - (promote(coeff,R)//promote(foundSubstr#1,R))*pref*gbHit*suff;
-      pairsf = sort pairs newf.terms;
+      pairsf = sort select(pairs newf.terms, s-> s#1 != promote(0,R));
       foundSubstr = {};
       gbHit = null;
-      coeff = null;
+      coeff = null;   
       for p in pairsf do (
          ncSubstrs = ncSubstrings(p#0,minNCGBDeg,maxNCGBDeg);
-         cSubstrs = if hasCoeffs then
+         cSubstrs = if hasCoeffs then 
                        apply(cSubstrings(first exponents leadMonomial promote(p#1,R),minCoeffDeg,maxCoeffDeg), s -> R_s)
                     else
                        {1_R};
