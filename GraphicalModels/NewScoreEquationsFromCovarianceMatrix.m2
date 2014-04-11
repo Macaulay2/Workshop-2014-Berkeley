@@ -276,6 +276,7 @@ orderingOfMixedGraph(MixedGraph) := (G) -> (
     return {l2#0, perm};
 );    
 
+{*
 getVariables = method();
 getVaiables(MixedGraph) := (G) -> (
     Un = G#graph#Graph;	   
@@ -296,6 +297,7 @@ getVaiables(MixedGraph) := (G) -> (
 	
     )
 );
+*}
 
 covarianceMatrixOfMixedGraph = method();
 covarianceMatrixOfMixedGraph(MixedGraph) := (G) -> (
@@ -310,52 +312,51 @@ scoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
     G = L1#0;
     perm = L1#1;
 -- we have to shuffle U according to perm
-    variables = getVariables(G);
     S := sampleCovarianceMatrix(U);   
     R := gaussianRing(G); 
 --    use R;   
     -- Lambda
     L := directedEdgesMatrix R;
+    K := undirectedEdgesMatrix R;
+    W := bidirectedEdgesMatrix R;
     -- d is equal to the number of vertices in G
     d := numRows L;
-    -- Omega
-    W := bidirectedEdgesMatrix R;
-    Z := undirectedEdgesMatrix R;
     -- move to a new ring, lpR, which does not have the s variables
     numSvars:=lift(d*(d+1)/2,ZZ);
     --lp rings is the ring without the s variables
-    lpRvarlist:=apply(numgens(R)-numSvars,i->(gens(R))_i);
+    lpkRvarlist:=apply(numgens(R)-numSvars,i->(gens(R))_i);
     KK:=coefficientRing(R);
-    lpR:=KK[lpRvarlist];
-    lpRTarget:=apply(numgens(R),i-> if i<= numgens(R)-numSvars-1 then (gens(lpR))_i else 0);
-    F:=map(lpR,R,lpRTarget);
+    lpkR:=KK[lpkRvarlist];
+    lpkRTarget:=apply(numgens(R),i-> if i<= numgens(R)-numSvars-1 then (gens(lpR))_i else 0);
+    F:=map(lpkR,R,lpkRTarget);
     L = matRtolpR(L,F);
     W = matRtolpR(W,F);
-    Z = matRtolpR(Z, F);
-    FR := frac(lpR);
-    Zinv := inverse Z;
-    M := mutableMatrix(F, numgens source L, numgens source L);
-    for i to (numgens source Z)-1 do (
-	for j to (numgens source Z) - 1 do (
-	    M_(i,j) = Zinv_(i,j);
+    K = matRtolpR(Z, F);
+    FR := frac(lpkR);
+    Kinv := inverse K;
+    M := mutableMatrix(FR, numgens source L, numgens source L);
+    for i to (numgens source K)-1 do (
+	for j to (numgens source K) - 1 do (
+	    M_(i,j) = Kinv_(i,j);
 	);
     );
     for i to (numgens source W)-1 do (
 	for j to (numgens source W)-1 do (
-	    M_(i + numgens source Z, j + numgens source Z) = W_(i,j);
+	    M_(i + numgens source K, j + numgens source K) = W_(i,j);
 	);
     );
-    K := inverse (id_(lpR^d)-L);
-    Sigma := (transpose K) * matrix(M) * K;
-    SigmaInv := inverse substitute(Sigma, FR);    
+    M = matrix(M);
+    Linv := inverse (id_(lpR^d)-L);
+    Sigma := (transpose Linv) * matrix(M) * Linv;
+    SigmaInv := (transpose substitute(L, FR)) * (inverse M) * substitute(L, FR);
+ --    SigmaInv := inverse substitute(Sigma, FR);    
     C1 := trace(SigmaInv * V)/2;
     C1derivative := JacobianMatrixOfRationalFunction(trace(SigmaInv * V)/2);
     LL := (substitute((jacobian(matrix{{det(S)}})), FR))*matrix{{(-1/(2*det(S)))}} - (transpose C1derivative);
     LL=flatten entries(LL);
-    denoms := apply(#LL, i -> lift(denominator(LL_i), lpR));
+    denoms := apply(#LL, i -> lift(denominator(LL_i), lpkR));
     prod := product(denoms);
-    J:=ideal apply(#LL, i -> lift(numerator(LL_i),lpR));
+    J:=ideal apply(#LL, i -> lift(numerator(LL_i),lpkR));
     J = saturate(J, prod);
-    
     return J;
 );
