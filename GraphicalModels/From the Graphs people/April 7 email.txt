@@ -1,0 +1,39 @@
+From David Cook
+April 7, 2014
+
+
+The new Graphs package is completely different from
+the old one.  There will be more changes in the future, but they should
+all be internal, that is, as long as you actually call the methods
+provided, then it should be fine (i.e., don't expect the internal
+structure to be the same).
+
+
+MixedGraphs are currently in the Graphs package, which I submitted to
+the git repository recently.  I've included it here because they still
+have not accepted it.
+
+
+I've also included a modification I made to GraphicalModels to make it
+stop monkeying around inside the Graph objects.  All the internal
+structures are now accessible via methods, and so should be used.  I
+don't care if you keep my modifications, but something similar will be
+necessary for the package to work.
+
+
+The changes to GraphicalModels are all in the method trekSeparation.
+Namely, it uses the #graph key of a Digraph which no longer exists.
+Instead, use the method "graph" on a Digraph to get that object.
+However, since you construct the digraph cdG via the information one
+would get from "graph cdG", I simply stored that data as "cdGgraph".
+Further, you have the digraph cdC which is modified internal via an
+external process.  I simply moved where the "digraph cdC0" call occurs
+as to not break object-oriented programming principles.  If you have
+questions, please let me know.
+
+
+I also fixed a small error in the input of a digraph in the
+documentation node for directedEdgesMatrix:  the line
+        G = mixedGraph(digraph {{b,{c,d}},{c,d}},bigraph {{a,d}})
+should be
+        G = mixedGraph(digraph {{b,{c,d}},{c,{d}}},bigraph {{a,d}})
