@@ -86,12 +86,12 @@ MAXDEG = 40
 MAXSIZE = 1000
 
 -- Andy's bergman path
- bergmanPath = "/usr/local/bergman1.001"
+-- bergmanPath = "/usr/local/bergman1.001"
 -- Andy's other bergman path
 -- bergmanPath = "/cygdrive/d/userdata/Desktop/bergman1.001"
 -- bergmanPath = "/usr/local/bergman1.001"
 -- Frank's bergman path
---bergmanPath = "~/bergman"
+bergmanPath = "~/bergman"
 -- Courtney's bergman path
 --bergmanPath = "/Users/crgibbon/Downloads/bergman1.001"
 
@@ -1042,13 +1042,14 @@ toStringMaybeSort NCRingElement := opts -> f -> (
                     "+"
                  else 
                     "") |
-                 (if printParens then "(" else "") | 
-                 (if t#1 != 1 and t#1 != -1 then
+                 (if printParens then "(" else "") |
+                 (if t#1 != 1 and t#1 != -1 and t#0#monList =!= {} then
                     tempNet | "*"
-                  else if t#1 == -1 then "-"
-                  else "") |
+                  else if t#1 == -1 and t#0#monList =!= {} then "-"
+                  else if t#0#monList === {} then tempNet
+		  else "") |
                  (if printParens then ")" else "") |
-                 (if t#0#monList === {} and (t#1 == 1 or t#1 == -1) then "1" else toString t#0);
+                 (if t#0#monList =!= {} then toString t#0 else "");
          firstTerm = false;
       );
       myNet
@@ -1580,13 +1581,13 @@ normalFormBergman (List, NCGroebnerBasis) := opts -> (fList, ncgb) -> (
    -- don't send zero elements to bergman, or an error occurs
    oldFList := fList;
    fListLen := #fList;
-   nonzeroIndices := positions(fList, f -> f != 0);
-   fList = fList_nonzeroIndices;
+   nonConstantIndices := positions(fList, f -> not isConstant f);
+   fList = fList_nonConstantIndices;
    maxDeg := 2*max((gens ncgb) / degree);
    -- if there are no nonzero entries left, then return
    if fList == {} then return fList;
-   nonzeroIndices = set nonzeroIndices;
-   numZeroIndices := fListLen - #nonzeroIndices;
+   nonConstantIndices = set nonConstantIndices;
+   numConstantIndices := fListLen - #nonConstantIndices;
    A := (first fList).ring;
    if not A#BergmanRing then 
       error "Bergman interface can only handle coefficients over QQ or ZZ/p at the present time." << endl;
@@ -1606,14 +1607,14 @@ normalFormBergman (List, NCGroebnerBasis) := opts -> (fList, ncgb) -> (
    writeNFInputFile(newFList / first,ncgb,{tempGBInput,tempNFInput},maxDeg,UsePreviousGBOutput=>usePreviousGBOutput);
    << "Writing bergman init file." << endl;
    writeNFInitFile(tempInit,tempGBInput,tempNFInput,tempOutput);
-   stderr << "--Calling Bergman for NF calculation for " << #nonzeroIndices << " elements." << endl;
+   stderr << "--Calling Bergman for NF calculation for " << #nonConstantIndices << " elements." << endl;
    runCommand("bergman -i " | tempInit | " -on-error exit --silent > " | tempTerminal);
    -- these are now the nfs of the nonzero entries.  Need to splice back in
    -- the zeros where they were.
    nfList := nfFromTerminalFile(A,tempTerminal);
    -- (**) then put denominators back
    nfList = apply(#nfList, i -> ((newFList#i#1)^(-1))*nfList#i);
-   functionMingle(nfList,toList(numZeroIndices:0), i -> member(i,nonzeroIndices))
+   functionMingle(nfList,toList(numConstantIndices:0), i -> member(i,nonConstantIndices))
 )
 
 normalFormBergman (NCRingElement, NCGroebnerBasis) := opts -> (f,ncgb) ->
