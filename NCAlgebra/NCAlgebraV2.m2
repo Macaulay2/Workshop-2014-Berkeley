@@ -340,7 +340,7 @@ homologyAsCokernel(NCMatrix,NCMatrix) := (M,N) -> (
     if M*N != 0 then return "Error: maps do not compose to zero"
     else (
     B := N.ring;
-    Z := Z = zeroMap((N.target),(N.source),B);
+    Z := Z = zeroMap((N.target),(N.source),B); -- What is this for?
     kerM := rightKernelBergman(M);
     subquotientAsCokernel(kerM,N)
     )
@@ -518,50 +518,141 @@ Hom (ZZ,NCModule,NCModule) := (d,M,N) -> (
 )
 
 Hom (ZZ,NCMatrix,NCMatrix) := (d,M,N) -> (
-   -- if isFreeModule M then N ** (dual M) else (
+   --
+   -- This method uses Boehm's Algorithm 6.5.1 from "Computer Algebra: Lecture Notes" 
+   -- http://www.mathematik.uni-kl.de/~boehm/lehre/1213_CA/ca.pdf
+   --
+   -- That algorithm applies to modules over a commutative ring R, 
+   -- taking advantage of the fact that Hom(M,N) is an R-module in that case.
+   -- In our case, we must work on the level of graded vector spaces, as 
+   -- Hom(M,N) need not be an R-module if R is noncommutative
+   --
+   -- The setup here:
+   --
+   -- M and N are presentation matrices for a pair of graded modules over an NCRing 
+   -- We compute graded homomorphisms only; a degree d homomorphism M --> N is the
+   -- same as a degree 0 homomorphism M --> N[d]. The method returns a basis for 
+   -- the space of degree d homomorphisms. Each map is represented by a matrix.
+   -- The matrix is a lift of the homomorphism to a map between targets of presentation
+   -- matrices. That is, if B is the NCRing, a homomorphism from coker M to coker N is
+   -- a pair of maps completing the commutative diagram below. We return f as a matrix.
+   -- 
+   -- coker M <--- B^{s0} <-- M --- B^{s1}
+   --    |          |                 |
+   --    |          f                 g
+   --    |          |                 |
+   --	 v	    v                 v
+   -- coker N <--- B^{t0} <-- N --- B^{t1} 
+   --
+   -- The key to implementing Boehm's algorithm is the identification Hom(B^n, B^m) = B^m \tensor (B^n)*
+   -- This identification is valid in the category of locally finite graded modules.
+
    B := ring M;
-   Nsyz := rightKernelBergman N;  -- be careful if Nsyz is zero!
-   L1 := identityMap(N.target,B);
-   K1 := L1 ** (transpose M);
-   L2 := identityMap(M.source,B);
-   L3 := identityMap(M.target,B);
-   L4 := identityMap(N.source,B);
+   -- it might be cleaner to shift N and set d=0
+    
+
+   -- Step 1: We need the first syzygy module of N to deal with homotopy.
+   --
+   -- coker M <--- B^{s0} <-- M --- B^{s1}
+   --    |          |                 |
+   --    |          f                 g
+   --    |          |                 |
+   --	 v	    v                 v
+   -- coker N <--- B^{t0} <-- N --- B^{t1} <---- Nsyz ---- B^{t2}
+   
+   Nsyz := rightKernelBergman N; 
+   if Nsyz == ncMatrix{{promote(0,B)}} then Nsyz = zeroMap(N.source,{0},B);
+
+   -- Step 2: Compute the map "\delta"
+   --      Hom(B^{s0},B^{t0}) ++ Hom(B^{s1},B^{t1}) ----> Hom(B^{s1},B^{t0}) 
+   --               ( f, g ) |--->  f*M - N*g
+   -- since every homomorphism belongs to the kernel of this map. 
+   --
+   -- After the identifications mentioned above, the map is given by
+   --      id \tensor M* - N \tensor id*
+
+   L1 := identityMap(N.target,B); -- identity on B^t0
+   L2 := identityMap(M.source,B); -- identity on B^s1
+   K1 := L1 ** (transpose M);    
    K2 := N ** (transpose L2);
+   
+   -- Step 3: Compute the kernel of the map \delta in the prescribed degree
+   --
+   -- See below.
+   --
+   -- Step 4: Compute the map "\rho"
+   --      Hom(B^{s0},B^{t1}) ++ Hom(B^{s1},B^{t2}) ----> Hom(B^{s0},B^{t0}) ++ Hom(B^{s1},B^{t1}) 
+   --                ( h, k ) |--->  ( N*h, h*M - Nsyz*k )
+   --
+   -- We will ultimately return the quotient ker(\delta) / im(\rho)
+
+   L3 := identityMap(M.target,B); -- identity on B^s0
+   L4 := identityMap(N.source,B); -- identity on B^t1
    K3 := N ** (transpose L3);
    K4 := L4 ** (transpose M);
    K5 := Nsyz ** (transpose L2);
-   myZeroMap := zeroMap(K3.target,K5.source,B);
+   myZeroMap := zeroMap(K3.target,K5.source,B); -- this is a zero block of the appropriate size
+
+   -- Computing Hom in degree d
+   --
+   -- To do this at the vector space level, we replace every entry in the matrices constructed
+   -- above with a matrix representing right or left multiplication, as required by the formulas.
+   -- Some care must be taken with degree shifts in the source and target. In particular, some
+   -- columns will simply vanish for degree reasons. We must keep track of these, at least for K1.
+   
    K1ent := entries K1;
    K2ent := entries K2;
    K3ent := entries K3;
    K4ent := entries K4;
    K5ent := entries K5;
    myZeroMapEnt := entries myZeroMap;
-   --K := K1 | K2;
-   --H := (K3 | myZeroMap) || (K4 | K5);
-   --H = K3 || K4   -- do this if Nsyz == 0
+   
+   -- The following tracks the source degrees of K1 where the conversion returns the empty matrix.
+   -- At the end, we'll go back and insert zeros if needed.
+   
+   sourceBasisSize := apply(#(K1.source),i-> # flatten entries basis(d-(K1.source)#i,B));
+   empties := positions(sourceBasisSize, i-> i==0);
+
+   -- Converting all matrices as described above.
+   
    K1' := matrix apply(#(K1.target), i -> apply(#(K1.source), j -> 
-	leftMultiplicationMap(K1ent#i#j, d - (K1.source)#j, d - (K1.target)#i)));
---   error "err";
+	rightMultiplicationMap(K1ent#i#j, d - (K1.source)#j, d - (K1.target)#i)));
    K2' := matrix apply(#(K2.target), i -> apply(#(K2.source), j -> 
-	rightMultiplicationMap(-K2ent#i#j, d - (K2.source)#j, d - (K2.target)#i)));
+	leftMultiplicationMap(-K2ent#i#j, d - (K2.source)#j, d - (K2.target)#i)));
    K3' := matrix apply(#(K3.target), i -> apply(#(K3.source), j -> 
-	rightMultiplicationMap(-K3ent#i#j, d - (K3.source)#j, d - (K3.target)#i)));
+	leftMultiplicationMap(K3ent#i#j, d - (K3.source)#j, d - (K3.target)#i)));
    K4' := matrix apply(#(K4.target), i -> apply(#(K4.source), j -> 
-	leftMultiplicationMap(-K4ent#i#j, d - (K4.source)#j, d - (K4.target)#i)));
+	rightMultiplicationMap(K4ent#i#j, d - (K4.source)#j, d - (K4.target)#i)));
    K5' := matrix apply(#(K5.target), i -> apply(#(K5.source), j -> 
-	rightMultiplicationMap(-K5ent#i#j, d - (K5.source)#j, d - (K5.target)#i)));
+	leftMultiplicationMap(-K5ent#i#j, d - (K5.source)#j, d - (K5.target)#i)));
    myZeroMap' := matrix apply(#(myZeroMap.target), i -> apply(#(myZeroMap.source), j -> 
-        rightMultiplicationMap(-myZeroMapEnt#i#j, d - (myZeroMap.source)#j, d - (myZeroMap.target)#i)));
+        leftMultiplicationMap(-myZeroMapEnt#i#j, d - (myZeroMap.source)#j, d - (myZeroMap.target)#i)));
+   
+   -- The following are the matrix representations of the degree d part of \delta and \rho respectively.
+      
    K' := K1'|K2';
    H' := matrix {{K3',myZeroMap'},{K4',K5'}};
-   --H' = matrix {{K3'},{K4'}}  -- do this if Nsyz == 0
-   myHom := prune ((ker K') / (image H'));
+
+   -- Compute the subquotient. 
+   
+   myHom := prune ((ker K') / (image H')); 
+
+   -- Now reformat to output the map f. 
+   -- First minimize the generators and trim down so only f is returned. 
    homGens := mingens image(gens image myHom.cache.pruningMap)^(toList(0..(numgens source K1' - 1)));
+   
+   -- Convert back to NCMatrices (flattened into a vector at this point)
    basisMatr := fold(apply(#(K1.source), i -> basis(d-(K1.source)#i,B)), (a,b) -> a ++ b);
    flattenedMatrs := basisMatr * homGens;
-   retVal := apply(apply(#(flattenedMatrs.source), i -> flatten entries flattenedMatrs_{i}), L -> ncMatrix pack(#(N.target),L));
-   retVal
+   
+   -- Finally, insert zeros where needed.
+   toMingleZeros := zeroMap((K1.source)_empties,flattenedMatrs.source,B);
+   if flatten entries flattenedMatrs == {} then {}
+   else (
+      mingledFlatMatrs := ncMatrix functionMingle(entries flattenedMatrs,entries toMingleZeros,i->sourceBasisSize#i!=0); 
+      retVal := apply(apply(#(mingledFlatMatrs.source), i -> flatten entries mingledFlatMatrs_{i}), L -> ncMatrix pack(#(M.target),L));
+      retVal
+   )
 )
 
 TEST ///
