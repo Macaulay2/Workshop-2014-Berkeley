@@ -32,6 +32,7 @@ export { NCRing, NCQuotientRing, NCPolynomialRing,
          normalFormBergman,
          hilbertBergman,
          rightKernelBergman,
+	 rightKernelDegreeLimit,
 	 isLeftRegular,
          isRightRegular,
          centralElements,
@@ -1751,10 +1752,14 @@ rightKernelBergman (NCMatrix) := opts -> (M) -> (
    if not isHomogeneous M then
       error "Expected a homogeneous matrix.";
    maxKerDeg := max M.source + opts#DegreeLimit;
+   if M.cache#?rightKernel and M.cache#rightKernelDegreeLimit >= maxKerDeg then
+      return M.cache#rightKernel;
    matrRels := buildMatrixRelations M;
    C := ring first matrRels;
    kerGBGens := getMatrixGB(M, DegreeLimit => maxKerDeg);
    kerM := minimizeMatrixKerGens(C,M,gens kerGBGens, DegreeLimit=>maxKerDeg);
+   M.cache#rightKernel = kerM;
+   M.cache#rightKernelDegreeLimit = maxKerDeg;
    kerM
 )
 

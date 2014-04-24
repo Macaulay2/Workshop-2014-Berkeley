@@ -546,10 +546,8 @@ Hom (ZZ,NCMatrix,NCMatrix) := (d,M,N) -> (
    --
    -- The key to implementing Boehm's algorithm is the identification Hom(B^n, B^m) = B^m \tensor (B^n)*
    -- This identification is valid in the category of locally finite graded modules.
-
    B := ring M;
    -- it might be cleaner to shift N and set d=0
-    
 
    -- Step 1: We need the first syzygy module of N to deal with homotopy.
    --
