@@ -306,17 +306,15 @@ covarianceMatrixOfMixedGraph(MixedGraph) := (G) -> (
     
 );
 
-scoreEquationsFromCovarianceMatrix = method();
-scoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
-    L1 = orderingOfMixedGraph(G);
-    G = L1#0;
-    perm = L1#1;
+newScoreEquationsFromCovarianceMatrix = method()
+newScoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
+ -- L1 = orderingOfMixedGraph(G);
+--  G = L1#0;
+--  perm = L1#1;
 -- we have to shuffle U according to perm
     S := sampleCovarianceMatrix(U);   
     R := gaussianRing(G); 
---    use R;   
-    -- Lambda
-    L := directedEdgesMatrix R;
+    L := directedEdgesMatrix R;	   
     K := undirectedEdgesMatrix R;
     W := bidirectedEdgesMatrix R;
     -- d is equal to the number of vertices in G
@@ -349,8 +347,60 @@ scoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
     M = matrix(M);
     Linv := inverse (id_(lpkR^d)-L);
     Sigma := (transpose Linv) * M * Linv;
-    SigmaInv := (transpose substitute(L, FR)) * (inverse M) * substitute(L, FR);
- --    SigmaInv := inverse substitute(Sigma, FR);    
+    SigmaInv := ( substitute(id_(lpkR^d)-L, FR)) * (inverse M) * (transpose substitute(id_(lpkR^d)-L, FR));    
+    C1 := trace(SigmaInv * S)/2;
+    C1derivative := JacobianMatrixOfRationalFunction(trace(SigmaInv * S)/2);
+    LL := (transpose JacobianMatrixOfRationalFunction(det(Sigma)))*matrix{{(-1/(2*det(Sigma)))}} - (transpose C1derivative);
+    LL=flatten entries(LL);
+    denoms := apply(#LL, i -> lift(denominator(LL_i), lpkR));
+    prod := product(denoms);
+    J:=ideal apply(#LL, i -> lift(numerator(LL_i),lpkR));
+    J = saturate(J, prod);
+    return J;
+)
+
+
+newScoreEquationsFromCovarianceMatrix(MixedGraph,Matrix) := (G, S) -> (
+ -- L1 = orderingOfMixedGraph(G);
+--  G = L1#0;
+--  perm = L1#1;
+-- we have to shuffle U according to perm
+--     S := sampleCovarianceMatrix(U);   
+    R := gaussianRing(G); 
+    L := directedEdgesMatrix R;	   
+    K := undirectedEdgesMatrix R;
+    W := bidirectedEdgesMatrix R;
+    -- d is equal to the number of vertices in G
+    d := numRows L;
+    -- move to a new ring, lpR, which does not have the s variables
+    numSvars:=lift(d*(d+1)/2,ZZ);
+    --lp rings is the ring without the s variables
+    lpkRvarlist:=apply(numgens(R)-numSvars,i->(gens(R))_i);
+    KK:=coefficientRing(R);
+    lpkR:=KK[lpkRvarlist];
+    lpkRTarget:=apply(numgens(R),i-> if i<= numgens(R)-numSvars-1 then (gens(lpkR))_i else 0);
+    F:=map(lpkR,R,lpkRTarget);
+    L = matRtolpR(L,F);
+    W = matRtolpR(W,F);
+    K = matRtolpR(K, F);
+    FR := frac(lpkR);
+    K = substitute(K, FR);
+    Kinv := inverse K;
+    M := mutableMatrix(FR, numgens source L, numgens source L);
+    for i to (numgens source K)-1 do (
+	for j to (numgens source K) - 1 do (
+	    M_(i,j) = Kinv_(i,j);
+	);
+    );
+    for i to (numgens source W)-1 do (
+	for j to (numgens source W)-1 do (
+	    M_(i + numgens source K, j + numgens source K) = W_(i,j);
+	);
+    );
+    M = matrix(M);
+    Linv := inverse (id_(lpkR^d)-L);
+    Sigma := (transpose Linv) * M * Linv;
+    SigmaInv := ( substitute(id_(lpkR^d)-L, FR)) * (inverse M) * (transpose substitute(id_(lpkR^d)-L, FR));    
     C1 := trace(SigmaInv * S)/2;
     C1derivative := JacobianMatrixOfRationalFunction(trace(SigmaInv * S)/2);
     LL := (transpose JacobianMatrixOfRationalFunction(det(Sigma)))*matrix{{(-1/(2*det(Sigma)))}} - (transpose C1derivative);
