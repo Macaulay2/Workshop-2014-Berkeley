@@ -332,7 +332,9 @@ newScoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
     K = matRtolpR(K, F);
     FR := frac(lpkR);
     K = substitute(K, FR);
+    W = substitute(W, FR);
     Kinv := inverse K;
+    Winv := inverse W;
     M := mutableMatrix(FR, numgens source L, numgens source L);
     for i to (numgens source K)-1 do (
 	for j to (numgens source K) - 1 do (
@@ -344,10 +346,22 @@ newScoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
 	    M_(i + numgens source K, j + numgens source K) = W_(i,j);
 	);
     );
+    Minv := mutableMatrix(FR, numgens source L, numgens source L);
+    for i to (numgens source K)-1 do (
+	for j to (numgens source K) - 1 do (
+	    Minv_(i,j) = K_(i,j);
+	);
+    );
+    for i to (numgens source W)-1 do (
+	for j to (numgens source W)-1 do (
+	    Minv_(i + numgens source K, j + numgens source K) = Winv_(i,j);
+	);
+    );
     M = matrix(M);
+    Minv = matrix(Minv);
     Linv := inverse (id_(lpkR^d)-L);
     Sigma := (transpose Linv) * M * Linv;
-    SigmaInv := ( substitute(id_(lpkR^d)-L, FR)) * (inverse M) * (transpose substitute(id_(lpkR^d)-L, FR));    
+    SigmaInv := ( substitute(id_(lpkR^d)-L, FR)) * Minv * (transpose substitute(id_(lpkR^d)-L, FR));    
     C1 := trace(SigmaInv * S)/2;
     C1derivative := JacobianMatrixOfRationalFunction(trace(SigmaInv * S)/2);
     LL := (transpose JacobianMatrixOfRationalFunction(det(Sigma)))*matrix{{(-1/(2*det(Sigma)))}} - (transpose C1derivative);
@@ -358,6 +372,9 @@ newScoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
     J = saturate(J, prod);
     return J;
 )
+
+
+
 
 
 newScoreEquationsFromCovarianceMatrix(MixedGraph,Matrix) := (G, S) -> (
@@ -411,3 +428,16 @@ newScoreEquationsFromCovarianceMatrix(MixedGraph,Matrix) := (G, S) -> (
     J = saturate(J, prod);
     return J;
 );
+
+
+
+
+
+
+
+newScoreEquationsFromConcentrationMatrix = method()
+newScoreEquationsFromConcentrationMatrix := (G, U) -> (
+    
+    
+    
+)
