@@ -306,6 +306,8 @@ covarianceMatrixOfMixedGraph(MixedGraph) := (G) -> (
     
 );
 
+
+-- computes the score equations in terms of the l,p,k-variables
 newScoreEquationsFromCovarianceMatrix = method()
 newScoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
  -- L1 = orderingOfMixedGraph(G);
@@ -374,15 +376,11 @@ newScoreEquationsFromCovarianceMatrix(MixedGraph,List) := (G, U) -> (
 )
 
 
-
-
-
 newScoreEquationsFromCovarianceMatrix(MixedGraph,Matrix) := (G, S) -> (
  -- L1 = orderingOfMixedGraph(G);
 --  G = L1#0;
 --  perm = L1#1;
 -- we have to shuffle U according to perm
---     S := sampleCovarianceMatrix(U);   
     R := gaussianRing(G); 
     L := directedEdgesMatrix R;	   
     K := undirectedEdgesMatrix R;
@@ -443,14 +441,11 @@ newScoreEquationsFromCovarianceMatrix(MixedGraph,Matrix) := (G, S) -> (
     return J;
 );
 
-
-
-
-
-
-
+-- computes the score equations in terms of the concentration matrix variables
+-- by first computing the equations in the l,p,k-variables and then eliminating
+-- the l,p,k-variables
 newScoreEquationsFromConcentrationMatrix = method()
-newScoreEquationsFromConcentrationMatrix := (G, U) -> (
+newScoreEquationsFromConcentrationMatrix(MixedGraph, List) := (G, U) -> (
     R := gaussianRing G;
     V := sampleCovarianceMatrix(U);
     use R;
@@ -517,7 +512,7 @@ newScoreEquationsFromConcentrationMatrix := (G, U) -> (
 )
 
 
-newScoreEquationsFromConcentrationMatrix := (G, V) -> (
+newScoreEquationsFromConcentrationMatrix(MixedGraph, Matrix) := (G, V) -> (
     R := gaussianRing G;
  --   V := sampleCovarianceMatrix(U);
     use R;
@@ -583,7 +578,8 @@ newScoreEquationsFromConcentrationMatrix := (G, V) -> (
     return J5;
 )
 
-
+-- Gives the score equations in terms of the s-variables using the
+-- equations in the l,p,k-variables and eliminating the l,p,k-variables
 newScoreEquationsFromCovarianceMatrixSVars = method();
 newScoreEquationsFromCovarianceMatrixSVars(MixedGraph, List) := (G, U) -> (
     R := gaussianRing G;
@@ -595,10 +591,26 @@ newScoreEquationsFromCovarianceMatrixSVars(MixedGraph, List) := (G, U) -> (
     -- Omega
     W := bidirectedEdgesMatrix R;
     K := undirectedEdgesMatrix R;
+    numSvars:=lift(d*(d+1)/2,ZZ);
+    lpkRvarlist:=apply(numgens(R)-numSvars,i->(gens(R))_i);
+    FR := frac(R);
+    K = substitute(K, FR);
     Linv := inverse (id_(R^d)-L);
+    Kinv := inverse K;
+    M := mutableMatrix(FR, numgens source L, numgens source L);
+    for i to (numgens source K)-1 do (
+	for j to (numgens source K) - 1 do (
+	    M_(i,j) = Kinv_(i,j);
+	);
+    );
+    for i to (numgens source W)-1 do (
+	for j to (numgens source W)-1 do (
+	    M_(i + numgens source K, j + numgens source K) = W_(i,j);
+	);
+    );	  
     -- the matrix Sigma expressed in terms of the l and p-variables.
     S := (transpose Linv) * W * Linv;
-    -- Get the ideal in l's and p's.
+    -- Get the ideal in l's, p's and k's.
     J := newScoreEquationsFromCovarianceMatrix(G, U);
     -- same ideal in the ring R.
     J1 := substitute(J, R);
@@ -611,15 +623,70 @@ newScoreEquationsFromCovarianceMatrixSVars(MixedGraph, List) := (G, U) -> (
  	    Sigma_(j,i) = s_(i+1,j+1);
 	);
     );
+    Sigma = matrix(Sigma);
+   -- Sigma = substitute(Sigma, ring(S));
     J2 := ideal(matrix(Sigma) - S);
     J3 := J1 + J2;
-    numSvars := lift(d*(d+1)/2,ZZ);
-    -- the l and p-variables
-    lpRvarlist := apply(numgens(R)-numSvars,i->(gens(R))_i);
+    --J3 = substitute(J3, R);
     -- the s-variables
     sRvarlist := apply(numSvars, i->(gens(R))_(i + numgens(R) - numSvars));
-    J4 := eliminate(lpRvarlist, J3);
+    J4 := eliminate(lpkRvarlist, J3);
     sR := coefficientRing(R)[sRvarlist];
     J5 := substitute(J4, sR);
     return J5;
-);
+)
+
+newScoreEquationsFromCovarianceMatrixSVars(MixedGraph, Matrix) := (G, V) -> (
+    R := gaussianRing G;
+   -- V := sampleCovarianceMatrix(U);
+    use R;
+    L := directedEdgesMatrix R;
+    -- d is equal to the number of vertices in G
+    d := numRows L;
+    -- Omega
+    W := bidirectedEdgesMatrix R;
+    K := undirectedEdgesMatrix R;
+    numSvars:=lift(d*(d+1)/2,ZZ);
+    lpkRvarlist:=apply(numgens(R)-numSvars,i->(gens(R))_i);
+    FR := frac(R);
+    K = substitute(K, FR);
+    Linv := inverse (id_(R^d)-L);
+    Kinv := inverse K;
+    M := mutableMatrix(FR, numgens source L, numgens source L);
+    for i to (numgens source K)-1 do (
+	for j to (numgens source K) - 1 do (
+	    M_(i,j) = Kinv_(i,j);
+	);
+    );
+    for i to (numgens source W)-1 do (
+	for j to (numgens source W)-1 do (
+	    M_(i + numgens source K, j + numgens source K) = W_(i,j);
+	);
+    );	  
+    -- the matrix Sigma expressed in terms of the l and p-variables.
+    S := (transpose Linv) * W * Linv;
+    -- Get the ideal in l's, p's and k's.
+    J := newScoreEquationsFromCovarianceMatrix(G, U);
+    -- same ideal in the ring R.
+    J1 := substitute(J, R);
+    Sigma := mutableMatrix(R, d, d); 
+    for i to d-1 do (
+	for j from i to d-1 do (
+	    use R;
+	    Sigma_(i,j) = s_(i+1,j+1);
+	    use R;
+ 	    Sigma_(j,i) = s_(i+1,j+1);
+	);
+    );
+    Sigma = matrix(Sigma);
+   -- Sigma = substitute(Sigma, ring(S));
+    J2 := ideal(matrix(Sigma) - S);
+    J3 := J1 + J2;
+    --J3 = substitute(J3, R);
+    -- the s-variables
+    sRvarlist := apply(numSvars, i->(gens(R))_(i + numgens(R) - numSvars));
+    J4 := eliminate(lpkRvarlist, J3);
+    sR := coefficientRing(R)[sRvarlist];
+    J5 := substitute(J4, sR);
+    return J5;
+);    
