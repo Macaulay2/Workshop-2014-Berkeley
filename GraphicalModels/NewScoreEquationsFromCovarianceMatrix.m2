@@ -402,7 +402,9 @@ newScoreEquationsFromCovarianceMatrix(MixedGraph,Matrix) := (G, S) -> (
     K = matRtolpR(K, F);
     FR := frac(lpkR);
     K = substitute(K, FR);
+    W = substitute(W, FR);
     Kinv := inverse K;
+    Winv := inverse W;
     M := mutableMatrix(FR, numgens source L, numgens source L);
     for i to (numgens source K)-1 do (
 	for j to (numgens source K) - 1 do (
@@ -414,10 +416,22 @@ newScoreEquationsFromCovarianceMatrix(MixedGraph,Matrix) := (G, S) -> (
 	    M_(i + numgens source K, j + numgens source K) = W_(i,j);
 	);
     );
+    Minv := mutableMatrix(FR, numgens source L, numgens source L);
+    for i to (numgens source K)-1 do (
+	for j to (numgens source K) - 1 do (
+	    Minv_(i,j) = K_(i,j);
+	);
+    );
+    for i to (numgens source W)-1 do (
+	for j to (numgens source W)-1 do (
+	    Minv_(i + numgens source K, j + numgens source K) = Winv_(i,j);
+	);
+    );
     M = matrix(M);
+    Minv = matrix(Minv);
     Linv := inverse (id_(lpkR^d)-L);
     Sigma := (transpose Linv) * M * Linv;
-    SigmaInv := ( substitute(id_(lpkR^d)-L, FR)) * (inverse M) * (transpose substitute(id_(lpkR^d)-L, FR));    
+    SigmaInv := ( substitute(id_(lpkR^d)-L, FR)) * Minv * (transpose substitute(id_(lpkR^d)-L, FR));    
     C1 := trace(SigmaInv * S)/2;
     C1derivative := JacobianMatrixOfRationalFunction(trace(SigmaInv * S)/2);
     LL := (transpose JacobianMatrixOfRationalFunction(det(Sigma)))*matrix{{(-1/(2*det(Sigma)))}} - (transpose C1derivative);
@@ -437,7 +451,134 @@ newScoreEquationsFromCovarianceMatrix(MixedGraph,Matrix) := (G, S) -> (
 
 newScoreEquationsFromConcentrationMatrix = method()
 newScoreEquationsFromConcentrationMatrix := (G, U) -> (
-    
-    
-    
+    R := gaussianRing G;
+    V := sampleCovarianceMatrix(U);
+    use R;
+    L := directedEdgesMatrix R;
+    -- d is equal to the number of vertices in G
+    d := numRows L;
+    -- Omega
+    W := bidirectedEdgesMatrix R;
+    K := undirectedEdgesMatrix R;
+    -- move to a new ring, lpR, which does not have the s variables
+    numSvars:=lift(d*(d+1)/2,ZZ);
+    --lp rings is the ring without the s variables
+    lpkRvarlist:=apply(numgens(R)-numSvars,i->(gens(R))_i);
+    KK:=coefficientRing(R);
+    lpkR:=KK[lpkRvarlist];
+    lpkRTarget:=apply(numgens(R),i-> if i<= numgens(R)-numSvars-1 then (gens(lpkR))_i else 0);
+    F:=map(lpkR,R,lpkRTarget);
+    L = matRtolpR(L,F);
+    W = matRtolpR(W,F);
+    K = matRtolpR(K, F);
+    FR := frac(lpkR);
+    K = substitute(K, FR);
+    Linv := inverse (id_(lpkR^d)-L);
+    Kinv := inverse K;
+    M := mutableMatrix(FR, numgens source L, numgens source L);
+    for i to (numgens source K)-1 do (
+	for j to (numgens source K) - 1 do (
+	    M_(i,j) = Kinv_(i,j);
+	);
+    );
+    for i to (numgens source W)-1 do (
+	for j to (numgens source W)-1 do (
+	    M_(i + numgens source K, j + numgens source K) = W_(i,j);
+	);
+    );
+    -- the matrix Sigma expressed in terms of the l, p and k-variables.
+    S := (transpose Linv) * W * Linv;
+    cVarsExtended := toList(c_(1,1)..c_(d,d));
+    cVars := {};
+    for i from 1 to d do (
+        for j from i to d do (
+	    cVars = append(cVars, c_(i,j));
+	);
+    );
+    Q := coefficientRing(R)[lpkRvarlist | cVars];
+    J := newScoreEquationsFromCovarianceMatrix(G, U);
+    J1 := substitute(J, Q);
+    ConcentrationMatrix := mutableMatrix(Q, d, d); 
+    for i to d-1 do (
+	for j from i to d-1 do (
+    	    use Q;
+	    ConcentrationMatrix_(i,j) = c_(i+1,j+1);
+	    use Q;
+	    ConcentrationMatrix_(j,i) = c_(i+1,j+1);
+	);
+    );
+    J2 := ideal((matrix(ConcentrationMatrix)) * substitute(S, Q) - id_(Q^d));
+    J3 := J1 + J2;
+    lpRvarlist = apply(numgens(Q)-numSvars,i->(gens(Q))_i);
+    J4 := eliminate(lpRvarlist, J3);
+    cQ := coefficientRing(Q)[cVars];
+    J5 := substitute(J4, cQ);
+    return J5;
+)
+
+
+newScoreEquationsFromConcentrationMatrix := (G, V) -> (
+    R := gaussianRing G;
+ --   V := sampleCovarianceMatrix(U);
+    use R;
+    L := directedEdgesMatrix R;
+    -- d is equal to the number of vertices in G
+    d := numRows L;
+    -- Omega
+    W := bidirectedEdgesMatrix R;
+    K := undirectedEdgesMatrix R;
+    -- move to a new ring, lpR, which does not have the s variables
+    numSvars:=lift(d*(d+1)/2,ZZ);
+    --lp rings is the ring without the s variables
+    lpkRvarlist:=apply(numgens(R)-numSvars,i->(gens(R))_i);
+    KK:=coefficientRing(R);
+    lpkR:=KK[lpkRvarlist];
+    lpkRTarget:=apply(numgens(R),i-> if i<= numgens(R)-numSvars-1 then (gens(lpkR))_i else 0);
+    F:=map(lpkR,R,lpkRTarget);
+    L = matRtolpR(L,F);
+    W = matRtolpR(W,F);
+    K = matRtolpR(K, F);
+    FR := frac(lpkR);
+    K = substitute(K, FR);
+    Linv := inverse (id_(lpkR^d)-L);
+    Kinv := inverse K;
+    M := mutableMatrix(FR, numgens source L, numgens source L);
+    for i to (numgens source K)-1 do (
+	for j to (numgens source K) - 1 do (
+	    M_(i,j) = Kinv_(i,j);
+	);
+    );
+    for i to (numgens source W)-1 do (
+	for j to (numgens source W)-1 do (
+	    M_(i + numgens source K, j + numgens source K) = W_(i,j);
+	);
+    );
+    -- the matrix Sigma expressed in terms of the l, p and k-variables.
+    S := (transpose Linv) * W * Linv;
+    cVarsExtended := toList(c_(1,1)..c_(d,d));
+    cVars := {};
+    for i from 1 to d do (
+        for j from i to d do (
+	    cVars = append(cVars, c_(i,j));
+	);
+    );
+    Q := coefficientRing(R)[lpkRvarlist | cVars];
+    J := newScoreEquationsFromCovarianceMatrix(G, U);
+    J1 := substitute(J, Q);
+    ConcentrationMatrix := mutableMatrix(Q, d, d); 
+    for i to d-1 do (
+	for j from i to d-1 do (
+    	    use Q;
+	    ConcentrationMatrix_(i,j) = c_(i+1,j+1);
+	    use Q;
+	    ConcentrationMatrix_(j,i) = c_(i+1,j+1);
+	);
+    );
+    J2 := ideal((matrix(ConcentrationMatrix)) * substitute(S, Q) - id_(Q^d));
+    J3 := J1 + J2;
+    lpRvarlist = apply(numgens(Q)-numSvars,i->(gens(Q))_i);
+    J4 := eliminate(lpRvarlist, J3);
+    cQ := coefficientRing(Q)[cVars];
+    J5 := substitute(J4, cQ);
+    return J5;
 )
