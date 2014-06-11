@@ -58,9 +58,9 @@ ascendBlowupSafe = (J1, irrI, u1, ak, ek) -> (--you pass it the ideal you want t
 
 
 
---computes the ethRoot of the pushForward of an appropriate twisted parameter
+--computes the ethRoot of the pushForward of an appropriate twisted parameter submodule
 ethImageOfBlowup = (I1, a1, e1) -> (
-	if ( not(codim(I1) > 1)) then error "We can only handle ideals of codimension > 1.";
+	if ( not(codim(I1) > 1)) then error "We can only handle ideals of codimension > 1 at this time.";
 
 	reesList := flattenedReesAlgebra I1;
 	A1 := reesList#0; --this one has flattened variables
@@ -78,11 +78,9 @@ ethImageOfBlowup = (I1, a1, e1) -> (
  	paraTest := paraTestModuleAmbient(A1); --this is dumb, we are doing work twice (computing the Ext)...  It makes mer nervous on the off chance that the presentation of the Ext group is different for two different calls.
  	
  	newMap := map(A1^1/(paraTest#0), source(canMap), matrix(canMap));
- 	newKer := (ker newMap)**A2;
+ 	newKer := (ker newMap)**A2; --this is the parameter test submodule of the canonical module  
  	
- 	myDirectImage := HH_0(directImageComplex(IRees^a1*newKer));
- 	
- 	assert false;
+ 	myDirectImage := HH_0(directImageComplex(IRees^a1*newKer, Regularity=>(20+a1))); 	
  	
  	directIdeal := moduleToIdeal(myDirectImage, ring I1);
  	print "we got somewhere";

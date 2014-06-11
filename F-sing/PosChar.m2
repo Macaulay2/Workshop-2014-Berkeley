@@ -1,5 +1,9 @@
 newPackage( "PosChar",
-Version => "0.1a", Date => "October 18th, 2013", Authors => {
+Version => "0.2", Date => "June 10th, 2014", Authors => {
+	{Name => "Daniel Hernandez",
+     Email=> "dhernan@math.utah.edu",
+     HomePage=> "http://www.math.utah.edu/~dhernan/"
+     },
      {Name => "Mordechai Katzman",
      Email=> "m.katzman@sheffield.ac.uk",
      HomePage=> "http://www.katzman.staff.shef.ac.uk/"
@@ -11,12 +15,16 @@ Version => "0.1a", Date => "October 18th, 2013", Authors => {
      Email => "schwede@math.psu.edu",
      HomePage => "http://math.psu.edu/schwede/"
      },
+     {Name => "Pedro Teixeira",
+     Email => "pteixeir@knox.edu",
+     HomePage => "http://www.knox.edu/academics/faculty/teixeira-pedro.html"
+     },
      {Name=> "Emily Witt",
      Email=> "ewitt@umn.edu",
      HomePage => "http://math.umn.edu/~ewitt/"
      }
 },
-Headline => "A package for calculations in positive characteristic", DebuggingMode => true, Reload => true )
+Headline => "A package for calculations of singularities in positive characteristic", DebuggingMode => true, Reload => true )
 export{
 	 "aPower",
 	 "ascendIdeal", 
@@ -37,7 +45,7 @@ export{
   	 "estFPT",
      "ethRoot",
      "ethRootSafe", 		--MK
----     "fancyEthRoot",		MK
+     "fancyEthRoot",		--MK
      "fastExp",
      "findGeneratingMorphisms",     --MK
      "findHSLloci",                 --MK
@@ -79,6 +87,7 @@ export{
      "sigmaQGorAmb", --needs optimization
      "sigmaAOverPEMinus1QGor",      --needs optimization
      "tauPoly",
+     "tauNonPrincipalAOverPEPoly",
      "tauAOverPEMinus1Poly",
      "tauGor",--needs optimization
      "tauGorAmb",--needs optimization
@@ -1823,6 +1832,86 @@ tauGor = (Rg,fg,tg) -> tauQGor (Rg,1,fg,tg)
 
 ----------------------------------------------------------------
 --************************************************************--
+--Test ideals for non-principal ideals                        --
+--************************************************************--
+----------------------------------------------------------------
+
+flattenedReesAlgebra = (I1) -> (--takes an ideal, forms the rees algebra, and returns the rees algebra in two ways, first with flattened variables and the second without
+	S1 := reesAlgebra I1;
+	J1 := ideal S1;
+	tempMonoid := S1.FlatMonoid;
+	k1 := coefficientRing (ring I1);
+	S2 := k1 tempMonoid;
+	
+	J2 := sub(J1, S2);
+	
+	(S2/J2, S1)
+)
+
+needsPackage "BGG"; --we'll be pushing forward...
+
+
+
+tauNonPrincipalAOverPEPoly = {Verbose=> false}>> o -> (I1, a1, e1) -> ( -- computes \tau(I^{a/p^e}) for I an ideal in a polynomial ring
+	if ( not(codim(I1) > 1)) then error "We can only handle ideals of codimension > 1 at this time.";
+	
+	--this function currently doesn't take advantage of Skoda's theorem, this will need to be done
+
+	reesList := flattenedReesAlgebra I1;
+	A1 := reesList#0; --this one has flattened variables
+	A2 := reesList#1;
+ 	irrIdeal := sub(ideal(first entries vars A1), A1);
+ 	singLocus := ideal singularLocus (A1);
+ 	
+ 	IRees := sub(I1, A2);
+ 	
+ 	canList := canonicalIdeal(A1, FullMap=>true);
+ 	canIdeal := canList#0;
+ 	canMap := canList#1;
+ 	
+ 	paraTest := paraTestModuleAmbient(A1, canIdeal); 
+ 		
+ 	newMap := map(A1^1/(paraTest#0), canList#2, matrix(canMap));
+ 	newKer := (ker newMap)**A2; --this is the parameter test submodule of the canonical module  
+
+	flag := false;
+	i1 := e1;
+	R1 := ring I1;
+	p1 := char R1;
+	ascend := I1; --dummy variables for checking whether we are done
+	descend := ideal(sub(1, R1)); --dummy variables for checking whether we are done
+	
+	while (flag == false) do (
+		ascend = fancyEthRoot(I1, a1*p1^(i1-e1), i1);
+		if (o.Verbose == true) then (print  "Ascending ideal"; print ascend);
+		
+		flag = isSubset(descend, ascend);
+		if (o.Verbose == true) then (print "flag"; print flag);
+		if (flag == false) then (
+			
+			myDirectImage := HH_0(directImageComplex(IRees^(a1*p1^(i1-e1))*newKer, Regularity=>(10+a1))); 	
+ 	
+		 	directIdeal := moduleToIdeal(myDirectImage, R1);
+ 			if ( codim(directIdeal)==1) then error "This function produced a codimension 1 ideal.";
+ 	
+ 			descend = ethRoot(directIdeal, i1);
+ 			if (o.Verbose == true) then (print  "Descending ideal"; print descend)
+		);
+		
+
+		flag = isSubset(descend, ascend);
+		
+		--the following should be removed eventually, it is only here for debug purposes
+		if ((flag == true) and (isSubset(ascend, descend)==false)) then error "Major error detected";
+		i1 = i1+1;
+		if (o.Verbose==true) then (print "Loop complete, continue?"; print (not flag) );
+	);
+	
+	ascend
+)
+
+----------------------------------------------------------------
+--************************************************************--
 --Functions for computing sigma                               --
 --************************************************************--
 ----------------------------------------------------------------
@@ -1940,7 +2029,9 @@ canonicalIdeal ={FullMap=> false} >> o -> (R1) -> (
 		};
 	});
 	
-	if (o.FullMap == true) then (ideal answer, map(R1^1, myExt**R1, matrix {answer2}), myExt) else ideal answer
+	
+	
+	if (o.FullMap == true) then (ideal answer, map(R1^1, myExt**R1, matrix {answer2}), (myExt**S1^{-degShift})**R1) else ideal answer
 )
 
 moduleToIdeal = (M1, R1) -> (--turns a module to an ideal of a ring, it returns the lift of the ideal to the ambient ring
@@ -1975,11 +2066,27 @@ finduOfIdeal = (canIdeal, defIdeal) -> (
 )
 
 --computes the parameter test submodule of a given ring.  It outputs the parameter test module (as an ideal), it then outputs the canonical module (as an ideal), and finally it outputs the term u used as the action on the ideal
-paraTestModuleAmbient = (R1) -> (
+paraTestModuleAmbient = method();
+
+paraTestModuleAmbient (Ring) := (R1) -> (
 	S1 := ambient R1;
 	I1 := ideal(R1);
 	
 	canIdeal := canonicalIdeal(R1);
+	
+	J1 := findTestElementAmbient(R1);
+	tau0 := J1*canIdeal; --this is the starting test element times the ideal
+	
+	u1 := finduOfIdeal(canIdeal, I1); --this is the multiplying object that gives us (u*omega)^{[1/p]} \subseteq omega.
+	
+	tauOut := ascendIdeal(tau0, u1, 1);
+	
+	(sub(tauOut, R1), sub(canIdeal, R1), u1)
+)
+
+paraTestModuleAmbient (Ring, Ideal) := (R1, canIdeal) -> (
+	S1 := ambient R1;
+	I1 := ideal(R1);
 	
 	J1 := findTestElementAmbient(R1);
 	tau0 := J1*canIdeal; --this is the starting test element times the ideal
@@ -2115,7 +2222,7 @@ xInt = (x1, y1, x2, y2) ->  x1-(y1/((y1-y2)/(x1-x2)))
 ---	f1 - some polynomial in two or three variables in a ring R of PRIME characteristic
 --- Output:
 ---	returns value of the F-signature of the pair (R, f1^{a1/p^e1})
---- Based on work of Eric Canton
+--- Code is based on work of Eric Canton
 fSig = (f1, a1, e1) -> (
      R1:=ring f1;
      pp:= char ring f1;     
@@ -2843,7 +2950,7 @@ doc ///
          :Ideal
      Description
 	Text
-	     This computes the test ideal tau(R) for a Q-Gorenstein ring R with index not divisible by p^e - 1.  It uses the fact that if R is a quotient of a polynomial ring S, then tau(R) can be computed as a sort of test/adjoint ideal on S.  The function findQGorGen is used to find the map to use on S.  e is the index of the canonical divisor on R.
+	     This computes the test ideal tau(R) for a Q-Gorenstein ring R with index dividing p^e - 1.  It uses the fact that if R is a quotient of a polynomial ring S, then tau(R) can be computed as a sort of test/adjoint ideal on S.  The function findQGorGen is used to find the map to use on S.  e is the index of the canonical divisor on R.
 ///
 
 doc ///
