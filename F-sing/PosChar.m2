@@ -982,7 +982,9 @@ FPT2VarHomogNontrivial (List,FTData) := opt -> (aa,S) ->
     S1:=setFTData(Iold,polys);
     e=e-1;
     trunc:=truncation(e,u,p);
-    cc:=findCPBelow(truncation(1,p^e*(u-trunc),p),S1)/p^e+trunc;
+    cc1:=findCPBelow(truncation(1,p^e*(u-trunc),p),S1);
+    cc:=cc1/p^e+trunc;
+    if product(cc1)==0 then cc=findCPBelow(cc,S);
     max apply(cc,aa,(c,a)->c/a)
 )
 
