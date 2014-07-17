@@ -483,7 +483,9 @@ findQGorGen(Ring) := (R2) -> ( findQGorGen(R2, 1) )
 ---------------------------------------------------------------------
 
 --Gives the e-th digit of the non-terminating base p expansion of x in [0,1] 
-digit = (e, x, p) -> 
+digit = method()
+
+digit (ZZ,QQ,ZZ) := (e, x, p) -> 
 (
      y := 0;
      if fracPart(p^e*x) != 0 then y = floor(p^e*x) - p*floor(p^(e-1)*x);
@@ -491,6 +493,9 @@ digit = (e, x, p) ->
      if fracPart(p^(e-1)*x) == 0 then y = p-1;
      y
 )
+
+--digit (ZZ,List,ZZ) threads over lists.
+digit (ZZ,List,ZZ) := (e,uu,p) -> apply(uu,x->digit(e,x,p))
 
 --Gives the e-th truncation of the non-terminating base p expansion of a nonnegative 
 --rational x as a fraction
@@ -954,14 +959,30 @@ FPT2VarHomogNontrivial = method(Options => {MaxExp => infinity})
 
 FPT2VarHomogNontrivial (List,FTData) := opt -> (aa,S) ->
 (    
+    deg:=taxicabNorm(aa);
+    pos:=positions(aa,k->(k>=deg/2));
+    if (pos!={}) then return(1/aa_(pos_0)); 
+       -- if some multiplicity aa_i is "too big", return 1/aa_i
     p:=S#"char";
-    u:=2*aa/taxicabNorm(aa);
+    rng:=S#"ring";
+    polys:=S#"polylist";
+    I:=S#"ideal";
+    Iold:=I;
     e:=0;
+    dgt:=0;
+    u:=2*aa/deg;
+    while (I!=ideal(1_rng) and e<(opt.MaxExp)) do 
+    (
+	e=e+1;
+	dgt=digit(e,u,p);
+	Iold=I;
+	I=frobeniusPower(I,1):product(polys,dgt,(f,k)->f^k)
+    );
+    if I!=ideal(1_rng) then (error "Reached MaxExp.");    
+    S1:=setFTData(Iold,polys);
+    e=e-1;
     trunc:=truncation(e,u,p);
-    while (isInLowerRegion(trunc,S) and e<(opt.MaxExp)) 
-        do (e=e+1; trunc=truncation(e,u,p));
-    if isInLowerRegion(trunc,S) then (error "Reached MaxExp.");
-    cc:=findCPBelow(trunc,S);
+    cc:=findCPBelow(truncation(1,p^e*(u-trunc),p),S1)/p^e+trunc;
     max apply(cc,aa,(c,a)->c/a)
 )
 
@@ -2794,20 +2815,27 @@ doc ///
 
 doc ///
      Key
-     	 digit
+     	digit
+	(digit,ZZ,QQ,ZZ)
+	(digit,ZZ,List,ZZ)
      Headline
         Gives the e-th digit of the base p expansion 
      Usage
-     	  digit(e,x,p) 
+     	 d=digit(e,x,p), D=digit(e,X,p)
      Inputs
-         e:ZZ
-         x:RR
-         p:ZZ
+	e:ZZ
+	x:QQ
+	p:ZZ
+	X:List
+	   consisting of rational numbers
      Outputs
-        :ZZ
+        d:ZZ
+	    which is the e-th digit of the non-terminating base p expansion of x
+	D:List
+	    which contains the e-th digits of the entries of the list X
      Description
 	Text
-	     Gives the e-th digit, to the right of the decimal point, of the non-terminating base p expansion of x in [0,1] 
+	     Gives the e-th digit, to the right of the decimal point, of the non-terminating base p expansion of x in [0,1]; threads over lists of rational numbers. 
 ///
 
 
