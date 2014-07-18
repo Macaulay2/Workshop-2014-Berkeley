@@ -26,75 +26,85 @@ Version => "0.2", Date => "June 10th, 2014", Authors => {
 },
 Headline => "A package for calculations of singularities in positive characteristic", DebuggingMode => true, Reload => true )
 export{
-	 "aPower",
-	 "ascendIdeal", 
-	 "ascendIdealSafe",
-	 "ascendIdealSafeList",
-	 "AscentCount",
-	 "basePExp",
-  	 "basePExpMaxE",
-  	 "BinomialCheck",
-  	 "binomialFPT",
-  	 "canonicalIdeal",
-  	 "carryTest",
-     "digit", 	 
-     "denom",
-  	 "DiagonalCheck", 
-  	 "diagonalFPT",
-  	 "divideFraction",
-  	 "estFPT",
-     "ethRoot",
-     "ethRootSafe", 		--MK
-     "fancyEthRoot",		--MK
-     "fastExp",
-     "findGeneratingMorphisms",     --MK
-     "findHSLloci",                 --MK
-     "findTestElementAmbient",
-     "FinalCheck",
-	"findAllCompatibleIdeals", 	--- MK
-     "findQGorGen",
-     "finduOfIdeal",
-     "firstCarry", 
-     "FPTApproxList",     
-     "FPT2VarHomog",     
-     "frobeniusPower",
-     "fSig",
-     "FullMap",--specifies whether the full data should be returned
-     "guessFPT",
-	"HSL",
-     "isBinomial",
-     "isDiagonal",
-     "isFJumpingNumberPoly",
-     "isFPTPoly",
-     "isFRegularPoly",
-     "isFRegularQGor",
-     "isJToAInIToPe",
-     "isSharplyFPurePoly",
-     "MaxExp",
-     "moduleToIdeal",
-	"minimalCompatible",		--- MK
----	"Mstar",			--- MK
-     "MultiThread",
+    "aPower",
+    "ascendIdeal", 
+    "ascendIdealSafe",
+    "ascendIdealSafeList",
+    "AscentCount",
+    "basePExp",
+    "basePExpMaxE",
+    "BinomialCheck",
+    "binomialFPT",
+    "canonicalIdeal",
+    "canVector",
+    "carryTest",
+    "digit", 	 
+    "denom",
+    "DiagonalCheck", 
+    "diagonalFPT",
+    "divideFraction",
+    "estFPT",
+    "ethRoot",
+    "ethRootSafe", 		--MK
+    "fancyEthRoot",		--MK
+    "fastExp",
+    "findCPBelow",
+    "findGeneratingMorphisms",     --MK
+    "findHSLloci",                 --MK
+    "findTestElementAmbient",
+    "FinalCheck",
+    "findAllCompatibleIdeals", 	--- MK
+    "findQGorGen",
+    "finduOfIdeal",
+    "firstCarry", 
+    "FPTApproxList",     
+    "FPT2VarHomog",     
+    "FPT2VarHomogNontrivial",
+    "frobeniusPower",
+    "fSig",
+    "FullMap",--specifies whether the full data should be returned
+    "getNumAndDenom",
+    "guessFPT",
+    "HSL",
+    "isBinomial",
+    "isCP",
+    "isDiagonal",
+    "isFJumpingNumberPoly",
+    "isFPTPoly",
+    "isFRegularPoly",
+    "isFRegularQGor",
+    "isInLowerRegion",
+    "isInUpperRegion",
+    "isJToAInIToPe",
+    "isSharplyFPurePoly",
+    "MaxExp",
+    "moduleToIdeal",
+    "minimalCompatible",		--- MK
+---    "Mstar",			--- MK
+    "MultiThread",
     "nonFInjectiveLocus",   --MK
-     "nu",
-     "nuList",
-     "NuCheck",
-     "Origin",
-     "OutputRange",
-     "paraTestModule",
-     "paraTestModuleAmbient",
-     "sigmaAOverPEMinus1Poly", 
-     "sigmaQGorAmb", --needs optimization
-     "sigmaAOverPEMinus1QGor",      --needs optimization
-     "tauPoly",
-     "tauNonPrincipalAOverPEPoly",
-     "tauAOverPEMinus1Poly",
-     "tauGor",--needs optimization
-     "tauGorAmb",--needs optimization
-     "tauQGor",--needs optimization
-     "tauQGorAmb",--needs optimization
-     "truncation",
-     "truncationBaseP"
+    "nu",
+    "nuList",
+    "NuCheck",
+    "Origin",
+    "OutputRange",
+    "paraTestModule",
+    "paraTestModuleAmbient",
+    "PrintCP",
+    "setFTData",
+    "sigmaAOverPEMinus1Poly", 
+    "sigmaQGorAmb", --needs optimization
+    "sigmaAOverPEMinus1QGor",      --needs optimization
+    "tauPoly",
+    "tauNonPrincipalAOverPEPoly",
+    "tauAOverPEMinus1Poly",
+    "tauGor",--needs optimization
+    "tauGorAmb",--needs optimization
+    "tauQGor",--needs optimization
+    "tauQGorAmb",--needs optimization
+    "taxicabNorm",
+    "truncation",
+    "truncationBaseP"
 }
 --This file has "finished" functions from the Macaulay2 workshop at Wake Forest
 --August 2012.  Sara Malec, Karl Schwede and Emily Witt contributed to it.
@@ -955,7 +965,7 @@ findCPBelow (List,FTData) := (pt,S) ->
 --FPT2VarHomogNontrivial({a1,...an},S): if S#"polylist={L1,...,Ln} is a list of linear
 --forms, FPT2VarHomogNontrivial({a1,...an},S) finds the FPT of the polynomial
 --F=L1^(a1)...Ln^(an), assuming this FPT is not the LCT. 
-FPT2VarHomogNontrivial = method(Options => {MaxExp => infinity})
+FPT2VarHomogNontrivial = method(Options => {MaxExp => infinity,PrintCP => false})
 
 FPT2VarHomogNontrivial (List,FTData) := opt -> (aa,S) ->
 (    
@@ -967,7 +977,7 @@ FPT2VarHomogNontrivial (List,FTData) := opt -> (aa,S) ->
     rng:=S#"ring";
     polys:=S#"polylist";
     I:=S#"ideal";
-    Iold:=I;
+    ideals:={I};
     e:=0;
     dgt:=0;
     u:=2*aa/deg;
@@ -975,18 +985,29 @@ FPT2VarHomogNontrivial (List,FTData) := opt -> (aa,S) ->
     (
 	e=e+1;
 	dgt=digit(e,u,p);
-	Iold=I;
-	I=frobeniusPower(I,1):product(polys,dgt,(f,k)->f^k)
+	I=frobeniusPower(I,1):product(polys,dgt,(f,k)->f^k);
+	ideals=append(ideals,I)
     );
     if I!=ideal(1_rng) then (error "Reached MaxExp.");    
-    S1:=setFTData(Iold,polys);
-    e=e-1;
-    trunc:=truncation(e,u,p);
-    cc1:=findCPBelow(truncation(1,p^e*(u-trunc),p),S1);
-    cc:=cc1/p^e+trunc;
-    if product(cc1)==0 then cc=findCPBelow(cc,S);
-    max apply(cc,aa,(c,a)->c/a)
+    e0:=e-1;
+    S1:=setFTData(ideals_e0,polys);
+    trunc:=truncation(e0,u,p);
+    cp:=findCPBelow(truncation(1,p^e0*(u-trunc),p),S1);
+    	--if some coordinate of cp is 0, its magnification may not be a CP
+    while product(cp)==0 do 
+    (
+    	e0=e0-1;
+    	S1=setFTData(ideals_e0,polys);
+    	trunc=truncation(e0,u,p);
+    	cp=findCPBelow(truncation(e-e0,p^e0*(u-trunc),p),S1)	
+    );
+    cp=cp/p^e0+trunc; -- "zoom out"
+    if opt.PrintCP then print(toString cp);
+    max apply(cp,aa,(c,a)->c/a)
 )
+
+FPT2VarHomogNontrivial (List,List) :=  opt -> (L,m) -> 
+    FPT2VarHomogNontrivial(m,setFTData(gens ring L_0,L),MaxExp=>(opt.MaxExp),PrintCP=>(opt.PrintCP))
 
 --FPT2VarHomogInternal({a1,...an},S): if S#"polylist={L1,...,Ln} is a list of linear
 --forms, FPT2VarHomogInternal({a1,...an},S) finds the FPT of the polynomial
