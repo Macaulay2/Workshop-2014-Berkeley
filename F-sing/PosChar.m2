@@ -992,7 +992,7 @@ FPT2VarHomogNontrivial (List,FTData) := opt -> (aa,S) ->
     e0:=e-1;
     S1:=setFTData(ideals_e0,polys);
     trunc:=truncation(e0,u,p);
-    cp:=findCPBelow(truncation(1,p^e0*(u-trunc),p),S1);
+    cp:=findCPBelow(digit(e,u,p)/p,S1);
     	--if some coordinate of cp is 0, its magnification may not be a CP
     while product(cp)==0 do 
     (
