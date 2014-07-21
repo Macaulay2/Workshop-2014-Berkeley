@@ -1284,7 +1284,7 @@ ethRootInternal = (I,e) -> (
      if (class R =!= PolynomialRing) then (error "ethRoot: Expected an ideal in a PolynomialRing.");
      p:=char(R); --characteristic
      kk:=coefficientRing(R); --base field
-     try q:=kk#order else ("ethRoot: Expected coefficient field to be finite.");
+     if ((kk =!= ZZ/p) and (class(kk) =!= GaloisField)) then (error "ethRoot: Expected the coefficient field to be ZZ/p or a GaloisField.");
      n:=rank source vars(R); --number of variables
      var:=first entries vars(R); --the variables (henceforth denoted X_i)
      Y:=local Y;
@@ -1296,10 +1296,11 @@ ethRootInternal = (I,e) -> (
      rules:=toList apply(0..(n-1), i->newvar#(n+i)=>substitute(var#(i),S)); 
          -- {Y_i =>X_i} 
      G:=first entries compress((gens substitute(I,S)) % J);
-     	 -- replaces x_i^(p^e) with Y_i 
+     	 -- replaces X_i^(p^e) with Y_i 
      L:=sum(G,t->ideal((coefficients(t,Variables=>var))#1));	 
      L=first entries mingens L;
      L=apply(L, t->substitute(t,rules));
+     q:=kk#order;
      if (q > p) then 
      (
 	 a:=(gens kk)#0;
