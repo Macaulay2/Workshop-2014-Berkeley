@@ -1242,7 +1242,7 @@ ethRootSafeList = (elmtList, I1, aList, e1) -> (
 
 ethRoot(RingElement, Ideal, ZZ, ZZ) := (f, I, a, e) -> ethRootSafe (f, I, a, e) ---MK
 
-ethRootInternal = (Im,e) -> (
+ethRootInternalOld = (Im,e) -> (
      if (isIdeal(Im) != true) then (
      	  error "ethRoot: Expted a nonnegative integer."; 
      );
@@ -1276,6 +1276,41 @@ ethRootInternal = (Im,e) -> (
      --use(Rm);
      substitute(ideal L4,Rm)
 )
+
+ethRootInternal = (I,e) -> (
+     if (not isIdeal(I)) then (error "ethRoot: Expected first argument to be an ideal.");
+     if (not e >= 0) then (error "ethRoot: Expected second argument to be a nonnegative integer.");
+     R:=ring(I); --Ambient ring
+     if (class R =!= PolynomialRing) then (error "ethRoot: Expected an ideal in a PolynomialRing.");
+     p:=char(R); --characteristic
+     kk:=coefficientRing(R); --base field
+     try q:=kk#order else ("ethRoot: Expected coefficient field to be finite.");
+     n:=rank source vars(R); --number of variables
+     var:=first entries vars(R); --the variables (henceforth denoted X_i)
+     Y:=local Y;
+     S:=kk(monoid[(var | toList(Y_1..Y_n)), MonomialOrder=>ProductOrder{n,n},MonomialSize=>64]);
+         -- brand new ring, with a variable Y_i for each X_i
+     newvar := first entries vars(S);
+     J:=matrix {toList apply(0..(n-1), i->newvar#(n+i)-newvar#(i)^(p^e))}; 
+         -- J = (Y_i-x_i^(p^e)) 
+     rules:=toList apply(0..(n-1), i->newvar#(n+i)=>substitute(var#(i),S)); 
+         -- {Y_i =>X_i} 
+     G:=first entries compress((gens substitute(I,S)) % J);
+     	 -- replaces x_i^(p^e) with Y_i 
+     L:=sum(G,t->ideal((coefficients(t,Variables=>var))#1));	 
+     L=first entries mingens L;
+     L=apply(L, t->substitute(t,rules));
+     if (q > p) then 
+     (
+	 a:=(gens kk)#0;
+	 e0:=floor(log(p,q)); 
+	 root:=a^(p^(e0-(e%e0)));
+     	 L=apply(L,t->substitute(t,a=>root));
+	     -- substitute generator of kk with its p^e-th root
+     );
+     substitute(ideal L,R)
+)
+
 
 --A short version of ethRoot
 eR = (I1,e1)-> (ethRoot(I1,e1) )
