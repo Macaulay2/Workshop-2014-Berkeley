@@ -277,14 +277,14 @@ Ring List := (R, varList) -> (
 
    A + A := (f,g) -> (
       -- new way
-      --newHash := merge(f.terms,g.terms,addVals);
+      newHash := removeZeroes merge(f.terms,g.terms,addVals);
       -- old way
-      newHash := new MutableHashTable from pairs f.terms;
-      for s in pairs g.terms do (
-         newMon := s#0;
-         if newHash#?newMon then newHash#newMon = newHash#newMon + s#1 else newHash#newMon = s#1;
-      );
-      newHash = removeZeroes hashTable pairs newHash;
+      --newHash := new MutableHashTable from pairs f.terms;
+      --for s in pairs g.terms do (
+      --   newMon := s#0;
+      --   if newHash#?newMon then newHash#newMon = newHash#newMon + s#1 else newHash#newMon = s#1;
+      --);
+      --newHash = removeZeroes hashTable pairs newHash;
       if newHash === hashTable {} then newHash = (promote(0,f.ring)).terms;
       new A from hashTable {(symbol ring, f.ring),
                             (symbol cache, new CacheTable from {("isReduced",false)}),
@@ -299,17 +299,18 @@ Ring List := (R, varList) -> (
 
    A * A := (f,g) -> (
       -- new way
-      -- newHash := removeZeroes combine(f.terms,g.terms,multKeys,multVals,addVals);
+      -- time not very predictable...
+      newHash := removeZeroes combine(f.terms,g.terms,multKeys,multVals,addVals);
       -- old way
-      newHash := new MutableHashTable;
-      for t in pairs f.terms do (
-         for s in pairs g.terms do (
-            newMon := t#0 | s#0;
-            newCoeff := (t#1)*(s#1);
-            if newHash#?newMon then newHash#newMon = newHash#newMon + newCoeff else newHash#newMon = newCoeff;
-         );
-      );
-      newHash = removeZeroes hashTable pairs newHash;
+      --newHash := new MutableHashTable;
+      --for t in pairs f.terms do (
+      --   for s in pairs g.terms do (
+      --      newMon := t#0 | s#0;
+      --      newCoeff := (t#1)*(s#1);
+      --      if newHash#?newMon then newHash#newMon = newHash#newMon + newCoeff else newHash#newMon = newCoeff;
+      --   );
+      --);
+      --newHash = removeZeroes hashTable pairs newHash;
       if newHash === hashTable {} then newHash = (promote(0,f.ring)).terms;
       new A from hashTable {(symbol ring, f.ring),
                             (symbol cache, new CacheTable from {("isReduced",false)}),
@@ -3098,10 +3099,12 @@ NCMatrix == NCMatrix := (M,N) -> (
     else
        (M.matrix) == (N.matrix)
 )
+
 NCMatrix == ZZ := (M,n) -> (
    if n != 0 then error "Expected comparison to zero.";
    all(flatten entries M, f -> f == 0)
 )
+
 ZZ == NCMatrix := (n,M) -> M == n
 
 -------------------------------------------------------------
