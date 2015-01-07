@@ -231,7 +231,6 @@ basis (ZZ, NCModule) := (d,M) -> (
    
 )
 
-
 ----------------------------------------------------------------------------
 
 freeProduct = method()
@@ -432,7 +431,7 @@ betti NCChainComplex := opts -> C -> (
     	keys (tally (C#0).target), 
     	i -> {(0,(C#0).target,i) => (tally (C#0).target)_i}
     );
-    lastbettis := flatten flatten apply(#C-1, j -> 
+    lastbettis := flatten flatten apply(#C, j -> 
 	apply(
     	    keys (tally (C#j).source), 
     	    i -> {(j+1,(C#j).source,i) => (tally (C#j).source)_i}
@@ -442,6 +441,19 @@ betti NCChainComplex := opts -> C -> (
     B := new BettiTally from L
 )
 
+spots = C -> select(keys C, i -> class i === ZZ and C#i != 0)
+
+net NCChainComplex := C -> (
+   s := sort spots C;
+   if # s === 0 then "0"
+   else (
+      a := s#0;
+      b := s#-1;
+      A := ring C#a;
+      mostOfThem := horizontalJoin between(" <-- ", apply(a .. b, i -> stack ((net A) | (net (#(C#i.target)))^1," ",net i)));
+      mostOfThem | " <-- " |  stack ((net A) | (net (#(C#b.source)))^1," ",net (b+1))
+   )
+)
 
 TEST ///
 restart
@@ -518,7 +530,6 @@ Hom (ZZ,NCModule,NCModule) := (d,M,N) -> (
 )
 
 Hom (ZZ,NCMatrix,NCMatrix) := (d,M,N) -> (
-   --
    -- This method uses Boehm's Algorithm 6.5.1 from "Computer Algebra: Lecture Notes" 
    -- http://www.mathematik.uni-kl.de/~boehm/lehre/1213_CA/ca.pdf
    --
@@ -544,7 +555,8 @@ Hom (ZZ,NCMatrix,NCMatrix) := (d,M,N) -> (
    --	 v	    v                 v
    -- coker N <--- B^{t0} <-- N --- B^{t1} 
    --
-   -- The key to implementing Boehm's algorithm is the identification Hom(B^n, B^m) = B^m \tensor (B^n)*
+   -- The key to implementing Boehm's algorithm is the identification
+   -- Hom(B^n, B^m) = B^m \tensor (B^n)*
    -- This identification is valid in the category of locally finite graded modules.
    B := ring M;
    -- it might be cleaner to shift N and set d=0
@@ -680,7 +692,7 @@ M = ncMatrix {{p,q,0},{0,q,r}}
 assignDegrees(M,{0,0},{1,3,5})
 N = ncMatrix {{p,q^5},{p,r^3}}
 assignDegrees(N,{0,0},{1,15})
-Hom(2,M,N)
+Hom(0,M,N)
 ///
 
 TEST ///

@@ -117,8 +117,7 @@ globalAssignment NCRing
 removeNulls = xs -> select(xs, x -> x =!= null)
 
 removeZeroes = myHash -> select(myHash, c -> c != 0)
-     
- 
+
 minUsing = (xs,f) -> (
    n := min (xs / f);
    first select(1,xs, x -> f x == n)
@@ -300,7 +299,7 @@ Ring List := (R, varList) -> (
 
    A * A := (f,g) -> (
       -- new way
-      --newHash := removeZeroes combine(f.terms,g.terms,multKeys,multVals,addVals);
+      -- newHash := removeZeroes combine(f.terms,g.terms,multKeys,multVals,addVals);
       -- old way
       newHash := new MutableHashTable;
       for t in pairs f.terms do (
@@ -506,6 +505,8 @@ homogDual NCQuotientRing := B -> (
    A:=J.ring;
    A/J
 )
+
+homogDual Ring := B -> homogDual toNCRing B
 
 -------------------------------------------------------
 --- Commands to compute endomorphism ring presentations
@@ -876,15 +877,11 @@ newBasis (ZZ,NCLeftIdeal) := NCMatrix => opts -> (n,I) -> (
    );
 
 -- now we need to minimize the spanning set
-   terms := flatten entries newBasis(n,R,CumulativeBasis=>opts#CumulativeBasis);
-   asCoeffs := sparseCoeffs(doneBasis, Monomials=>terms);  
+   myTerms := flatten entries newBasis(n,R,CumulativeBasis=>opts#CumulativeBasis);
+   asCoeffs := sparseCoeffs(doneBasis, Monomials=>myTerms);  
    minGens := mingens image asCoeffs;
-   ncMatrix{terms}*minGens
+   ncMatrix{myTerms}*minGens
 )
-
-
-
-
 
 ------------------------------------------------
 
@@ -1059,7 +1056,7 @@ toStringMaybeSort NCRingElement := opts -> f -> (
 
 clearDenominators = method()
 clearDenominators NCRingElement := f -> (
-   if coefficientRing ring f =!= QQ then f else (
+   if coefficientRing ring f =!= QQ then (f,f) else (
       coeffDens := apply(values (f.terms), p -> if class p === QQ then denominator p else 1);
       myLCM := lcm coeffDens;
       (f*myLCM,myLCM)
@@ -2553,6 +2550,8 @@ skewPolynomialRing (Ring,RingElement,List) := (R,skewElt,varList) -> (
 threeDimSklyanin = method(Options => {DegreeLimit => 5})
 threeDimSklyanin (Ring, List, List) := opts -> (R, params, varList) -> (
    if #params != 3 or #varList != 3 then error "Expected lists of length 3.";
+   if instance(varList#0, R) or instance(varList#0,ZZ) or instance(varList#0,QQ) then
+      error "Expected list of variables in third argument.";
    A := R varList;
    gensA := gens A;
    I := ncIdeal {params#0*gensA#1*gensA#2+params#1*gensA#2*gensA#1+params#2*(gensA#0)^2,
