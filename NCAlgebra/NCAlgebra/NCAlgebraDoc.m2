@@ -4069,7 +4069,8 @@ doc ///
 
 ///
 
---- Documentation To-do
+-- NCAlgebra Documentation to-do
+
 --warning: symbol has no documentation: NCAlgebra :: rightKernelDegreeLimit
 --warning: symbol has no documentation: NCAlgebra :: Basis
 --warning: method has no documentation: NCAlgebra :: leftMultiplicationMap(NCRingElement,ZZ,ZZ), key: (leftMultiplicationMap,NCRingElement,ZZ,ZZ)
@@ -4080,15 +4081,27 @@ doc ///
 --warning: symbol has no documentation: NCAlgebra :: gddKernel
 --warning: method has no documentation: NCAlgebra :: gddKernel(ZZ,NCRingMap), key: (gddKernel,ZZ,NCRingMap)
 --warning: method has no documentation: NCAlgebra :: ncMatrix(NCRing,List,List), key: (ncMatrix,NCRing,List,List)
---warning: 10 warning(s) occurred in documentation for package NCAlgebra
+--warning: symbol has no documentation: NCAlgebra :: envelopingAlgebra
+--warning: method has no documentation: NCAlgebra :: envelopingAlgebra(NCRing,Symbol), key: (envelopingAlgebra,NCRing,Symbol)
+--warning: symbol has no documentation: NCAlgebra :: freeProduct
+--warning: method has no documentation: NCAlgebra :: freeProduct(NCRing,NCRing), key: (freeProduct,NCRing,NCRing)
+--warning: symbol has no documentation: NCAlgebra :: qTensorProduct
+--warning: method has no documentation: NCAlgebra :: qTensorProduct(NCRing,NCRing,QQ), key: (qTensorProduct,NCRing,NCRing,QQ)
+--warning: method has no documentation: NCAlgebra :: qTensorProduct(NCRing,NCRing,RingElement), key: (qTensorProduct,NCRing,NCRing,RingElement)
+--warning: 17 warning(s) occurred in documentation for package NCAlgebra
 --making info file in ../../../.Macaulay2/local/share/info/NCAlgebra.info.tmp
+--warning: tag has no documentation: NCAlgebra :: Hom(ZZ,NCMatrix,NCMatrix), key (Hom,ZZ,NCMatrix,NCMatrix)
 --warning: tag has no documentation: NCAlgebra :: NCMatrix ? NCMatrix, key (symbol ?,NCMatrix,NCMatrix)
+--warning: tag has no documentation: NCAlgebra :: NCMatrix _ ZZ, key (symbol _,NCMatrix,ZZ)
+--warning: tag has no documentation: NCAlgebra :: NCMatrix Array, key (symbol SPACE,NCMatrix,Array)
+--warning: tag has no documentation: NCAlgebra :: NCRing ** NCRing, key (symbol **,NCRing,NCRing)
 --warning: tag has no documentation: NCAlgebra :: NCRingMap + NCRingMap, key (symbol +,NCRingMap,NCRingMap)
 --warning: tag has no documentation: NCAlgebra :: NCRingMap ? NCRingMap, key (symbol ?,NCRingMap,NCRingMap)
 --warning: tag has no documentation: NCAlgebra :: NCRingMap ^ ZZ, key (symbol ^,NCRingMap,ZZ)
 --warning: tag has no documentation: NCAlgebra :: NCRingMap NCGroebnerBasis, key (symbol SPACE,NCRingMap,NCGroebnerBasis)
 --warning: tag has no documentation: NCAlgebra :: NCRingMap NCIdeal, key (symbol SPACE,NCRingMap,NCIdeal)
 --warning: tag has no documentation: NCAlgebra :: QQ * NCRingMap, key (symbol *,QQ,NCRingMap)
+--warning: tag has no documentation: NCAlgebra :: resolution(NCMatrix), key (resolution,NCMatrix)
 --warning: tag has no documentation: NCAlgebra :: ring(NCGroebnerBasis), key (ring,NCGroebnerBasis)
 --warning: tag has no documentation: NCAlgebra :: RingElement * NCRingMap, key (symbol *,RingElement,NCRingMap)
 --warning: tag has no documentation: NCAlgebra :: ZZ * NCRingMap, key (symbol *,ZZ,NCRingMap)
