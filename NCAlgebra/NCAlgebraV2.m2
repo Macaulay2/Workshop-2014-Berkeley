@@ -372,6 +372,7 @@ homologyAsCokernel(M,L)
 
 --NCMatrix ** Matrix := 
 --Matrix ** NCMatrix := 
+-- what does this matrix represent?
 NCMatrix ** NCMatrix := (M,N) -> (
    entriesM := entries M;
    MtensN := ncMatrix applyTable(entriesM, e -> e*N);
@@ -416,7 +417,7 @@ NCChainComplex = new Type of HashTable
 
 resolution NCMatrix := opts -> M -> (
    i := 0;
-   numSyz := if opts#LengthLimit === infinity then numgens ring M else opts#LengthLimit;
+   numSyz := if opts#LengthLimit === infinity then numgens ring M - 1 else opts#LengthLimit;
    currentM := M;
    syzList := {M} | while (i < numSyz and currentM != 0) list (
       newM := rightKernelBergman currentM;
@@ -427,11 +428,13 @@ resolution NCMatrix := opts -> M -> (
 )
 
 betti NCChainComplex := opts -> C -> (
+    len := #C;
     firstbettis := flatten apply(
     	keys (tally (C#0).target), 
     	i -> {(0,(C#0).target,i) => (tally (C#0).target)_i}
     );
-    lastbettis := flatten flatten apply(#C, j -> 
+    if C#(len-1) == 0 then len = len - 1;
+    lastbettis := flatten flatten apply(len, j -> 
 	apply(
     	    keys (tally (C#j).source), 
     	    i -> {(j+1,(C#j).source,i) => (tally (C#j).source)_i}
