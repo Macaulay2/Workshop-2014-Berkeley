@@ -695,7 +695,7 @@ M = ncMatrix {{p,q,0},{0,q,r}}
 assignDegrees(M,{0,0},{1,3,5})
 N = ncMatrix {{p,q^5},{p,r^3}}
 assignDegrees(N,{0,0},{1,15})
-Hom(0,M,N)
+Hom(0,M,M)
 ///
 
 TEST ///
