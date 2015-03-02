@@ -231,7 +231,6 @@ basis (ZZ, NCModule) := (d,M) -> (
    
 )
 
-
 ----------------------------------------------------------------------------
 
 freeProduct = method()
@@ -373,6 +372,7 @@ homologyAsCokernel(M,L)
 
 --NCMatrix ** Matrix := 
 --Matrix ** NCMatrix := 
+-- what does this matrix represent?
 NCMatrix ** NCMatrix := (M,N) -> (
    entriesM := entries M;
    MtensN := ncMatrix applyTable(entriesM, e -> e*N);
@@ -417,7 +417,7 @@ NCChainComplex = new Type of HashTable
 
 resolution NCMatrix := opts -> M -> (
    i := 0;
-   numSyz := if opts#LengthLimit === infinity then numgens ring M else opts#LengthLimit;
+   numSyz := if opts#LengthLimit === infinity then numgens ring M - 1 else opts#LengthLimit;
    currentM := M;
    syzList := {M} | while (i < numSyz and currentM != 0) list (
       newM := rightKernelBergman currentM;
@@ -428,11 +428,13 @@ resolution NCMatrix := opts -> M -> (
 )
 
 betti NCChainComplex := opts -> C -> (
+    len := #C;
     firstbettis := flatten apply(
     	keys (tally (C#0).target), 
     	i -> {(0,(C#0).target,i) => (tally (C#0).target)_i}
     );
-    lastbettis := flatten flatten apply(#C-1, j -> 
+    if C#(len-1) == 0 then len = len - 1;
+    lastbettis := flatten flatten apply(len, j -> 
 	apply(
     	    keys (tally (C#j).source), 
     	    i -> {(j+1,(C#j).source,i) => (tally (C#j).source)_i}
@@ -442,6 +444,19 @@ betti NCChainComplex := opts -> C -> (
     B := new BettiTally from L
 )
 
+spots = C -> select(keys C, i -> class i === ZZ and C#i != 0)
+
+net NCChainComplex := C -> (
+   s := sort spots C;
+   if # s === 0 then "0"
+   else (
+      a := s#0;
+      b := s#-1;
+      A := ring C#a;
+      mostOfThem := horizontalJoin between(" <-- ", apply(a .. b, i -> stack ((net A) | (net (#(C#i.target)))^1," ",net i)));
+      mostOfThem | " <-- " |  stack ((net A) | (net (#(C#b.source)))^1," ",net (b+1))
+   )
+)
 
 TEST ///
 restart
@@ -518,7 +533,6 @@ Hom (ZZ,NCModule,NCModule) := (d,M,N) -> (
 )
 
 Hom (ZZ,NCMatrix,NCMatrix) := (d,M,N) -> (
-   --
    -- This method uses Boehm's Algorithm 6.5.1 from "Computer Algebra: Lecture Notes" 
    -- http://www.mathematik.uni-kl.de/~boehm/lehre/1213_CA/ca.pdf
    --
@@ -544,7 +558,8 @@ Hom (ZZ,NCMatrix,NCMatrix) := (d,M,N) -> (
    --	 v	    v                 v
    -- coker N <--- B^{t0} <-- N --- B^{t1} 
    --
-   -- The key to implementing Boehm's algorithm is the identification Hom(B^n, B^m) = B^m \tensor (B^n)*
+   -- The key to implementing Boehm's algorithm is the identification
+   -- Hom(B^n, B^m) = B^m \tensor (B^n)*
    -- This identification is valid in the category of locally finite graded modules.
    B := ring M;
    -- it might be cleaner to shift N and set d=0
@@ -680,7 +695,7 @@ M = ncMatrix {{p,q,0},{0,q,r}}
 assignDegrees(M,{0,0},{1,3,5})
 N = ncMatrix {{p,q^5},{p,r^3}}
 assignDegrees(N,{0,0},{1,15})
-Hom(2,M,N)
+Hom(0,M,M)
 ///
 
 TEST ///
