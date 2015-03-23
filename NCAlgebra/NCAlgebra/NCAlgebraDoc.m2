@@ -34,6 +34,7 @@ doc ///
       commands contain calls to the existing noncommutative algebra package Bergman.
   Subnodes
     "Basic operations on noncommutative algebras"
+    "General setup information"
     "Using the Bergman interface"
 ///
 
@@ -4031,14 +4032,12 @@ doc ///
       "General setup information"
 ///
 
-
-
 doc ///
    Key
       "General setup information"
    Description
       Text
-         We recommend using the NCAlgebra packaage with the most recent version of Macaulay2. 
+         We recommend using the NCAlgebra package with the most recent version of Macaulay2. 
       Text 
          Many of the methods in the NCAlgebra package rely on J. Backelin's
 	 noncommutative Groebner basis program Bergman. In the future, we may
@@ -4048,25 +4047,44 @@ doc ///
          Bergman is free, open-source software available at
 	 http://servus.math.su.se/bergman/. We suggest users download the "current"
 	 version. You will find that Bergman can be compiled in several ways.
-	 The NCAlgebra package assumes Bergman is installed under Common LISP
-	 (CLISP). CLISP is available at http://clisp.sourceforge.net/.
+	 We have found that as of March of 2015, Bergman does not run on the version
+	 of Common Lisp that installs via homebrew on Mac OS X versions 10.9 or newer.
+      	 We give detailed instructions for installing Bergman and having it work
+	 with the NCAlgebra package below in the case of an Ubuntu installation.
       Text
-         Once Bergman is successfully installed, you will need to edit the 
-	 variable "bergmanPath" in the NCAlgebra.m2 file. The entry should be path to
-	 the top-level Bergman folder. This step is necessary
-	 for NCAlgebra to access a certain library file in the Bergman distribution.
-	 Having the correct directory in your \$PATH is not sufficient; do not omit
-	 this step. You can test whether bergmanPath is set correctly by 
-	 running the examples in @ TO normalFormBergman @.
+         First, install Common Lisp using the command
+      CannedExample
+      	 sudo apt-get install clisp
       Text
-         While you're editing bergmanPath, you may wish to note the variables
-	 MAXDEG and MAXSIZE. These are tolerance values beyond which Bergman is
-	 called for normal form reductions. See @ TO "Using the Bergman interface" @
-	 for more information.
+         Next, download the bergman source and un-tar it.  You'll need M2 to see the source
+	 even after it is built so remember where you left it.  Next, change to the
+	 directory <bergmanRoot>/scripts/clisp/unix.  In this directory is a file called
+	 mkbergman that is basically the makefile for the common lisp build.  From within
+	 that directory, execute the command
+      CannedExample
+         ./mkbergman -auto
+      Text
+      	 The -auto parameter can be left off in place of -i (for interactive) if you would
+	 like to specify non-default answers to some of the build parameters.  When this command
+	 has been completed, the location of the bergman executable will be reported to you.
+      Text
+         Next, add bergman to your path.  This can be achieved, for example, by symlinking the bergman executable to
+	 a directory on your path using the command:
+      CannedExample
+         ln -s <bergmanExecutableLocation> /usr/bin/bergman
+      Text
+      	 Next, you need to set it up so that the environment variable BERGMANPATH is set upon entering a terminal
+	 by editing, for example, your .bashrc file.  It should contain the location of the root of the bergman
+	 source code.  This can be achieved with adding the following line to your .bashrc file (or course, assuming your source code is located
+	 at "~/bergman"):
+      CannedExample
+         export BERGMANPATH="~/bergman"
+      Text
+         There are also two global variables present (MAXDEG and MAXSIZE) in NCAlgebra.m2 which are
+	 tolerance values beyond which Bergman is called for normal form reductions.
+	 See @ TO "Using the Bergman interface" @ for more information.
    SeeAlso
       "Using the Bergman interface"
-
-
 ///
 
 -- NCAlgebra Documentation to-do

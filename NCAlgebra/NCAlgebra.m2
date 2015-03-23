@@ -92,15 +92,11 @@ protect CumulativeBasis
 MAXDEG = 40
 MAXSIZE = 1000
 
--- Andy's bergman path
--- bergmanPath = "/usr/local/bergman1.001"
--- Andy's other bergman path
--- bergmanPath = "/cygdrive/d/userdata/Desktop/bergman1.001"
--- bergmanPath = "/usr/local/bergman1.001"
--- Frank's bergman path
-bergmanPath = "~/bergman"
--- Courtney's bergman path
---bergmanPath = "/Users/crgibbon/Downloads/bergman1.001"
+-- This manner of locating the bergman source code is deprecated.
+-- bergmanPath = "~/bergman"
+
+-- the environment variable BERGMANPATH must be set to the root directory of the bergman source
+bergmanPath = getenv "BERGMANPATH"
 
 NCRing = new Type of Ring
 NCQuotientRing = new Type of NCRing
