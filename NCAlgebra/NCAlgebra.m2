@@ -13,7 +13,8 @@ newPackage("NCAlgebra",
 	   HomePage => "http://courtneygibbons.org/",
 	   Email => "crgibbon@hamilton.edu"}},
      AuxiliaryFiles => true,
-     DebuggingMode => true
+     DebuggingMode => true,
+     CacheExampleOutput =>true
      )
 
 
@@ -66,7 +67,8 @@ export { NCRing, NCQuotientRing, NCPolynomialRing,
 	 gddKernel,
 	 freeProduct,
 	 qTensorProduct,
-	 envelopingAlgebra
+	 envelopingAlgebra,
+	 NCChainComplex
 }
 
 
@@ -2665,6 +2667,7 @@ freeProduct (NCRing,NCRing) := (A,B) -> (
 )
 
 qTensorProduct = method()
+qTensorProduct (NCRing, NCRing, ZZ) :=
 qTensorProduct (NCRing, NCRing, QQ) :=
 qTensorProduct (NCRing, NCRing, RingElement) := (A,B,q) -> (
    -- this is the q-commuting tensor product of rings
@@ -2696,12 +2699,12 @@ envelopingAlgebra (NCRing, Symbol) := (A,x) -> (
    R := coefficientRing A;
    Aop := oppositeRing A;
    B := R apply(#gens A, g-> x_g);  -- remove # once indexing works without printing ( ) 
-   if class A === NCPolynomialRing then (B ** A) 
+   if class A === NCPolynomialRing then (A ** B) 
    else (
       A' := ambient Aop;   
       f := ncMap(B,A',gens B);
       J := ncIdeal (gens ideal Aop / f);
-      (B/J) ** A
+      A ** (B/J)
    )
 )
 
