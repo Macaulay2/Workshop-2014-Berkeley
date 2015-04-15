@@ -1,5 +1,5 @@
 newPackage( "PosChar",
-Version => "0.2", Date => "June 10th, 2014", Authors => {
+Version => "0.2a", Date => "April 15th, 2015", Authors => {
 	{Name => "Daniel Hernandez",
      Email=> "dhernan@math.utah.edu",
      HomePage=> "http://www.math.utah.edu/~dhernan/"
@@ -13,7 +13,7 @@ Version => "0.2", Date => "June 10th, 2014", Authors => {
      },
      {Name => "Karl Schwede",
      Email => "schwede@math.psu.edu",
-     HomePage => "http://math.psu.edu/schwede/"
+     HomePage => "http://math.utah.edu/~schwede/"
      },
      {Name => "Pedro Teixeira",
      Email => "pteixeir@knox.edu",
@@ -80,7 +80,6 @@ export{
     "isJToAInIToPe",
     "isSharplyFPurePoly",
     "MaxExp",
-    "moduleToIdeal",
     "minimalCompatible",		--- MK
 ---    "Mstar",			--- MK
     "multOrder",
@@ -1939,7 +1938,7 @@ flattenedReesAlgebra = (I1) -> (--takes an ideal, forms the rees algebra, and re
 
 needsPackage "BGG"; --we'll be pushing forward...
 
-
+needsPackage "Divisor";r
 
 tauNonPrincipalAOverPEPoly = {Verbose=> false}>> o -> (I1, a1, e1) -> ( -- computes \tau(I^{a/p^e}) for I an ideal in a polynomial ring
 	if ( not(codim(I1) > 1)) then error "We can only handle ideals of codimension > 1 at this time.";
@@ -2123,26 +2122,26 @@ canonicalIdeal ={FullMap=> false} >> o -> (R1) -> (
 	if (o.FullMap == true) then (ideal answer, map(R1^1, myExt**R1, matrix {answer2}), (myExt**S1^{-degShift})**R1) else ideal answer
 )
 
-moduleToIdeal = (M1, R1) -> (--turns a module to an ideal of a ring, it returns the lift of the ideal to the ambient ring
-	S1 := ambient R1;
-	myMatrix := substitute(relations prune M1, S1);
-	
-	answer:=0;
-	s1:=syz transpose substitute(myMatrix,R1);
-	s2:=entries transpose s1;
-	
-	apply(s2, t->
-	{
-		s3:=substitute(syz gens ideal t,S1);
+--moduleToIdeal = (M1, R1) -> (--turns a module to an ideal of a ring, it returns the lift of the ideal to the ambient ring
+--	S1 := ambient R1;
+---	myMatrix := substitute(relations prune M1, S1);
+--	
+--	answer:=0;
+--	s1:=syz transpose substitute(myMatrix,R1);
+--	s2:=entries transpose s1;
+--	
+--	apply(s2, t->
+--	{
+--		s3:=substitute(syz gens ideal t,S1);
 ---		print(s3%canModuleMatrix);
-		if ((s3%myMatrix)==0) then
-		{
-			answer=substitute(mingens ideal t,S1);
-			break;
-		};
-	});
-	ideal answer	
-)
+--		if ((s3%myMatrix)==0) then
+--		{
+--			answer=substitute(mingens ideal t,S1);
+--			break;
+--		};
+--	});
+--	ideal answer	
+--)
 
 --the following function computes the u of a canonical ideal in a polynomial ring
 --it uses previous work of Katzman
@@ -2263,7 +2262,7 @@ isFRegularPoly (RingElement, QQ) := (f1, t1) -> (
      isSubset(ideal(1_(ring f1)), tauPoly(f1,t1))
 )
 
---Checks whether (R, f1^a1) is sharply F-pure at the prime ideal m1
+--Checks whether (R, f1^(a1/(p^e1-1)) is sharply F-pure at the prime ideal m1
 isSharplyFPurePoly = (f1, a1, e1,m1) -> (
      if (isPrime m1 == false) then error "isSharplyFPurePoly: expected a prime ideal.";
      not (isSubset(ideal(f1^a1), frobeniusPower(m1,e1)))
@@ -3001,7 +3000,7 @@ doc ///
      Key
      	 isSharplyFPurePoly
      Headline
-        Checks whether (R, f^a) is F-pure at the prime ideal m.
+        Checks whether (R, f^(a/(p^e - 1))) is F-pure at the prime ideal m.
      Usage
      	 isSharplyFPurePoly(f,a,e,m)
      Inputs
@@ -3013,7 +3012,7 @@ doc ///
          :Boolean
      Description
 	Text
-	     This checks whether (R, f^a) is F-pure at the prime ideal m at least in the case that R is a polynomial ring.
+	     This checks whether (R, f^(a/(p^e-1))) is F-pure at the prime ideal m at least in the case that R is a polynomial ring.
 ///
 
 doc ///
@@ -3502,3 +3501,8 @@ doc ///
 
 
 end
+
+--**********************************
+--Changes in 0.2a
+----Fixed some typos in documentation and comments
+----Commented out moduleToIdeal, replaced with needsPackage "Divisor" which has a better version of moduleToIdeal
