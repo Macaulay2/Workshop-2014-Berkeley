@@ -1938,7 +1938,7 @@ flattenedReesAlgebra = (I1) -> (--takes an ideal, forms the rees algebra, and re
 
 needsPackage "BGG"; --we'll be pushing forward...
 
-needsPackage "Divisor";r
+needsPackage "Divisor";
 
 tauNonPrincipalAOverPEPoly = {Verbose=> false}>> o -> (I1, a1, e1) -> ( -- computes \tau(I^{a/p^e}) for I an ideal in a polynomial ring
 	if ( not(codim(I1) > 1)) then error "We can only handle ideals of codimension > 1 at this time.";
