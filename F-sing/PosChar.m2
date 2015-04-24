@@ -68,6 +68,8 @@ export{
     "getNumAndDenom",
     "guessFPT",
     "HSL",
+    "imageOfRelativeCanonical",
+    "imageOfTrace",
     "isBinomial",
     "isCP",
     "isDiagonal",
@@ -79,6 +81,7 @@ export{
     "isInUpperRegion",
     "isJToAInIToPe",
     "isSharplyFPurePoly",
+    "isMapSplit",
     "MaxExp",
     "minimalCompatible",		--- MK
 ---    "Mstar",			--- MK
@@ -2515,50 +2518,52 @@ isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
 
 
 --********************************************
---	--This next function should be deleted, it is just here for now for comparison
+--Some functions for the purpose of checking whether a map of rings is a splitting.  It also computes images of (field) trace.
 --********************************************
-isFPTPolyOld ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> ( --this is obsolete
-	pp := char ring f1;
-	if (o.Origin == true) then org := ideal(vars (ring f1));
-	funList := divideFraction(t1, pp);
-	--this writes t1 = a/(p^b(p^c-1))
-	aa := funList#0;
-	bb := funList#1;
-	cc := funList#2;
-	mySigma := ideal(f1);
-	myTau := tauPoly(f1, t1*pp^bb);
-	
-	if (o.Verbose==true) then print "higher tau Computed";
 
-	--first we check whether this is even a jumping number.
-	if (cc == 0) then
-		mySigma = (ideal(f1^(aa-1)))*((sigmaAOverPEMinus1Poly(f1, (pp-1), 1)))
-	else 
-		mySigma = (sigmaAOverPEMinus1Poly(f1, aa, cc));
-	if (o.Verbose==true) then print "higher sigma Computed";
+needsPackage "PushForward"; 
 
-	returnValue := false;
+--checks whether f1 : R1 -> S1 splits as a map of R1-modules
+isMapSplit = (f1) -> (
+	J1 := imageOfRelativeCanonical(f1);
+	val := false;
+	if (1 % J1 == 0) then val = true;
 	
-	if (o.Origin == false) then (--if we are not restricting our check to the origin.
-		if ( not (isSubset(mySigma, myTau) ) ) then (--this holds if t1 is a jumping number (but it is not sufficient), perahps it would better not to do this check.
-			if (o.Verbose==true) then print "higher sigma is not higher tau";
-			if ( isSubset(ideal(sub(1, ring f1)), ethRoot(mySigma, bb) )) then (
-				if (o.Verbose==true) then print "we know t1 <= FPT";
-				if (not isSubset(ideal(sub(1, ring f1)), ethRoot(myTau, bb) ))  then returnValue = true 
-			)
-		)
-	)
-	else( --we are only checking at the origin
-		if ( isSubset(ideal(sub(1, ring f1)), ethRoot(mySigma, bb)+org )) then (
-			if (o.Verbose==true) then print "we know t1 <= FPT";
-			if (not isSubset(ideal(sub(1, ring f1)), ethRoot(myTau, bb)+org ))  then returnValue = true 
-		)
-	);
-	
-	returnValue
+	val
 )
 
+--computes the image of Hom_R1(S1, R1) -> R1.
+imageOfRelativeCanonical = (f1) -> (
+	outList := pushFwd(f1);
+--	myGenerators := first entries (outList#1);	
+	target1 := (outList#2)(sub(1, target f1));
+	
+	h1 := map(outList#0, (source f1)^1, target1);
+	
+	d1 := Hom(h1, (source f1)^1);
+	
+	trim ideal( first entries gens image d1)
+)
 
+--computes the image of trace : S \to R if S is a finite R-module.
+imageOfTrace = (f1) -> (
+	outList := pushFwd(f1);
+	myGenerators := first entries (outList#1);	
+	i := 0;
+	traceList := {};
+	newMap := null;
+	newMatrix := null;
+	S1 := target f1;
+	
+	while (i < #myGenerators) do (
+		newMap = map(S1^1, S1^1, {{myGenerators#i}});
+		newMatrix = pushFwd(newMap, f1);
+		traceList = append(traceList, trace newMatrix);
+		i = i+1;
+	);
+	
+	trim ideal traceList
+)
 
 --isFJumpingNumberPoly determines if a given rational number is an F-jumping number
 --***************************************************************************
