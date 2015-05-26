@@ -62,6 +62,7 @@ export{
     "FPT2VarHomog",     
     "FPT2VarHomogInternal",
     "fracPart",
+    "frobenius",
     "frobeniusPower",
     "fSig",
     "FullMap",--specifies whether the full data should be returned
@@ -69,7 +70,7 @@ export{
     "guessFPT",
     "HSL",
     "imageOfRelativeCanonical",
-    "imageOfTrace",
+    "imageOfTrace", --doesn't work!
     "isBinomial",
     "isCP",
     "isDiagonal",
@@ -2547,6 +2548,7 @@ imageOfRelativeCanonical = (f1) -> (
 
 --computes the image of trace : S \to R if S is a finite R-module.
 imageOfTrace = (f1) -> (
+	print "Warning, this only works right now if S is a free module.  We should try to fix it...
 	outList := pushFwd(f1);
 	myGenerators := first entries (outList#1);	
 	i := 0;
@@ -2563,6 +2565,14 @@ imageOfTrace = (f1) -> (
 	);
 	
 	trim ideal traceList
+)
+
+--computes the relative e-iterated Frobenius over the base ring (the absolute Frobenius in the case 
+frobenius = (R1, e1) -> (
+	p1 := char R1;
+	genList := first entries gens R1;
+	fPowerList := apply(genList, z->z^p1 );
+	map(R1, R1, fPowerList);
 )
 
 --isFJumpingNumberPoly determines if a given rational number is an F-jumping number
