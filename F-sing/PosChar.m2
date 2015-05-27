@@ -301,9 +301,19 @@ basePExpMaxE = (N,p,e1) ->
     new List from E
 )
 
---Computes powers of elements in char p>0, using that Frobenius
---is an endomorphism
+--Computes powers of elements in char p>0, using that Frobenius is an endomorphism
+-- If N = N_0 + N_1 p + ... + N_e p^e, then this computes f^N as f^N = f^(N_0) f^(N_1)^p ... (f^(N_e))^(p^e)
+
 fastExp = (f,N) ->
+(
+     p:=char ring f;
+     E:=basePExp(N,p);
+     product(#E, e -> (sum(terms f^(E#e), g->g^(p^e))))
+)
+
+-- Old version of fastExp. 
+-- If N = N_0 + N_1 p + ... + N_e p^e, then this computes f^N as f^N = f^(N_0) (f^p)^(N_1) ... (f^(p^e))^(N_e)
+fastExpOld = (f,N) ->
 (
      p:=char ring f;
      E:=basePExp(N,p);
@@ -429,6 +439,7 @@ FPTApproxList (RingElement,ZZ) := (f,e) -> FPTApproxList(ideal(f),e)
 --constructions (colons).                                    --
 --***********************************************************--
 ---------------------------------------------------------------
+ 
  
 --The following raises an ideal to a Frobenius power; it was written by Moty Katzman
 frobeniusPower=method()
