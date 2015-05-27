@@ -1983,7 +1983,7 @@ tauNonPrincipalAOverPEPoly = {Verbose=> false}>> o -> (I1, a1, e1) -> ( -- compu
 			
 			myDirectImage := HH_0(directImageComplex(IRees^(a1*p1^(i1-e1))*newKer, Regularity=>(10+a1))); 	
  	
-		 	directIdeal := moduleToIdeal(myDirectImage, R1);
+		 	directIdeal := module2Ideal(myDirectImage, R1);
  			if ( codim(directIdeal)==1) then error "This function produced a codimension 1 ideal.";
  	
  			descend = ethRoot(directIdeal, i1);
@@ -2549,7 +2549,7 @@ imageOfRelativeCanonical = (f1) -> (
 --computes the image of trace : S \to R if S is a finite R-module.
 imageOfTrace = (f1) -> (
 	print "Warning, this only works right now if S is a free module.  We should try to fix it...
-	outList := pushFwd(f1);
+	outList := pushFwd(f1)";
 	myGenerators := first entries (outList#1);	
 	i := 0;
 	traceList := {};
