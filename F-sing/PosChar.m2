@@ -2548,8 +2548,8 @@ imageOfRelativeCanonical = (f1) -> (
 
 --computes the image of trace : S \to R if S is a finite R-module.
 imageOfTrace = (f1) -> (
-	print "Warning, this only works right now if S is a free module.  We should try to fix it...
-	outList := pushFwd(f1)";
+	print "Warning, this only works right now if S is a free module.  We should try to fix it...";
+	outList := pushFwd(f1);
 	myGenerators := first entries (outList#1);	
 	i := 0;
 	traceList := {};
@@ -3521,3 +3521,4 @@ end
 --Changes in 0.2a
 ----Fixed some typos in documentation and comments
 ----Commented out moduleToIdeal, replaced with needsPackage "Divisor" which has a better version of moduleToIdeal
+--- Fixed things
