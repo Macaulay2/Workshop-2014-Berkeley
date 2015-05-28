@@ -65,6 +65,7 @@ export{
     "frobenius",
     "frobeniusPower",
     "fSig",
+    "FTApproxList",
     "FullMap",--specifies whether the full data should be returned
     "getNumAndDenom",
     "genFrobeniusPower",
@@ -93,6 +94,8 @@ export{
     "Nontrivial",
     "nu",
     "nuList",
+    "nuListFast",
+    "nuFast",
     "NuCheck",
     "num",
     "Origin",
@@ -334,15 +337,17 @@ isJToAInIToPe = (J1, a1, I1, e1) -> (--checks whether or not f1^a1 is in I1^(p^e
 	
 	isSubset(root, I1)
 )
---test for pulling
-nuListFast = (I1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
+
+nuListFast = method()
+
+nuListFast (Ideal, Ideal,  ZZ) := (I1, J1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
 	d1 := 0;
 	p1 := char ring I1;
 	local top;--for the binary search
 	local bottom;--for the binary search
-	local middle;--for the binary search
+ 	local middle;--for the binary search
 	local answer; --a boolean for determining if we go up, or down
-	mIdeal := ideal(first entries vars ring I1); 
+--	mIdeal := ideal(first entries vars ring I1); 
 	N := 0;
 	myList := new MutableList;
 	curPower := 0;
@@ -354,7 +359,7 @@ nuListFast = (I1, e1) -> ( --this is a faster nuList computation, it tries to do
 		
 		while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
 			middle := floor((top + bottom)/2);
-			answer = isJToAInIToPe(I1, curPower + middle, mIdeal, d1);
+			answer = isJToAInIToPe(I1, curPower + middle, J1, d1);
 --			print "Here we are";
 --			print (bottom, top);
 			if (answer == false) then bottom = middle else top = middle
@@ -368,13 +373,19 @@ nuListFast = (I1, e1) -> ( --this is a faster nuList computation, it tries to do
 	toList myList
 )
 
-nuFast = (I1, e1) -> ( --this does a fast nu computation
+nuListFast (Ideal, ZZ) := (I1, e1) -> (
+    nuListFast(I1,ideal(first entries vars ring I1), e1)
+    )
+
+nuFast = method()
+
+nuFast (Ideal, Ideal, ZZ) := (I1, J1, e1) -> ( --this does a fast nu computation
 	p1 := char ring I1;
 	local top;--for the binary search
 	local bottom1;--for the binary search
 	local middle;--for the binary search
 	local answer; --a boolean for determining if we go up, or down
-	mIdeal := ideal(first entries vars ring I1); 
+--	mIdeal := ideal(first entries vars ring I1); 
 	N := 0;
 	myList := new MutableList;
 	curPower := 0;
@@ -383,12 +394,15 @@ nuFast = (I1, e1) -> ( --this does a fast nu computation
 	top = p1^e1;		
 	while (top - 1 > bottom1) do (--the bottom value is always not in m, the top is always in m
 		middle = floor((top + bottom1)/2);
-		answer = isJToAInIToPe(I1, middle, mIdeal, e1);
+		answer = isJToAInIToPe(I1, middle, J1, e1);
 		if (answer == false) then bottom1 = middle else top = middle;
 	);
 	bottom1
 )
 
+nuFast (Ideal, ZZ) := (I1, e1) -> (
+    nuFast(I1,ideal(first entries vars ring I1), e1)
+    )
 
 
 --Lists \nu_I(p^d) for d = 1,...,e 
@@ -433,6 +447,19 @@ FPTApproxList (Ideal,ZZ) := (I,e) ->
 )
 FPTApproxList (RingElement,ZZ) := (f,e) -> FPTApproxList(ideal(f),e)
 
+--Aproximates the F-Threshold with respects to an ideal J
+
+FTApproxList = method();
+
+FTApproxList(Ideal,Ideal,ZZ) := (I1,J1,e1) ->
+(
+    if isSubset(I1, radical(J1))==false then (print "Error: F-Threshold Undefined")
+    else(
+     p1 := char ring I1;
+     apply(#nuListFast(I1,J1,e1), i->((nuListFast(I1,J1,e1))#i)/p1^(i+1)))
+)
+
+FTApproxList (RingElement,Ideal,ZZ) := (f1,J1,e1) -> FTApproxList(ideal(f1),J1,e1)
 
 ---------------------------------------------------------------
 --***********************************************************--
