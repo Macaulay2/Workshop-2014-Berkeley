@@ -514,7 +514,7 @@ findQGorGen(Ring) := (R2) -> ( findQGorGen(R2, 1) )
 --*****************************************************************--
 ---------------------------------------------------------------------
 
-nuList()--Gives the e-th digit of the non-terminating base p expansion of x in [0,1] 
+--Gives the e-th digit of the non-terminating base p expansion of x in [0,1] 
 digit = method()
 
 digit (ZZ,QQ,ZZ) := (e, x, p) -> 
