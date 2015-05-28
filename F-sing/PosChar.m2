@@ -94,8 +94,6 @@ export{
     "Nontrivial",
     "nu",
     "nuList",
-    "nuListFast",
-    "nuFast",
     "NuCheck",
     "num",
     "Origin",
@@ -338,16 +336,15 @@ isJToAInIToPe = (J1, a1, I1, e1) -> (--checks whether or not f1^a1 is in I1^(p^e
 	isSubset(root, I1)
 )
 
-nuListFast = method()
+nuList = method()
 
-nuListFast (Ideal, Ideal,  ZZ) := (I1, J1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
+nuList(Ideal, Ideal,  ZZ) := (I1, J1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
 	d1 := 0;
 	p1 := char ring I1;
 	local top;--for the binary search
 	local bottom;--for the binary search
  	local middle;--for the binary search
 	local answer; --a boolean for determining if we go up, or down
---	mIdeal := ideal(first entries vars ring I1); 
 	N := 0;
 	myList := new MutableList;
 	curPower := 0;
@@ -373,19 +370,20 @@ nuListFast (Ideal, Ideal,  ZZ) := (I1, J1, e1) -> ( --this is a faster nuList co
 	toList myList
 )
 
-nuListFast (Ideal, ZZ) := (I1, e1) -> (
-    nuListFast(I1,ideal(first entries vars ring I1), e1)
+nuList(Ideal, ZZ) := (I1, e1) -> (
+    nuList(I1,ideal(first entries vars ring I1), e1)
     )
 
-nuFast = method()
+nuList(RingElement,ZZ) := (f,e) -> nuList(ideal(f),e)
 
-nuFast (Ideal, Ideal, ZZ) := (I1, J1, e1) -> ( --this does a fast nu computation
+nu = method()
+
+nu(Ideal, Ideal, ZZ) := (I1, J1, e1) -> ( --this does a fast nu computation
 	p1 := char ring I1;
 	local top;--for the binary search
 	local bottom1;--for the binary search
 	local middle;--for the binary search
-	local answer; --a boolean for determining if we go up, or down
---	mIdeal := ideal(first entries vars ring I1); 
+	local answer; --a boolean for determining if we go up, or down 
 	N := 0;
 	myList := new MutableList;
 	curPower := 0;
@@ -400,42 +398,10 @@ nuFast (Ideal, Ideal, ZZ) := (I1, J1, e1) -> ( --this does a fast nu computation
 	bottom1
 )
 
-nuFast (Ideal, ZZ) := (I1, e1) -> (
-    nuFast(I1,ideal(first entries vars ring I1), e1)
+nu(Ideal, ZZ) := (I1, e1) -> (
+    nu(I1,ideal(first entries vars ring I1), e1)
     )
 
-
---Lists \nu_I(p^d) for d = 1,...,e 
-nuList = method();
-
-nuList (Ideal, ZZ) := (I, e) -> (nuListFast(I, e) )
-
-nuListOld = method();
-
-nuListOld (Ideal,ZZ) := (I,e) -> --an obsolete way to compute nu's
-(
-     p := char ring I;
-     m := ideal(first entries vars ring I); 
-     L := new MutableList;
-     N:=0;
-     J:=I;
-     for d from 1 to e do 
-     (	  
-	  J = ideal(apply(first entries gens I, g->fastExp(g, N)));
-	  N=N+1;
-	  while isSubset(I*J, frobeniusPower(m,d))==false do (N = N+1; J = I*J); 
-     	  L#(d-1) = N-1; 
-	  N = p*(N-1)
-     );
-     toList L
-)
-nuList(RingElement,ZZ) := (f,e) -> nuList(ideal(f),e)
-
-
-
---Gives \nu_I(p^e)
-nu = method();
-nu(Ideal,ZZ) := (I,e) -> nuFast(I,e)
 nu(RingElement, ZZ) := (f,e) -> nu(ideal(f),e)
 
 --Gives a list of \nu_I(p^d)/p^d for d=1,...,e
@@ -456,7 +422,7 @@ FTApproxList(Ideal,Ideal,ZZ) := (I1,J1,e1) ->
     if isSubset(I1, radical(J1))==false then (print "Error: F-Threshold Undefined")
     else(
      p1 := char ring I1;
-     apply(#nuListFast(I1,J1,e1), i->((nuListFast(I1,J1,e1))#i)/p1^(i+1)))
+     apply(#nuList(I1,J1,e1), i->((nuList(I1,J1,e1))#i)/p1^(i+1)))
 )
 
 FTApproxList (RingElement,Ideal,ZZ) := (f1,J1,e1) -> FTApproxList(ideal(f1),J1,e1)
