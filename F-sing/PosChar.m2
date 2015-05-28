@@ -3538,3 +3538,6 @@ end
 ----Fixed some typos in documentation and comments
 ----Commented out moduleToIdeal, replaced with needsPackage "Divisor" which has a better version of moduleToIdeal
 --- Fixed things
+
+
+---Zhibek was here 
