@@ -334,7 +334,7 @@ isJToAInIToPe = (J1, a1, I1, e1) -> (--checks whether or not f1^a1 is in I1^(p^e
 	
 	isSubset(root, I1)
 )
-
+--test for pulling
 nuListFast = (I1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
 	d1 := 0;
 	p1 := char ring I1;
@@ -514,7 +514,7 @@ findQGorGen(Ring) := (R2) -> ( findQGorGen(R2, 1) )
 --*****************************************************************--
 ---------------------------------------------------------------------
 
---Gives the e-th digit of the non-terminating base p expansion of x in [0,1] 
+nuList()--Gives the e-th digit of the non-terminating base p expansion of x in [0,1] 
 digit = method()
 
 digit (ZZ,QQ,ZZ) := (e, x, p) -> 
