@@ -67,6 +67,7 @@ export{
     "fSig",
     "FullMap",--specifies whether the full data should be returned
     "getNumAndDenom",
+    "genFrobeniusPower",
     "guessFPT",
     "HSL",
     "imageOfRelativeCanonical",
@@ -449,7 +450,7 @@ frobeniusPower(Ideal,ZZ) := (I1,e1) ->(
      p1:=char R1;
      local answer;
      G1:=first entries gens I1;
-     if (#G1==0) then answer=ideal(0_R1) else answer=ideal(apply(G1, j->j^(p1^e1)));
+     if (#G1==0) then answer=ideal(0_R1) else answer=ideal(apply(G1, j->fastExp(j, (p1^e1))));
      answer
 );
 
@@ -459,6 +460,17 @@ frobeniusPower(Matrix,ZZ) := (M,e) ->
     matrix apply(entries M,u->apply(u,j->j^(p^e)))
 )
 
+-- The following raises an ideal to a generalized Frobenius power i.e. if N=n_0+n_1P+...+n_eP^e then
+-- I^N = I^n_0*(I^n_1)^[P]*...*(I^n_e)^[P^e].
+
+genFrobeniusPower = (e1,I1) ->(
+     R1:=ring I1;
+     p1:=char R1;
+     E1:=basePExp(e1,p1);
+     local answer;
+     answer = product(#E1, q -> (frobeniusPower(I1^(E1#q),q)));
+     answer
+)
 
 -- This function computes the element in the ambient ring S of R=S/I such that
 -- I^{[p^e]}:I = (f) + I^{[p^e]}
