@@ -404,7 +404,8 @@ nu(Ideal, ZZ) := (I1, e1) -> (
 
 nu(RingElement, ZZ) := (f,e) -> nu(ideal(f),e)
 
---Gives a list of \nu_I(p^d)/p^d for d=1,...,e
+--Approximates the F-pure Threshold
+--Gives a list of nu_I(p^d)/p^d for d=1,...,e
 FPTApproxList = method();
 FPTApproxList (Ideal,ZZ) := (I,e) ->
 (
@@ -413,7 +414,8 @@ FPTApproxList (Ideal,ZZ) := (I,e) ->
 )
 FPTApproxList (RingElement,ZZ) := (f,e) -> FPTApproxList(ideal(f),e)
 
---Aproximates the F-Threshold with respects to an ideal J
+--Approximates the F-Threshold with respect to an ideal J
+--More specifically, this gives a list of nu_I^J(p^d)/p^d for d=1,...,e
 
 FTApproxList = method();
 
@@ -2896,7 +2898,7 @@ doc ///
 	 (FPTApproxList,Ideal,ZZ)
 	 (FPTApproxList,RingElement,ZZ)
      Headline
-        Gives a list of $\nu_I(p^d)/p^d$ for d=1,...,e.
+        Gives a list of nu_I(p^d)/p^d for d=1,...,e.
      Usage
      	  FPTApproxList(I,e)
 	  FPTApproxList(f,e) 
@@ -2908,7 +2910,29 @@ doc ///
          :List
      Description
 	Text 
- 	     This returns a list of nu(I, p^d) for d = 1, ..., e.  The {nu(I, p^d)/p^d} converge to the F-pure threshold.	     
+ 	     This returns a list of nu_I(p^d)/p^d for d = 1, ..., e.  The {nu_I(p^d)/p^d} converge to the F-pure threshold.	     
+///
+
+doc ///
+     Key
+     	 FTApproxList
+	 (FTApproxList,Ideal,Ideal, ZZ)
+	 (FTApproxList,RingElement,Ideal,ZZ)
+     Headline
+        Gives a list of nu_I^J(p^d)/p^d for d=1,...,e.
+     Usage
+     	  FPTApproxList(I,J,e)
+	  FPTApproxList(f,J,e) 
+     Inputs
+     	 I:Ideal
+	 J:Ideal
+	 f:RingElement
+         e:ZZ
+     Outputs
+         :List
+     Description
+	Text 
+ 	     This returns a list of nu_I^J(p^d)/p^d for d = 1, ..., e.  The {nu_I^J(p^d)/p^d} converge to the F-threshold.	     
 ///
 
 doc ///
@@ -3538,6 +3562,5 @@ end
 ----Fixed some typos in documentation and comments
 ----Commented out moduleToIdeal, replaced with needsPackage "Divisor" which has a better version of moduleToIdeal
 --- Fixed things
-
 
 ---Zhibek was here 
