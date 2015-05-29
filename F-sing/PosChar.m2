@@ -1,5 +1,5 @@
 newPackage( "PosChar",
-Version => "0.2", Date => "June 10th, 2014", Authors => {
+Version => "0.2a", Date => "April 15th, 2015", Authors => {
 	{Name => "Daniel Hernandez",
      Email=> "dhernan@math.utah.edu",
      HomePage=> "http://www.math.utah.edu/~dhernan/"
@@ -13,7 +13,7 @@ Version => "0.2", Date => "June 10th, 2014", Authors => {
      },
      {Name => "Karl Schwede",
      Email => "schwede@math.psu.edu",
-     HomePage => "http://math.psu.edu/schwede/"
+     HomePage => "http://math.utah.edu/~schwede/"
      },
      {Name => "Pedro Teixeira",
      Email => "pteixeir@knox.edu",
@@ -62,12 +62,17 @@ export{
     "FPT2VarHomog",     
     "FPT2VarHomogInternal",
     "fracPart",
+    "frobenius",
     "frobeniusPower",
     "fSig",
+    "FTApproxList",
     "FullMap",--specifies whether the full data should be returned
     "getNumAndDenom",
+    "genFrobeniusPower",
     "guessFPT",
     "HSL",
+    "imageOfRelativeCanonical",
+    "imageOfTrace", --doesn't work!
     "isBinomial",
     "isCP",
     "isDiagonal",
@@ -79,8 +84,8 @@ export{
     "isInUpperRegion",
     "isJToAInIToPe",
     "isSharplyFPurePoly",
+    "isMapSplit",
     "MaxExp",
-    "moduleToIdeal",
     "minimalCompatible",		--- MK
 ---    "Mstar",			--- MK
     "multOrder",
@@ -298,9 +303,19 @@ basePExpMaxE = (N,p,e1) ->
     new List from E
 )
 
---Computes powers of elements in char p>0, using that Frobenius
---is an endomorphism
+--Computes powers of elements in char p>0, using that Frobenius is an endomorphism
+-- If N = N_0 + N_1 p + ... + N_e p^e, then this computes f^N as f^N = f^(N_0) f^(N_1)^p ... (f^(N_e))^(p^e)
+
 fastExp = (f,N) ->
+(
+     p:=char ring f;
+     E:=basePExp(N,p);
+     product(#E, e -> (sum(terms f^(E#e), g->g^(p^e))))
+)
+
+-- Old version of fastExp. 
+-- If N = N_0 + N_1 p + ... + N_e p^e, then this computes f^N as f^N = f^(N_0) (f^p)^(N_1) ... (f^(p^e))^(N_e)
+fastExpOld = (f,N) ->
 (
      p:=char ring f;
      E:=basePExp(N,p);
@@ -321,14 +336,15 @@ isJToAInIToPe = (J1, a1, I1, e1) -> (--checks whether or not f1^a1 is in I1^(p^e
 	isSubset(root, I1)
 )
 
-nuListFast = (I1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
+nuList = method()
+
+nuList(Ideal, Ideal,  ZZ) := (I1, J1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
 	d1 := 0;
 	p1 := char ring I1;
 	local top;--for the binary search
 	local bottom;--for the binary search
-	local middle;--for the binary search
+ 	local middle;--for the binary search
 	local answer; --a boolean for determining if we go up, or down
-	mIdeal := ideal(first entries vars ring I1); 
 	N := 0;
 	myList := new MutableList;
 	curPower := 0;
@@ -340,7 +356,7 @@ nuListFast = (I1, e1) -> ( --this is a faster nuList computation, it tries to do
 		
 		while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
 			middle := floor((top + bottom)/2);
-			answer = isJToAInIToPe(I1, curPower + middle, mIdeal, d1);
+			answer = isJToAInIToPe(I1, curPower + middle, J1, d1);
 --			print "Here we are";
 --			print (bottom, top);
 			if (answer == false) then bottom = middle else top = middle
@@ -354,13 +370,20 @@ nuListFast = (I1, e1) -> ( --this is a faster nuList computation, it tries to do
 	toList myList
 )
 
-nuFast = (I1, e1) -> ( --this does a fast nu computation
+nuList(Ideal, ZZ) := (I1, e1) -> (
+    nuList(I1,ideal(first entries vars ring I1), e1)
+    )
+
+nuList(RingElement,ZZ) := (f,e) -> nuList(ideal(f),e)
+
+nu = method()
+
+nu(Ideal, Ideal, ZZ) := (I1, J1, e1) -> ( --this does a fast nu computation
 	p1 := char ring I1;
 	local top;--for the binary search
 	local bottom1;--for the binary search
 	local middle;--for the binary search
-	local answer; --a boolean for determining if we go up, or down
-	mIdeal := ideal(first entries vars ring I1); 
+	local answer; --a boolean for determining if we go up, or down 
 	N := 0;
 	myList := new MutableList;
 	curPower := 0;
@@ -369,48 +392,20 @@ nuFast = (I1, e1) -> ( --this does a fast nu computation
 	top = p1^e1;		
 	while (top - 1 > bottom1) do (--the bottom value is always not in m, the top is always in m
 		middle = floor((top + bottom1)/2);
-		answer = isJToAInIToPe(I1, middle, mIdeal, e1);
+		answer = isJToAInIToPe(I1, middle, J1, e1);
 		if (answer == false) then bottom1 = middle else top = middle;
 	);
 	bottom1
 )
 
+nu(Ideal, ZZ) := (I1, e1) -> (
+    nu(I1,ideal(first entries vars ring I1), e1)
+    )
 
-
---Lists \nu_I(p^d) for d = 1,...,e 
-nuList = method();
-
-nuList (Ideal, ZZ) := (I, e) -> (nuListFast(I, e) )
-
-nuListOld = method();
-
-nuListOld (Ideal,ZZ) := (I,e) -> --an obsolete way to compute nu's
-(
-     p := char ring I;
-     m := ideal(first entries vars ring I); 
-     L := new MutableList;
-     N:=0;
-     J:=I;
-     for d from 1 to e do 
-     (	  
-	  J = ideal(apply(first entries gens I, g->fastExp(g, N)));
-	  N=N+1;
-	  while isSubset(I*J, frobeniusPower(m,d))==false do (N = N+1; J = I*J); 
-     	  L#(d-1) = N-1; 
-	  N = p*(N-1)
-     );
-     toList L
-)
-nuList(RingElement,ZZ) := (f,e) -> nuList(ideal(f),e)
-
-
-
---Gives \nu_I(p^e)
-nu = method();
-nu(Ideal,ZZ) := (I,e) -> nuFast(I,e)
 nu(RingElement, ZZ) := (f,e) -> nu(ideal(f),e)
 
---Gives a list of \nu_I(p^d)/p^d for d=1,...,e
+--Approximates the F-pure Threshold
+--Gives a list of nu_I(p^d)/p^d for d=1,...,e
 FPTApproxList = method();
 FPTApproxList (Ideal,ZZ) := (I,e) ->
 (
@@ -419,6 +414,20 @@ FPTApproxList (Ideal,ZZ) := (I,e) ->
 )
 FPTApproxList (RingElement,ZZ) := (f,e) -> FPTApproxList(ideal(f),e)
 
+--Approximates the F-Threshold with respect to an ideal J
+--More specifically, this gives a list of nu_I^J(p^d)/p^d for d=1,...,e
+
+FTApproxList = method();
+
+FTApproxList(Ideal,Ideal,ZZ) := (I1,J1,e1) ->
+(
+    if isSubset(I1, radical(J1))==false then (print "Error: F-Threshold Undefined")
+    else(
+     p1 := char ring I1;
+     apply(#nuList(I1,J1,e1), i->((nuList(I1,J1,e1))#i)/p1^(i+1)))
+)
+
+FTApproxList (RingElement,Ideal,ZZ) := (f1,J1,e1) -> FTApproxList(ideal(f1),J1,e1)
 
 ---------------------------------------------------------------
 --***********************************************************--
@@ -426,6 +435,7 @@ FPTApproxList (RingElement,ZZ) := (f,e) -> FPTApproxList(ideal(f),e)
 --constructions (colons).                                    --
 --***********************************************************--
 ---------------------------------------------------------------
+ 
  
 --The following raises an ideal to a Frobenius power; it was written by Moty Katzman
 frobeniusPower=method()
@@ -435,7 +445,7 @@ frobeniusPower(Ideal,ZZ) := (I1,e1) ->(
      p1:=char R1;
      local answer;
      G1:=first entries gens I1;
-     if (#G1==0) then answer=ideal(0_R1) else answer=ideal(apply(G1, j->j^(p1^e1)));
+     if (#G1==0) then answer=ideal(0_R1) else answer=ideal(apply(G1, j->fastExp(j, (p1^e1))));
      answer
 );
 
@@ -445,6 +455,17 @@ frobeniusPower(Matrix,ZZ) := (M,e) ->
     matrix apply(entries M,u->apply(u,j->j^(p^e)))
 )
 
+-- The following raises an ideal to a generalized Frobenius power i.e. if N=n_0+n_1P+...+n_eP^e then
+-- I^N = I^n_0*(I^n_1)^[P]*...*(I^n_e)^[P^e].
+
+genFrobeniusPower = (e1,I1) ->(
+     R1:=ring I1;
+     p1:=char R1;
+     E1:=basePExp(e1,p1);
+     local answer;
+     answer = product(#E1, q -> (frobeniusPower(I1^(E1#q),q)));
+     answer
+)
 
 -- This function computes the element in the ambient ring S of R=S/I such that
 -- I^{[p^e]}:I = (f) + I^{[p^e]}
@@ -1939,7 +1960,7 @@ flattenedReesAlgebra = (I1) -> (--takes an ideal, forms the rees algebra, and re
 
 needsPackage "BGG"; --we'll be pushing forward...
 
-
+needsPackage "Divisor";
 
 tauNonPrincipalAOverPEPoly = {Verbose=> false}>> o -> (I1, a1, e1) -> ( -- computes \tau(I^{a/p^e}) for I an ideal in a polynomial ring
 	if ( not(codim(I1) > 1)) then error "We can only handle ideals of codimension > 1 at this time.";
@@ -1980,7 +2001,7 @@ tauNonPrincipalAOverPEPoly = {Verbose=> false}>> o -> (I1, a1, e1) -> ( -- compu
 			
 			myDirectImage := HH_0(directImageComplex(IRees^(a1*p1^(i1-e1))*newKer, Regularity=>(10+a1))); 	
  	
-		 	directIdeal := moduleToIdeal(myDirectImage, R1);
+		 	directIdeal := module2Ideal(myDirectImage, R1);
  			if ( codim(directIdeal)==1) then error "This function produced a codimension 1 ideal.";
  	
  			descend = ethRoot(directIdeal, i1);
@@ -2123,26 +2144,26 @@ canonicalIdeal ={FullMap=> false} >> o -> (R1) -> (
 	if (o.FullMap == true) then (ideal answer, map(R1^1, myExt**R1, matrix {answer2}), (myExt**S1^{-degShift})**R1) else ideal answer
 )
 
-moduleToIdeal = (M1, R1) -> (--turns a module to an ideal of a ring, it returns the lift of the ideal to the ambient ring
-	S1 := ambient R1;
-	myMatrix := substitute(relations prune M1, S1);
-	
-	answer:=0;
-	s1:=syz transpose substitute(myMatrix,R1);
-	s2:=entries transpose s1;
-	
-	apply(s2, t->
-	{
-		s3:=substitute(syz gens ideal t,S1);
+--moduleToIdeal = (M1, R1) -> (--turns a module to an ideal of a ring, it returns the lift of the ideal to the ambient ring
+--	S1 := ambient R1;
+---	myMatrix := substitute(relations prune M1, S1);
+--	
+--	answer:=0;
+--	s1:=syz transpose substitute(myMatrix,R1);
+--	s2:=entries transpose s1;
+--	
+--	apply(s2, t->
+--	{
+--		s3:=substitute(syz gens ideal t,S1);
 ---		print(s3%canModuleMatrix);
-		if ((s3%myMatrix)==0) then
-		{
-			answer=substitute(mingens ideal t,S1);
-			break;
-		};
-	});
-	ideal answer	
-)
+--		if ((s3%myMatrix)==0) then
+--		{
+--			answer=substitute(mingens ideal t,S1);
+--			break;
+--		};
+--	});
+--	ideal answer	
+--)
 
 --the following function computes the u of a canonical ideal in a polynomial ring
 --it uses previous work of Katzman
@@ -2263,7 +2284,7 @@ isFRegularPoly (RingElement, QQ) := (f1, t1) -> (
      isSubset(ideal(1_(ring f1)), tauPoly(f1,t1))
 )
 
---Checks whether (R, f1^a1) is sharply F-pure at the prime ideal m1
+--Checks whether (R, f1^(a1/(p^e1-1)) is sharply F-pure at the prime ideal m1
 isSharplyFPurePoly = (f1, a1, e1,m1) -> (
      if (isPrime m1 == false) then error "isSharplyFPurePoly: expected a prime ideal.";
      not (isSubset(ideal(f1^a1), frobeniusPower(m1,e1)))
@@ -2516,50 +2537,61 @@ isFPTPoly ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> (
 
 
 --********************************************
---	--This next function should be deleted, it is just here for now for comparison
+--Some functions for the purpose of checking whether a map of rings is a splitting.  It also computes images of (field) trace.
 --********************************************
-isFPTPolyOld ={Verbose=> false,Origin=>false}>> o -> (f1, t1) -> ( --this is obsolete
-	pp := char ring f1;
-	if (o.Origin == true) then org := ideal(vars (ring f1));
-	funList := divideFraction(t1, pp);
-	--this writes t1 = a/(p^b(p^c-1))
-	aa := funList#0;
-	bb := funList#1;
-	cc := funList#2;
-	mySigma := ideal(f1);
-	myTau := tauPoly(f1, t1*pp^bb);
-	
-	if (o.Verbose==true) then print "higher tau Computed";
 
-	--first we check whether this is even a jumping number.
-	if (cc == 0) then
-		mySigma = (ideal(f1^(aa-1)))*((sigmaAOverPEMinus1Poly(f1, (pp-1), 1)))
-	else 
-		mySigma = (sigmaAOverPEMinus1Poly(f1, aa, cc));
-	if (o.Verbose==true) then print "higher sigma Computed";
+needsPackage "PushForward"; 
 
-	returnValue := false;
+--checks whether f1 : R1 -> S1 splits as a map of R1-modules
+isMapSplit = (f1) -> (
+	J1 := imageOfRelativeCanonical(f1);
+	val := false;
+	if (1 % J1 == 0) then val = true;
 	
-	if (o.Origin == false) then (--if we are not restricting our check to the origin.
-		if ( not (isSubset(mySigma, myTau) ) ) then (--this holds if t1 is a jumping number (but it is not sufficient), perahps it would better not to do this check.
-			if (o.Verbose==true) then print "higher sigma is not higher tau";
-			if ( isSubset(ideal(sub(1, ring f1)), ethRoot(mySigma, bb) )) then (
-				if (o.Verbose==true) then print "we know t1 <= FPT";
-				if (not isSubset(ideal(sub(1, ring f1)), ethRoot(myTau, bb) ))  then returnValue = true 
-			)
-		)
-	)
-	else( --we are only checking at the origin
-		if ( isSubset(ideal(sub(1, ring f1)), ethRoot(mySigma, bb)+org )) then (
-			if (o.Verbose==true) then print "we know t1 <= FPT";
-			if (not isSubset(ideal(sub(1, ring f1)), ethRoot(myTau, bb)+org ))  then returnValue = true 
-		)
-	);
-	
-	returnValue
+	val
 )
 
+--computes the image of Hom_R1(S1, R1) -> R1.
+imageOfRelativeCanonical = (f1) -> (
+	outList := pushFwd(f1);
+--	myGenerators := first entries (outList#1);	
+	target1 := (outList#2)(sub(1, target f1));
+	
+	h1 := map(outList#0, (source f1)^1, target1);
+	
+	d1 := Hom(h1, (source f1)^1);
+	
+	trim ideal( first entries gens image d1)
+)
 
+--computes the image of trace : S \to R if S is a finite R-module.
+imageOfTrace = (f1) -> (
+	print "Warning, this only works right now if S is a free module.  We should try to fix it...";
+	outList := pushFwd(f1);
+	myGenerators := first entries (outList#1);	
+	i := 0;
+	traceList := {};
+	newMap := null;
+	newMatrix := null;
+	S1 := target f1;
+	
+	while (i < #myGenerators) do (
+		newMap = map(S1^1, S1^1, {{myGenerators#i}});
+		newMatrix = pushFwd(newMap, f1);
+		traceList = append(traceList, trace newMatrix);
+		i = i+1;
+	);
+	
+	trim ideal traceList
+)
+
+--computes the relative e-iterated Frobenius over the base ring (the absolute Frobenius in the case 
+frobenius = (R1, e1) -> (
+	p1 := char R1;
+	genList := first entries gens R1;
+	fPowerList := apply(genList, z->z^p1 );
+	map(R1, R1, fPowerList);
+)
 
 --isFJumpingNumberPoly determines if a given rational number is an F-jumping number
 --***************************************************************************
@@ -2866,7 +2898,7 @@ doc ///
 	 (FPTApproxList,Ideal,ZZ)
 	 (FPTApproxList,RingElement,ZZ)
      Headline
-        Gives a list of $\nu_I(p^d)/p^d$ for d=1,...,e.
+        Gives a list of nu_I(p^d)/p^d for d=1,...,e.
      Usage
      	  FPTApproxList(I,e)
 	  FPTApproxList(f,e) 
@@ -2878,7 +2910,29 @@ doc ///
          :List
      Description
 	Text 
- 	     This returns a list of nu(I, p^d) for d = 1, ..., e.  The {nu(I, p^d)/p^d} converge to the F-pure threshold.	     
+ 	     This returns a list of nu_I(p^d)/p^d for d = 1, ..., e.  The {nu_I(p^d)/p^d} converge to the F-pure threshold.	     
+///
+
+doc ///
+     Key
+     	 FTApproxList
+	 (FTApproxList,Ideal,Ideal, ZZ)
+	 (FTApproxList,RingElement,Ideal,ZZ)
+     Headline
+        Gives a list of nu_I^J(p^d)/p^d for d=1,...,e.
+     Usage
+     	  FPTApproxList(I,J,e)
+	  FPTApproxList(f,J,e) 
+     Inputs
+     	 I:Ideal
+	 J:Ideal
+	 f:RingElement
+         e:ZZ
+     Outputs
+         :List
+     Description
+	Text 
+ 	     This returns a list of nu_I^J(p^d)/p^d for d = 1, ..., e.  The {nu_I^J(p^d)/p^d} converge to the F-threshold.	     
 ///
 
 doc ///
@@ -3001,7 +3055,7 @@ doc ///
      Key
      	 isSharplyFPurePoly
      Headline
-        Checks whether (R, f^a) is F-pure at the prime ideal m.
+        Checks whether (R, f^(a/(p^e - 1))) is F-pure at the prime ideal m.
      Usage
      	 isSharplyFPurePoly(f,a,e,m)
      Inputs
@@ -3013,7 +3067,7 @@ doc ///
          :Boolean
      Description
 	Text
-	     This checks whether (R, f^a) is F-pure at the prime ideal m at least in the case that R is a polynomial ring.
+	     This checks whether (R, f^(a/(p^e-1))) is F-pure at the prime ideal m at least in the case that R is a polynomial ring.
 ///
 
 doc ///
@@ -3502,3 +3556,11 @@ doc ///
 
 
 end
+
+--**********************************
+--Changes in 0.2a
+----Fixed some typos in documentation and comments
+----Commented out moduleToIdeal, replaced with needsPackage "Divisor" which has a better version of moduleToIdeal
+--- Fixed things
+
+---Zhibek was here 
