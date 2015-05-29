@@ -3254,13 +3254,13 @@ betti NCChainComplex := opts -> C -> (
     len := #C;
     firstbettis := flatten apply(
     	keys (tally (C#0).target), 
-    	i -> {(0,(C#0).target,i) => (tally (C#0).target)_i}
+    	i -> {(0,{i},i) => (tally (C#0).target)_i}
     );
     if C#(len-1) == 0 then len = len - 1;
     lastbettis := flatten flatten apply(len, j -> 
 	apply(
     	    keys (tally (C#j).source), 
-    	    i -> {(j+1,(C#j).source,i) => (tally (C#j).source)_i}
+    	    i -> {(j+1,{i},i) => (tally (C#j).source)_i}
 	    )
 	);
     L := firstbettis | lastbettis;
