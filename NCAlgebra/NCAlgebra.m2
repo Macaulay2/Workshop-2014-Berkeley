@@ -3034,6 +3034,46 @@ transpose NCMatrix := M -> (
        Mtrans)
 )
 
+--NCMatrix ** Matrix := 
+--Matrix ** NCMatrix := 
+-- what does this matrix represent?
+NCMatrix ** NCMatrix := (M,N) -> (
+   entriesM := entries M;
+   MtensN := ncMatrix applyTable(entriesM, e -> e*N);
+   --- now we must assignDegrees to make make them compatible
+   --- with the maps M and N
+   newSource := flatten apply(#(M.source), i ->
+         apply(#(N.source), j -> ((M.source)#i)+((N.source)#j)));
+   newTarget := flatten apply(#(M.target), i ->
+         apply(#(N.target), j -> ((M.target)#i)+((N.target)#j)));
+   assignDegrees(MtensN,newTarget,newSource)
+)
+
+NCMatrix ++ NCMatrix := (M,N) -> (
+   B := ring M;
+   Mtar := M.target;
+   Msrc := M.source;
+   Ntar := N.target;
+   Nsrc := N.source;
+   urZero := zeroMap(Mtar,Nsrc,B);
+   lrZero := zeroMap(Ntar,Msrc,B);
+   -- this is a hack until ncMatrix can take lists of empty matrices
+   if Msrc == {} and Mtar == {} then N
+   else if Msrc == {} and Nsrc == {} then ncMatrix(B,Mtar|Ntar,{})
+   else if Msrc == {} and Ntar == {} then urZero
+   else if Msrc == {} then ncMatrix{{urZero},{N}}
+   else if Mtar == {} and Nsrc == {} then lrZero
+   else if Mtar == {} and Ntar == {} then ncMatrix(B,{},Msrc|Nsrc)
+   else if Mtar == {} then ncMatrix{{lrZero,N}}
+   else if Nsrc == {} and Ntar == {} then M
+   else if Nsrc == {} then ncMatrix{{M},{lrZero}}
+   else if Ntar == {} then ncMatrix{{M,urZero}}
+   else (
+      ds := ncMatrix {{M,urZero},{lrZero,N}};
+      assignDegrees(ds,M.target | N.target, M.source | N.source)
+   )
+)
+
 --- flag an entire matrix as having reduced entries
 --- internal routine
 flagReducedMatrix = method()
@@ -3429,17 +3469,16 @@ load (currentFileDirectory | "NCAlgebra/NCAlgebraDoc.m2")
 
 end
 
+---- installing and loading the package
 restart
 uninstallPackage "NCAlgebra"
 installPackage "NCAlgebra"
 needsPackage "NCAlgebra"
 viewHelp "NCAlgebra"
 
---- arithmetic benchmark
-restart
-needsPackage "NCAlgebra"
-A = QQ{x,y,z}
-f = x+y+z
-time(f^12);
-time(f^6*f^6);
+---- checking the package
+
+loadPackage "UnitTestsNCA"
+check UnitTestsNCA
+
 
