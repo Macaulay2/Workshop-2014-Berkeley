@@ -2198,7 +2198,7 @@ rightKernel(NCMatrix,ZZ):= opts -> (M,deg) -> (
       if opts#Verbosity > 0 then << "Kernel computed. Reverting to ring elements." << endl;
    retVal := ncMatrix apply(toList(0..(cols-1)), k-> {bas*submatrix(gens Kscalar,{k*fromDim..(k*fromDim+fromDim-1)},)});
    --- now need to assign degrees.
-   assignDegrees(retVal,M.source, apply(M.source, i -> i + 1));
+   assignDegrees(retVal,M.source, toList ((#(first entries retVal)):((first M.source)+deg)));
    retVal
 )
 
