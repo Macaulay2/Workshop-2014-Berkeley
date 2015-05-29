@@ -2144,7 +2144,7 @@ normalElements (NCQuotientRing, ZZ, Symbol, Symbol) := (R,n,x,y) -> (
 rightKernel = method(Options=>{NumberOfBins => 1, Verbosity=>0})
 rightKernel(NCMatrix,ZZ):= opts -> (M,deg) -> (
    -- Assume (without checking) that the entries of M are homogeneous of the same degree n
-   -- This function takes a NCMatrix M and a degree deg and returns the left kernel in degree deg over the tensor algebra. 
+   -- This function takes a NCMatrix M and a degree deg and returns the right kernel in degree deg
    -- Increasing bins can provide some memory savings if the degree deg part of the ring is large. Optimal bin size seems to be in the 1000-2000 range.
    bins := opts#NumberOfBins;
    rows := # entries M;
@@ -2196,7 +2196,10 @@ rightKernel(NCMatrix,ZZ):= opts -> (M,deg) -> (
       return 0
    else
       if opts#Verbosity > 0 then << "Kernel computed. Reverting to ring elements." << endl;
-   ncMatrix apply(toList(0..(cols-1)), k-> {bas*submatrix(gens Kscalar,{k*fromDim..(k*fromDim+fromDim-1)},)})
+   retVal := ncMatrix apply(toList(0..(cols-1)), k-> {bas*submatrix(gens Kscalar,{k*fromDim..(k*fromDim+fromDim-1)},)});
+   --- now need to assign degrees.
+   assignDegrees(retVal,M.source, apply(M.source, i -> i + 1));
+   retVal
 )
 
 isLeftRegular = method()
