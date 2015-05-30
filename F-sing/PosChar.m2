@@ -321,15 +321,17 @@ basePExpMaxE = (N,p,e1) ->
 )
 
 
----------------------------------------------------------------
---***********************************************************--
---Basic functions for computing powers of elements in        --
---characteristic p>0.                                        --
---***********************************************************--
----------------------------------------------------------------
 
 
---Computes powers of elements in char p>0, using that Frobenius is an endomorphism
+---------------------------------------------------------------
+--***********************************************************--
+--Basic functions for fast exponentiation in characteristic p--
+--and computation of Frobenius powers of ideals (including   --
+--generalized Frobenius- Powers).                            --                                       
+--***********************************************************--
+---------------------------------------------------------------
+ 
+ --Computes powers of elements in char p>0, using that Frobenius is an endomorphism
 -- If N = N_0 + N_1 p + ... + N_e p^e, then this computes f^N as f^N = f^(N_0) f^(N_1)^p ... (f^(N_e))^(p^e)
 
 fastExp = (f,N) ->
@@ -341,12 +343,82 @@ fastExp = (f,N) ->
 
 -- Old version of fastExp. 
 -- If N = N_0 + N_1 p + ... + N_e p^e, then this computes f^N as f^N = f^(N_0) (f^p)^(N_1) ... (f^(p^e))^(N_e)
-fastExpOld = (f,N) ->
+--fastExpOld = (f,N) ->
+--(
+--     p:=char ring f;
+--     E:=basePExp(N,p);
+--     product(#E, e -> (sum(terms f, g->g^(p^e)))^(E#e) )
+--)
+
+--The following raises an ideal to a Frobenius power; it was written by Moty Katzman
+frobeniusPower=method()
+
+frobeniusPower(Ideal,ZZ) := (I1,e1) ->(
+     R1:=ring I1;
+     p1:=char R1;
+     local answer;
+     G1:=first entries gens I1;
+     if (#G1==0) then answer=ideal(0_R1) else answer=ideal(apply(G1, j->fastExp(j, (p1^e1))));
+     answer
+);
+
+frobeniusPower(Matrix,ZZ) := (M,e) ->
 (
-     p:=char ring f;
-     E:=basePExp(N,p);
-     product(#E, e -> (sum(terms f, g->g^(p^e)))^(E#e) )
+    p:=char ring M;
+    matrix apply(entries M,u->apply(u,j->j^(p^e)))
 )
+
+-- The following raises an ideal to a generalized Frobenius power i.e. if N=n_0+n_1P+...+n_eP^e then
+-- I^N = I^n_0*(I^n_1)^[P]*...*(I^n_e)^[P^e].
+
+genFrobeniusPower = (I1,e1) ->(
+     R1:=ring I1;
+     p1:=char R1;
+     E1:=basePExp(e1,p1);
+     local answer;
+     answer = product(#E1, q -> (frobeniusPower(I1^(E1#q),q)));
+     answer
+)
+
+---------------------------------------------------------------
+--***********************************************************--
+--
+--                                  
+--***********************************************************--
+---------------------------------------------------------------
+ 
+-- This function computes the element in the ambient ring S of R=S/I such that
+-- I^{[p^e]}:I = (f) + I^{[p^e]}
+-- If there is no such unique element, the function returns zero
+
+findQGorGen=method();
+findQGorGen (Ring,ZZ) := (Rk,ek) -> (
+     Sk := ambient Rk; -- the ambient ring
+     Ik := ideal Rk; -- the defining ideal
+     pp := char Sk; --the characteristic
+     Ikpp := frobeniusPower(Ik,ek);
+     
+     J1 := trim (Ikpp : Ik); --compute the colon
+     Tk := Sk/Ikpp; --determine the ideal in 
+     
+     J2 := trim sub(J1, Tk);
+     
+     Lk := first entries gens J2;
+     
+     nk := #Lk;
+     val := 0_Sk;
+     
+     if (nk != 1) then (
+	  error "findGorGen: this ring does not appear to be (Q-)Gorenstein, or
+	   you might need to work on a smaller chart.  Or the index may not divide p^e-1
+	   for the e you have selected.";
+     )
+     else (
+	  val = lift(Lk#0, Sk);
+     );    
+     val 
+)
+findQGorGen(Ring) := (R2) -> ( findQGorGen(R2, 1) )
 
 
 ---------------------------------------------------------------
@@ -660,77 +732,6 @@ FTHatApproxList(Ideal,Ideal,ZZ) := (I1,J1,e1) ->
 )
 
 FTHatApproxList (RingElement,Ideal,ZZ) := (f1,J1,e1) -> FTHatApproxList(ideal(f1),J1,e1)
-
----------------------------------------------------------------
---***********************************************************--
---Basic functions for Frobenius powers of ideals and related --
---constructions (colons).                                    --
---***********************************************************--
----------------------------------------------------------------
- 
- 
---The following raises an ideal to a Frobenius power; it was written by Moty Katzman
-frobeniusPower=method()
-
-frobeniusPower(Ideal,ZZ) := (I1,e1) ->(
-     R1:=ring I1;
-     p1:=char R1;
-     local answer;
-     G1:=first entries gens I1;
-     if (#G1==0) then answer=ideal(0_R1) else answer=ideal(apply(G1, j->fastExp(j, (p1^e1))));
-     answer
-);
-
-frobeniusPower(Matrix,ZZ) := (M,e) ->
-(
-    p:=char ring M;
-    matrix apply(entries M,u->apply(u,j->j^(p^e)))
-)
-
--- The following raises an ideal to a generalized Frobenius power i.e. if N=n_0+n_1P+...+n_eP^e then
--- I^N = I^n_0*(I^n_1)^[P]*...*(I^n_e)^[P^e].
-
-genFrobeniusPower = (I1,e1) ->(
-     R1:=ring I1;
-     p1:=char R1;
-     E1:=basePExp(e1,p1);
-     local answer;
-     answer = product(#E1, q -> (frobeniusPower(I1^(E1#q),q)));
-     answer
-)
-
--- This function computes the element in the ambient ring S of R=S/I such that
--- I^{[p^e]}:I = (f) + I^{[p^e]}
--- If there is no such unique element, the function returns zero
-
-findQGorGen=method();
-findQGorGen (Ring,ZZ) := (Rk,ek) -> (
-     Sk := ambient Rk; -- the ambient ring
-     Ik := ideal Rk; -- the defining ideal
-     pp := char Sk; --the characteristic
-     Ikpp := frobeniusPower(Ik,ek);
-     
-     J1 := trim (Ikpp : Ik); --compute the colon
-     Tk := Sk/Ikpp; --determine the ideal in 
-     
-     J2 := trim sub(J1, Tk);
-     
-     Lk := first entries gens J2;
-     
-     nk := #Lk;
-     val := 0_Sk;
-     
-     if (nk != 1) then (
-	  error "findGorGen: this ring does not appear to be (Q-)Gorenstein, or
-	   you might need to work on a smaller chart.  Or the index may not divide p^e-1
-	   for the e you have selected.";
-     )
-     else (
-	  val = lift(Lk#0, Sk);
-     );    
-     val 
-)
-findQGorGen(Ring) := (R2) -> ( findQGorGen(R2, 1) )
 
 
 ---------------------------------------------------------------------
