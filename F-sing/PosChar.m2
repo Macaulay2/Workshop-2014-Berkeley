@@ -565,7 +565,7 @@ nu(Ideal, Ideal, ZZ) := (I1, J1, e1) -> ( --this does a fast nu computation
 )
 
 -- Computes the value of (nu_I)^J(p^e) 
-- -when J=maximal ideal
+-- when J=maximal ideal
 
 nu(Ideal, ZZ) := (I1, e1) -> (
     nu(I1,ideal(first entries vars ring I1), e1)
