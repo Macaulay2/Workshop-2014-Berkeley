@@ -1,8 +1,18 @@
 newPackage( "PosChar",
-Version => "0.2a", Date => "April 15th, 2015", Authors => {
-	{Name => "Daniel Hernandez",
+Version => "0.2a", Date => "May 30th, 2015", Authors => {
+     {Name => "Erin Bela",
+     Email=> "ebela@nd.edu",
+     },
+     {Name => "DJ Bruce",
+     Email=> "djbruce@math.wic.edu",
+     HomePage => "http://www.math.wisc.edu/~djbruce/"
+     },
+     {Name => "Daniel Hernandez",
      Email=> "dhernan@math.utah.edu",
      HomePage=> "http://www.math.utah.edu/~dhernan/"
+     },
+     {Name => "Zhibek Kadyrsizova",
+     Email=> "zhikadyr@umich.edu",
      },
      {Name => "Mordechai Katzman",
      Email=> "m.katzman@sheffield.ac.uk",
@@ -79,6 +89,7 @@ export{
     "isDiagonal",
     "isFJumpingNumberPoly",
     "isFPTPoly",
+    "isFPure",
     "isFRegularPoly",
     "isFRegularQGor",
     "isInLowerRegion",
@@ -120,10 +131,17 @@ export{
     "truncation",
     "truncationBaseP"
 }
---This file has "finished" functions from the Macaulay2 workshop at Wake Forest
---August 2012.  Sara Malec, Karl Schwede and Emily Witt contributed to it.
---Some functions, are based on code written by Eric Canton and Moty Katzman
---UPDATE January 2014.  Daniel Hernandez, Moty Katzman, Karl Schwede, Pedro Teixeira, Emily Witt added more functionality.
+--This file has "finished" functions from the Macaulay2 workshop at Wake 
+--Forest in August 2012.  Sara Malec, Karl Schwede and Emily Witt contributed
+--to it.  Some functions, are based on code written by Eric Canton and Moty
+-- Katzman
+--
+--UPDATE January 2014 at Macaulay2 workshop at MSRI:  Daniel Hernandez, Moty 
+--Katzman, Karl Schwede, Pedro Teixeira, Emily Witt added more functionality.
+--
+--UPDATE May 2015 at Macaulay2 workshop atBoise State:  Erin Bela, DJ Bruce,
+-- Daniel Hernandez, Zhibek Kadyrsizova, and Emily Witt improved/fixed/added 
+--functionality.
 
 ----------------------------------------------------------------
 --************************************************************--
