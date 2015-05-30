@@ -1,10 +1,27 @@
 This is a project to build tools for computing this related to F-singularities in Macaulay2.
 
-It is developed by
+Here is the development history (in reverse order):
+
+modified at Workshop-2015-Boise by
+
+DJ Bruce
+Erin Bela
+Daniel Hernandez
+Zhibek Kadyrsizova
+Emily Witt
+
+modified at Workshop-2014-Berkeley by
 
 Daniel Hernandez
 Moty Katzman
-Sara Malec
 Karl Schwede
 Pedro Teixeira
 Emily Witt
+
+initiated at Workshop-2012-Wake Forest by
+
+Sara Malec
+Karl Schwede
+Emily Witt
+
+
