@@ -149,6 +149,9 @@ export{
 --************************************************************--
 ----------------------------------------------------------------
 
+--the functions denom and num are needed because M2 complains about 
+--computing numerators and denominators of integers (we need this)
+
 denom = method(); --Finds the denominator of a rational number or integer
 denom QQ := x -> denominator x;
 denom ZZ := x -> 1;
