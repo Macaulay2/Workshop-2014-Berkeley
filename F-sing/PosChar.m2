@@ -3477,8 +3477,8 @@ doc ///
      Headline
         Gives a list of nu_I^J(p^d)/p^d for d=1,...,e.
      Usage
-     	  FPTApproxList(I,J,e)
-	  FPTApproxList(f,J,e) 
+     	  FTApproxList(I,J,e)
+	  FTApproxList(f,J,e) 
      Inputs
      	 I:Ideal
 	 J:Ideal
@@ -3489,6 +3489,28 @@ doc ///
      Description
 	Text 
  	     This returns a list of nu_I^J(p^d)/p^d for d = 1, ..., e.  The {nu_I^J(p^d)/p^d} converge to the F-threshold.	     
+///
+
+doc ///
+     Key
+     	 FTHatApproxList
+	 (FTHatApproxList,Ideal,Ideal, ZZ)
+	 (FTHatApproxList,RingElement,Ideal,ZZ)
+     Headline
+        Gives a list of nuHat_I^J(p^d)/p^d for d=1,...,e.
+     Usage
+     	  FTHatApproxList(I,J,e)
+	  FTHatApproxList(f,J,e) 
+     Inputs
+     	 I:Ideal
+	 J:Ideal
+	 f:RingElement
+         e:ZZ
+     Outputs
+         :List
+     Description
+	Text 
+ 	     This returns a list of nuHat_I^J(p^d)/p^d for d = 1, ..., e.  The {nuHat_I^J(p^d)/p^d} converge to the FHat-threshold.	     
 ///
 
 doc ///
