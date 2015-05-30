@@ -288,13 +288,6 @@ findNumberBetween = (myInterv, maxDenom)->(
 )
 
 
----------------------------------------------------------------
---***********************************************************--
---Basic functions for computing powers of elements in        --
---characteristic p>0.                                        --
---***********************************************************--
----------------------------------------------------------------
-
 --Computes the non-terminating base p expansion of an integer
 basePExp = (N,p) ->
 (
@@ -326,6 +319,15 @@ basePExpMaxE = (N,p,e1) ->
     );
     new List from E
 )
+
+
+---------------------------------------------------------------
+--***********************************************************--
+--Basic functions for computing powers of elements in        --
+--characteristic p>0.                                        --
+--***********************************************************--
+---------------------------------------------------------------
+
 
 --Computes powers of elements in char p>0, using that Frobenius is an endomorphism
 -- If N = N_0 + N_1 p + ... + N_e p^e, then this computes f^N as f^N = f^(N_0) f^(N_1)^p ... (f^(N_e))^(p^e)
