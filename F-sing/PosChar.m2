@@ -93,8 +93,10 @@ export{
     "nonFInjectiveLocus",   --MK
     "Nontrivial",
     "nu",
-    "nuList",
     "NuCheck",
+    "NuHat",
+    "NuHatList",
+    "nuList",
     "num",
     "Origin",
     "OutputRange",
@@ -330,11 +332,19 @@ fastExpOld = (f,N) ->
 --***********************************************************--
 ---------------------------------------------------------------
 
-isJToAInIToPe = (J1, a1, I1, e1) -> (--checks whether or not f1^a1 is in I1^(p^e1).  It seems to be much faster than raising f1 to a power
-	root := ethRoot(J1, a1, e1); 
-	
-	isSubset(root, I1)
+-- If I is contained in Rad(J) then this finds the minimal N 
+-- such that I^n is conatined in J
+
+effRad = (I1,J1) ->(
+       d1 := 1;
+       if isSubset(I1, radical(J1))==false then (print "Error: I Not Contained in Rad(J)")
+       else(
+       while isSubset(I1^d1,J1) == false do (
+	   d1 = d1+1
+   	   );
+        d1)
 )
+
 
 nuList = method()
 
@@ -345,29 +355,27 @@ nuList(Ideal, Ideal,  ZZ) := (I1, J1, e1) -> ( --this is a faster nuList computa
 	local bottom;--for the binary search
  	local middle;--for the binary search
 	local answer; --a boolean for determining if we go up, or down
-	N := 0;
+	
+	if isSubset(I1, radical(J1))==false then (print "Error: Nu Undefined")
+	else(
 	myList := new MutableList;
-	curPower := 0;
+	nuPrev := effRad(I1,J1);
+	N := numgens(trim(J1));
+	top = nuPrev*(N*p1-1);
+	bottom = 0;
 	
 	for d1 from 1 to e1 do (
---		if (curPower == 0) then curPower = 1 else curPower = p1^(d1-1)*curPower;
-		top = p1;
-		bottom = 0;
-		
 		while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
 			middle := floor((top + bottom)/2);
-			answer = isJToAInIToPe(I1, curPower + middle, J1, d1);
---			print "Here we are";
---			print (bottom, top);
-			if (answer == false) then bottom = middle else top = middle
-			--print "Here we are"
+			answer = isSubset(I1^middle, frobeniusPower(J1, d1));
+			if (answer == false) then bottom = middle else top = middle;
 		);
-	--	print (bottom, top, curPower);
-		curPower = curPower + bottom;
-		myList#(d1-1) = curPower;
-		curPower = curPower*p1;
+		nuPrev = bottom;
+		myList#(d1-1) = nuPrev;
+		top = (nuPrev+1)*(N*p1-1);
+		bottom = p1*nuPrev;
 	);
-	toList myList
+	toList myList)
 )
 
 nuList(Ideal, ZZ) := (I1, e1) -> (
@@ -381,21 +389,24 @@ nu = method()
 nu(Ideal, Ideal, ZZ) := (I1, J1, e1) -> ( --this does a fast nu computation
 	p1 := char ring I1;
 	local top;--for the binary search
-	local bottom1;--for the binary search
+	local bottom;--for the binary search
 	local middle;--for the binary search
 	local answer; --a boolean for determining if we go up, or down 
+	if isSubset(I1, radical(J1))==false then (print "Error: Nu Undefined")
+	else(
 	N := 0;
 	myList := new MutableList;
-	curPower := 0;
-	
-	bottom1 = 0;
-	top = p1^e1;		
-	while (top - 1 > bottom1) do (--the bottom value is always not in m, the top is always in m
-		middle = floor((top + bottom1)/2);
-		answer = isJToAInIToPe(I1, middle, J1, e1);
-		if (answer == false) then bottom1 = middle else top = middle;
+	nuPrev := effRad(I1,J1);
+	N = numgens(trim(J1));
+	top = nuPrev*N*p1^e1-1;
+	bottom = 0;
+			
+	while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
+		middle = floor((top + bottom)/2);
+		answer = isSubset(I1^middle, frobeniusPower(J1, e1));
+		if (answer == false) then bottom = middle else top = middle;
 	);
-	bottom1
+	bottom)
 )
 
 nu(Ideal, ZZ) := (I1, e1) -> (
@@ -431,6 +442,203 @@ FTApproxList (RingElement,Ideal,ZZ) := (f1,J1,e1) -> FTApproxList(ideal(f1),J1,e
 
 ---------------------------------------------------------------
 --***********************************************************--
+--This seems wrong becuase the top bound is incorrect for    --
+--ideals that are not principal. (5/29/15)-Boise
+--***********************************************************--
+--Functions for computing \nu_I(p^e), \nu_f(p^e), and using  --
+--these to compute estimates of FPTs.                        --
+--***********************************************************--
+---------------------------------------------------------------
+
+--isJToAInIToPe = (J1, a1, I1, e1) -> (--checks whether or not f1^a1 is in I1^(p^e1).  It seems to be much faster than raising f1 to a power
+--	root := ethRoot(J1, a1, e1); 
+--	
+--	isSubset(root, I1)
+--)
+--
+--nuList = method()
+--
+--nuList(Ideal, Ideal,  ZZ) := (I1, J1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
+--	d1 := 0;
+--	p1 := char ring I1;
+--	local top;--for the binary search
+--	local bottom;--for the binary search
+--	local middle;--for the binary search
+--	local answer; --a boolean for determining if we go up, or down
+--	N := 0;
+--	myList := new MutableList;
+--	curPower := 0;
+	
+--	for d1 from 1 to e1 do (
+--		if (curPower == 0) then curPower = 1 else curPower = p1^(d1-1)*curPower;
+--		top = p1;
+--		bottom = 0;
+--		
+--		while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
+--			middle := floor((top + bottom)/2);
+--			answer = isJToAInIToPe(I1, curPower + middle, J1, d1);
+--			print "Here we are";
+--			print (bottom, top);
+--			if (answer == false) then bottom = middle else top = middle
+--			--print "Here we are"
+--		);
+--	--	print (bottom, top, curPower);
+--		curPower = curPower + bottom;
+--		myList#(d1-1) = curPower;
+--		curPower = curPower*p1;
+--	);
+--	toList myList
+--)
+--
+--nuList(Ideal, ZZ) := (I1, e1) -> (
+--    nuList(I1,ideal(first entries vars ring I1), e1)
+--    )
+--
+--nuList(RingElement,ZZ) := (f,e) -> nuList(ideal(f),e)
+--
+--nu = method()
+--
+--nu(Ideal, Ideal, ZZ) := (I1, J1, e1) -> ( --this does a fast nu computation
+--	p1 := char ring I1;
+--	local top;--for the binary search
+--	local bottom1;--for the binary search
+--	local middle;--for the binary search
+--	local answer; --a boolean for determining if we go up, or down 
+--	N := 0;
+--	myList := new MutableList;
+--	curPower := 0;
+--	
+--	bottom1 = 0;
+--	top = p1^e1;		
+--	while (top - 1 > bottom1) do (--the bottom value is always not in m, the top is always in m
+--		middle = floor((top + bottom1)/2);
+--		answer = isJToAInIToPe(I1, middle, J1, e1);
+--		if (answer == false) then bottom1 = middle else top = middle;
+--	);
+--	bottom1
+--)
+--
+--nu(Ideal, ZZ) := (I1, e1) -> (
+--    nu(I1,ideal(first entries vars ring I1), e1)
+--    )
+--
+--nu(RingElement, ZZ) := (f,e) -> nu(ideal(f),e)
+--
+--Approximates the F-pure Threshold
+--Gives a list of nu_I(p^d)/p^d for d=1,...,e
+--FPTApproxList = method();
+--FPTApproxList (Ideal,ZZ) := (I,e) ->
+--(
+--     p := char ring I;
+--     apply(#nuList(I,e), i->((nuList(I,e))#i)/p^(i+1)) 
+--)
+--FPTApproxList (RingElement,ZZ) := (f,e) -> FPTApproxList(ideal(f),e)
+--
+--Approximates the F-Threshold with respect to an ideal J
+--More specifically, this gives a list of nu_I^J(p^d)/p^d for d=1,...,e
+--
+--FTApproxList = method();
+--
+--FTApproxList(Ideal,Ideal,ZZ) := (I1,J1,e1) ->
+--(
+--    if isSubset(I1, radical(J1))==false then (print "Error: F-Threshold Undefined")
+--    else(
+--     p1 := char ring I1;
+--     apply(#nuList(I1,J1,e1), i->((nuList(I1,J1,e1))#i)/p1^(i+1)))
+--)
+--
+--FTApproxList (RingElement,Ideal,ZZ) := (f1,J1,e1) -> FTApproxList(ideal(f1),J1,e1)
+--
+
+---------------------------------------------------------------
+--***********************************************************--
+--Functions for computing \nuHat_I(p^e), \nHatu_f(p^e), and  --
+--using these to compute estimates of FThat's.                        --
+--***********************************************************--
+---------------------------------------------------------------
+
+
+nuHatList = method()
+
+nuHatList(Ideal, Ideal,  ZZ) := (I1, J1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
+	d1 := 0;
+	p1 := char ring I1;
+	local top;--for the binary search
+	local bottom;--for the binary search
+ 	local middle;--for the binary search
+	local answer; --a boolean for determining if we go up, or down
+    	if isSubset(I1, radical(J1))==false then (print "Error: NuHat Undefined")
+	else(
+	myList := new MutableList;
+	nuPrev := effRad(I1,J1);
+--	N = numgens(trim(J1));
+	top =nuPrev*p1;
+	bottom = 0;
+	
+	
+	for d1 from 1 to e1 do (
+		while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
+			middle := floor((top + bottom)/2);
+			answer = isSubset(genFrobeniusPower(I1,middle), frobeniusPower(J1,d1));
+			if (answer == false) then bottom = middle else top = middle;
+		);
+		nuPrev = bottom;
+		myList#(d1-1) = bottom;
+		top = p1*(nuPrev+1);
+		bottom = p1*nuPrev;
+	);
+	toList myList)
+)
+
+nuHatList (Ideal, ZZ) := (I1, e1) -> (
+    nuHatList(I1,ideal(first entries vars ring I1), e1)
+    )
+
+nuHat = method()
+
+nuHat (Ideal, Ideal, ZZ) := (I1, J1, e1) -> ( --this does a fast nu computation
+	p1 := char ring I1;
+	local top;--for the binary search
+	local bottom;--for the binary search
+	local middle;--for the binary search
+	local answer; --a boolean for determining if we go up, or down
+    	if isSubset(I1, radical(J1))==false then (print "Error: NuHat Undefined")
+	else(
+	myList := new MutableList;
+	nuPrev := effRad(I1,J1);
+--	N = numgens(trim(J1));
+	top = nuPrev*p1^e1;
+	bottom = 0;
+			
+	while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
+		middle = floor((top + bottom)/2);
+		answer = isSubset(genFrobeniusPower(I1, middle), frobeniusPower(J1,e1));
+		if (answer == false) then bottom = middle else top = middle;
+	);
+	bottom)
+)
+
+nuHat (Ideal, ZZ) := (I1, e1) -> (
+    nuHat(I1,ideal(first entries vars ring I1), e1)
+    )
+
+
+--Aproximates the F-Threshold with respects to an ideal J
+
+FTHatApproxList = method();
+
+FTHatApproxList(Ideal,Ideal,ZZ) := (I1,J1,e1) ->
+(
+    if isSubset(I1, radical(J1))==false then (print "Error: F-Threshold Undefined")
+    else(
+     p1 := char ring I1;
+     apply(#nuHatList(I1,J1,e1), i->((nuHatList(I1,J1,e1))#i)/p1^(i+1)))
+)
+
+FTHatApproxList (RingElement,Ideal,ZZ) := (f1,J1,e1) -> FTHatApproxList(ideal(f1),J1,e1)
+
+---------------------------------------------------------------
+--***********************************************************--
 --Basic functions for Frobenius powers of ideals and related --
 --constructions (colons).                                    --
 --***********************************************************--
@@ -458,7 +666,7 @@ frobeniusPower(Matrix,ZZ) := (M,e) ->
 -- The following raises an ideal to a generalized Frobenius power i.e. if N=n_0+n_1P+...+n_eP^e then
 -- I^N = I^n_0*(I^n_1)^[P]*...*(I^n_e)^[P^e].
 
-genFrobeniusPower = (e1,I1) ->(
+genFrobeniusPower = (I1,e1) ->(
      R1:=ring I1;
      p1:=char R1;
      E1:=basePExp(e1,p1);
@@ -2830,7 +3038,23 @@ doc ///
 	     If I = ideal(x1, ..., xn), then frobeniusPower(I,e) outputs ideal(x1^(p^e), ..., xn^(p^e)) where p is the characteristic of the ring.
 ///
 
-
+doc ///
+     Key
+     	genFrobeniusPower 
+     Headline
+        Computes the generalized Frobenius power of an ideal
+     Usage
+     	  frobeniusPower(I1,e1)  
+     Inputs
+         	I1:Ideal
+	 	e1:ZZ
+     Outputs
+        :Ideal
+     Description
+     	Text
+	     Computes I^[N] for an ideal I and an integer N, where I^[N] is defined as follows. If N's base P-expansion is N=n_0+n_1P+...+n_eP^e then I^[N]=I^(n_0)*(I^(n_1))^[P]*...*(I^(n_e))^[P^e]. When P is prime I^[P^e] is the usual Frobenius power.
+ ///
+ 
 doc ///
      Key
      	guessFPT 
