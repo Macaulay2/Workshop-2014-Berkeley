@@ -1,8 +1,18 @@
 newPackage( "PosChar",
-Version => "0.2a", Date => "April 15th, 2015", Authors => {
-	{Name => "Daniel Hernandez",
+Version => "0.2a", Date => "May 30th, 2015", Authors => {
+     {Name => "Erin Bela",
+     Email=> "ebela@nd.edu",
+     },
+     {Name => "DJ Bruce",
+     Email=> "djbruce@math.wic.edu",
+     HomePage => "http://www.math.wisc.edu/~djbruce/"
+     },
+     {Name => "Daniel Hernandez",
      Email=> "dhernan@math.utah.edu",
      HomePage=> "http://www.math.utah.edu/~dhernan/"
+     },
+     {Name => "Zhibek Kadyrsizova",
+     Email=> "zhikadyr@umich.edu",
      },
      {Name => "Mordechai Katzman",
      Email=> "m.katzman@sheffield.ac.uk",
@@ -66,6 +76,7 @@ export{
     "frobeniusPower",
     "fSig",
     "FTApproxList",
+    "FTHatApproxList", 
     "FullMap",--specifies whether the full data should be returned
     "getNumAndDenom",
     "genFrobeniusPower",
@@ -78,6 +89,7 @@ export{
     "isDiagonal",
     "isFJumpingNumberPoly",
     "isFPTPoly",
+    "isFPure",
     "isFRegularPoly",
     "isFRegularQGor",
     "isInLowerRegion",
@@ -93,8 +105,10 @@ export{
     "nonFInjectiveLocus",   --MK
     "Nontrivial",
     "nu",
-    "nuList",
     "NuCheck",
+    "nuHat",
+    "nuHatList",
+    "nuList",
     "num",
     "Origin",
     "OutputRange",
@@ -117,16 +131,26 @@ export{
     "truncation",
     "truncationBaseP"
 }
---This file has "finished" functions from the Macaulay2 workshop at Wake Forest
---August 2012.  Sara Malec, Karl Schwede and Emily Witt contributed to it.
---Some functions, are based on code written by Eric Canton and Moty Katzman
---UPDATE January 2014.  Daniel Hernandez, Moty Katzman, Karl Schwede, Pedro Teixeira, Emily Witt added more functionality.
+--This file has "finished" functions from the Macaulay2 workshop at Wake 
+--Forest in August 2012.  Sara Malec, Karl Schwede and Emily Witt contributed
+--to it.  Some functions, are based on code written by Eric Canton and Moty
+-- Katzman
+--
+--UPDATE January 2014 at Macaulay2 workshop at MSRI:  Daniel Hernandez, Moty 
+--Katzman, Karl Schwede, Pedro Teixeira, Emily Witt added more functionality.
+--
+--UPDATE May 2015 at Macaulay2 workshop atBoise State:  Erin Bela, DJ Bruce,
+-- Daniel Hernandez, Zhibek Kadyrsizova, and Emily Witt improved/fixed/added 
+--functionality.
 
 ----------------------------------------------------------------
 --************************************************************--
 --Functions for doing particular factorizations with numbers. --
 --************************************************************--
 ----------------------------------------------------------------
+
+--the functions denom and num are needed because M2 complains about 
+--computing numerators and denominators of integers (we need this)
 
 denom = method(); --Finds the denominator of a rational number or integer
 denom QQ := x -> denominator x;
@@ -264,13 +288,6 @@ findNumberBetween = (myInterv, maxDenom)->(
 )
 
 
----------------------------------------------------------------
---***********************************************************--
---Basic functions for computing powers of elements in        --
---characteristic p>0.                                        --
---***********************************************************--
----------------------------------------------------------------
-
 --Computes the non-terminating base p expansion of an integer
 basePExp = (N,p) ->
 (
@@ -303,7 +320,18 @@ basePExpMaxE = (N,p,e1) ->
     new List from E
 )
 
---Computes powers of elements in char p>0, using that Frobenius is an endomorphism
+
+
+
+---------------------------------------------------------------
+--***********************************************************--
+--Basic functions for fast exponentiation in characteristic p--
+--and computation of Frobenius powers of ideals (including   --
+--generalized Frobenius- Powers).                            --                                       
+--***********************************************************--
+---------------------------------------------------------------
+ 
+ --Computes powers of elements in char p>0, using that Frobenius is an endomorphism
 -- If N = N_0 + N_1 p + ... + N_e p^e, then this computes f^N as f^N = f^(N_0) f^(N_1)^p ... (f^(N_e))^(p^e)
 
 fastExp = (f,N) ->
@@ -315,129 +343,16 @@ fastExp = (f,N) ->
 
 -- Old version of fastExp. 
 -- If N = N_0 + N_1 p + ... + N_e p^e, then this computes f^N as f^N = f^(N_0) (f^p)^(N_1) ... (f^(p^e))^(N_e)
-fastExpOld = (f,N) ->
-(
-     p:=char ring f;
-     E:=basePExp(N,p);
-     product(#E, e -> (sum(terms f, g->g^(p^e)))^(E#e) )
-)
+--fastExpOld = (f,N) ->
+--(
+--     p:=char ring f;
+--     E:=basePExp(N,p);
+--     product(#E, e -> (sum(terms f, g->g^(p^e)))^(E#e) )
+--)
 
-
----------------------------------------------------------------
---***********************************************************--
---Functions for computing \nu_I(p^e), \nu_f(p^e), and using  --
---these to compute estimates of FPTs.                        --
---***********************************************************--
----------------------------------------------------------------
-
-isJToAInIToPe = (J1, a1, I1, e1) -> (--checks whether or not f1^a1 is in I1^(p^e1).  It seems to be much faster than raising f1 to a power
-	root := ethRoot(J1, a1, e1); 
-	
-	isSubset(root, I1)
-)
-
-nuList = method()
-
-nuList(Ideal, Ideal,  ZZ) := (I1, J1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
-	d1 := 0;
-	p1 := char ring I1;
-	local top;--for the binary search
-	local bottom;--for the binary search
- 	local middle;--for the binary search
-	local answer; --a boolean for determining if we go up, or down
-	N := 0;
-	myList := new MutableList;
-	curPower := 0;
-	
-	for d1 from 1 to e1 do (
---		if (curPower == 0) then curPower = 1 else curPower = p1^(d1-1)*curPower;
-		top = p1;
-		bottom = 0;
-		
-		while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
-			middle := floor((top + bottom)/2);
-			answer = isJToAInIToPe(I1, curPower + middle, J1, d1);
---			print "Here we are";
---			print (bottom, top);
-			if (answer == false) then bottom = middle else top = middle
-			--print "Here we are"
-		);
-	--	print (bottom, top, curPower);
-		curPower = curPower + bottom;
-		myList#(d1-1) = curPower;
-		curPower = curPower*p1;
-	);
-	toList myList
-)
-
-nuList(Ideal, ZZ) := (I1, e1) -> (
-    nuList(I1,ideal(first entries vars ring I1), e1)
-    )
-
-nuList(RingElement,ZZ) := (f,e) -> nuList(ideal(f),e)
-
-nu = method()
-
-nu(Ideal, Ideal, ZZ) := (I1, J1, e1) -> ( --this does a fast nu computation
-	p1 := char ring I1;
-	local top;--for the binary search
-	local bottom1;--for the binary search
-	local middle;--for the binary search
-	local answer; --a boolean for determining if we go up, or down 
-	N := 0;
-	myList := new MutableList;
-	curPower := 0;
-	
-	bottom1 = 0;
-	top = p1^e1;		
-	while (top - 1 > bottom1) do (--the bottom value is always not in m, the top is always in m
-		middle = floor((top + bottom1)/2);
-		answer = isJToAInIToPe(I1, middle, J1, e1);
-		if (answer == false) then bottom1 = middle else top = middle;
-	);
-	bottom1
-)
-
-nu(Ideal, ZZ) := (I1, e1) -> (
-    nu(I1,ideal(first entries vars ring I1), e1)
-    )
-
-nu(RingElement, ZZ) := (f,e) -> nu(ideal(f),e)
-
---Approximates the F-pure Threshold
---Gives a list of nu_I(p^d)/p^d for d=1,...,e
-FPTApproxList = method();
-FPTApproxList (Ideal,ZZ) := (I,e) ->
-(
-     p := char ring I;
-     apply(#nuList(I,e), i->((nuList(I,e))#i)/p^(i+1)) 
-)
-FPTApproxList (RingElement,ZZ) := (f,e) -> FPTApproxList(ideal(f),e)
-
---Approximates the F-Threshold with respect to an ideal J
---More specifically, this gives a list of nu_I^J(p^d)/p^d for d=1,...,e
-
-FTApproxList = method();
-
-FTApproxList(Ideal,Ideal,ZZ) := (I1,J1,e1) ->
-(
-    if isSubset(I1, radical(J1))==false then (print "Error: F-Threshold Undefined")
-    else(
-     p1 := char ring I1;
-     apply(#nuList(I1,J1,e1), i->((nuList(I1,J1,e1))#i)/p1^(i+1)))
-)
-
-FTApproxList (RingElement,Ideal,ZZ) := (f1,J1,e1) -> FTApproxList(ideal(f1),J1,e1)
-
----------------------------------------------------------------
---***********************************************************--
---Basic functions for Frobenius powers of ideals and related --
---constructions (colons).                                    --
---***********************************************************--
----------------------------------------------------------------
- 
- 
 --The following raises an ideal to a Frobenius power; it was written by Moty Katzman
+--Modified, now uses fastExp; Boise 2015
+
 frobeniusPower=method()
 
 frobeniusPower(Ideal,ZZ) := (I1,e1) ->(
@@ -458,7 +373,7 @@ frobeniusPower(Matrix,ZZ) := (M,e) ->
 -- The following raises an ideal to a generalized Frobenius power i.e. if N=n_0+n_1P+...+n_eP^e then
 -- I^N = I^n_0*(I^n_1)^[P]*...*(I^n_e)^[P^e].
 
-genFrobeniusPower = (e1,I1) ->(
+genFrobeniusPower = (I1,e1) ->(
      R1:=ring I1;
      p1:=char R1;
      E1:=basePExp(e1,p1);
@@ -467,6 +382,13 @@ genFrobeniusPower = (e1,I1) ->(
      answer
 )
 
+---------------------------------------------------------------
+--***********************************************************--
+--
+--                                  
+--***********************************************************--
+---------------------------------------------------------------
+ 
 -- This function computes the element in the ambient ring S of R=S/I such that
 -- I^{[p^e]}:I = (f) + I^{[p^e]}
 -- If there is no such unique element, the function returns zero
@@ -499,6 +421,448 @@ findQGorGen (Ring,ZZ) := (Rk,ek) -> (
      val 
 )
 findQGorGen(Ring) := (R2) -> ( findQGorGen(R2, 1) )
+
+
+---------------------------------------------------------------
+--***********************************************************--
+--Functions for computing \(nu_I)^J(p^e), \(nu_f)^J(p^e), and using  --
+--these to compute estimates of FPTs.                        --
+--***********************************************************--
+---------------------------------------------------------------
+
+-- If I is contained in Rad(J) then this finds the minimal N 
+-- such that I^N is contained in J
+
+effRad = (I1,J1) ->(
+       d1 := 1;
+       if isSubset(I1, radical(J1))==false then (print "Error: I Not Contained in Rad(J)")
+       else(
+       while isSubset(I1^d1,J1) == false do (
+	   d1 = d1+1
+   	   );
+        d1)
+)
+
+-- Computes effRad for a principal ideal generated by f
+
+effPolyRad = (f1,J1) ->(
+       d1 := 1;
+       if isSubset(ideal(f1), radical(J1))==false then (print "Error: I Not Contained in Rad(J)")
+       else(
+       while isSubset(ideal(fastExp(f1,d1)),J1) == false do (
+	   d1 = d1+1
+   	   );
+        d1)
+)
+
+-- Computes the list of values of nu_I^J(p^d) for d=1,..., e
+
+nuList = method()
+
+nuList(Ideal, Ideal,  ZZ) := (I1, J1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
+	d1 := 0;
+	p1 := char ring I1;
+	local top;--for the binary search
+	local bottom;--for the binary search
+ 	local middle;--for the binary search
+	local answer; --a boolean for determining if we go up, or down
+	
+	if isSubset(I1, radical(J1))==false then (print "Error: Nu Undefined")
+	else(
+	myList := new MutableList;
+	nuPrev := effRad(I1,J1);
+	N := numgens(trim(J1));
+	top = nuPrev*(N*p1-1);
+	bottom = 0;
+	
+	for d1 from 1 to e1 do (
+		while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
+			middle := floor((top + bottom)/2);
+			answer = isSubset(I1^middle, frobeniusPower(J1, d1));
+			if (answer == false) then bottom = middle else top = middle;
+		);
+		nuPrev = bottom;
+		myList#(d1-1) = nuPrev;
+		top = (nuPrev+1)*(N*p1-1);
+		bottom = p1*nuPrev;
+	);
+	toList myList)
+)
+
+-- Computes the list of values of nu_I^J(p^d) for d=1,..., e 
+-- when J = maximal ideal
+
+nuList(Ideal, ZZ) := (I1, e1) -> (
+    nuList(I1,ideal(first entries vars ring I1), e1)
+    )
+
+-- Computes the list of values of nu_I^J(p^d) for d=1,..., e
+-- when I=(f) is a principal ideal
+
+nuList(RingElement, Ideal,  ZZ) := (f1, J1, e1) -> ( --this is a faster nuList computation for a polynomial, it tries to do a smart nu list computation
+	d1 := 0;
+	p1 := char ring f1;
+	local top;--for the binary search
+	local bottom;--for the binary search
+ 	local middle;--for the binary search
+	local answer; --a boolean for determining if we go up, or down
+	
+	if isSubset(ideal(f1), radical(J1))==false then (print "Error: Nu Undefined")
+	else(
+	myList := new MutableList;
+	nuPrev := effPolyRad(f1,J1);
+	N := numgens(trim(J1));
+	top = nuPrev*(N*p1-1);
+	bottom = 0;
+	
+	for d1 from 1 to e1 do (
+		while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
+			middle := floor((top + bottom)/2);
+			answer = isSubset(ideal(fastExp(f1,middle)), frobeniusPower(J1, d1));
+			if (answer == false) then bottom = middle else top = middle;
+		);
+		nuPrev = bottom;
+		myList#(d1-1) = nuPrev;
+		top = (nuPrev+1)*(N*p1-1);
+		bottom = p1*nuPrev;
+	);
+	toList myList)
+)
+
+-- Computes the list of values of nu_I^J(p^d) for d=1,..., e
+-- when I=(f) is a principal ideal
+-- and J=maximal ideal
+
+nuList(RingElement, ZZ) := (f1, e1) -> (
+    nuList(f1,ideal( first entries vars ring ideal(f1)), e1)
+    )
+
+-- Computes the value of (nu_I)^J(p^e)
+
+nu = method()
+
+nu(Ideal, Ideal, ZZ) := (I1, J1, e1) -> ( --this does a fast nu computation
+	p1 := char ring I1;
+	local top;--for the binary search
+	local bottom;--for the binary search
+	local middle;--for the binary search
+	local answer; --a boolean for determining if we go up, or down 
+	if isSubset(I1, radical(J1))==false then (print "Error: Nu Undefined")
+	else(
+	N := 0;
+	myList := new MutableList;
+	nuPrev := effRad(I1,J1);
+	N = numgens(trim(J1));
+	top = nuPrev*N*p1^e1-1;
+	bottom = 0;
+			
+	while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
+		middle = floor((top + bottom)/2);
+		answer = isSubset(I1^middle, frobeniusPower(J1, e1));
+		if (answer == false) then bottom = middle else top = middle;
+	);
+	bottom)
+)
+
+-- Computes the value of (nu_I)^J(p^e) 
+-- when J=maximal ideal
+
+nu(Ideal, ZZ) := (I1, e1) -> (
+    nu(I1,ideal(first entries vars ring I1), e1)
+    )
+
+-- Computes the value of (nu_I)^J(p^e) 
+-- when I=(f) a principal ideal
+
+nu(RingElement, Ideal, ZZ) := (f1, J1, e1) -> ( --this does a fast nu computation for a polynomial
+	p1 := char ring f1;
+	local top;--for the binary search
+	local bottom;--for the binary search
+	local middle;--for the binary search
+	local answer; --a boolean for determining if we go up, or down 
+	if isSubset(ideal(f1), radical(J1))==false then (print "Error: Nu Undefined")
+	else(
+	N := 0;
+	myList := new MutableList;
+	nuPrev := effPolyRad(f1,J1);
+	N = numgens(trim(J1));
+	top = nuPrev*N*p1^e1-1;
+	bottom = 0;
+			
+	while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
+		middle = floor((top + bottom)/2);
+		answer = isSubset(ideal(fastExp(f1,middle)), frobeniusPower(J1, e1));
+		if (answer == false) then bottom = middle else top = middle;
+	);
+	bottom)
+)
+
+-- Computes the value of (nu_I)^J(p^e) 
+-- when I=(f) a principal ideal 
+-- and J=maximal ideal
+
+nu(RingElement, ZZ) := (f1, e1) -> (
+    nu(f1,ideal( first entries vars ring ideal(f1)), e1)
+    )
+
+--Approximates the F-pure Threshold
+--Gives a list of nu_I(p^d)/p^d for d=1,...,e
+FPTApproxList = method();
+FPTApproxList (Ideal,ZZ) := (I,e) ->
+(
+     p := char ring I;
+     apply(#nuList(I,e), i->((nuList(I,e))#i)/p^(i+1)) 
+)
+FPTApproxList (RingElement,ZZ) := (f,e) -> FPTApproxList(ideal(f),e)
+
+--Approximates the F-Threshold with respect to an ideal J
+--More specifically, this gives a list of nu_I^J(p^d)/p^d for d=1,...,e
+
+FTApproxList = method();
+
+FTApproxList(Ideal,Ideal,ZZ) := (I1,J1,e1) ->
+(
+    if isSubset(I1, radical(J1))==false then (print "Error: F-Threshold Undefined")
+    else(
+     p1 := char ring I1;
+     apply(#nuList(I1,J1,e1), i->((nuList(I1,J1,e1))#i)/p1^(i+1)))
+)
+
+FTApproxList (RingElement,Ideal,ZZ) := (f1,J1,e1) -> FTApproxList(ideal(f1),J1,e1)
+
+---------------------------------------------------------------
+--***********************************************************--
+--This seems wrong becuase the top bound is incorrect for    --
+--ideals that are not principal. (5/29/15)-Boise
+--***********************************************************--
+--Functions for computing \nu_I(p^e), \nu_f(p^e), and using  --
+--these to compute estimates of FPTs.                        --
+--***********************************************************--
+---------------------------------------------------------------
+
+--isJToAInIToPe = (J1, a1, I1, e1) -> (--checks whether or not f1^a1 is in I1^(p^e1).  It seems to be much faster than raising f1 to a power
+--	root := ethRoot(J1, a1, e1); 
+--	
+--	isSubset(root, I1)
+--)
+--
+--nuList = method()
+--
+--nuList(Ideal, Ideal,  ZZ) := (I1, J1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
+--	d1 := 0;
+--	p1 := char ring I1;
+--	local top;--for the binary search
+--	local bottom;--for the binary search
+--	local middle;--for the binary search
+--	local answer; --a boolean for determining if we go up, or down
+--	N := 0;
+--	myList := new MutableList;
+--	curPower := 0;
+	
+--	for d1 from 1 to e1 do (
+--		if (curPower == 0) then curPower = 1 else curPower = p1^(d1-1)*curPower;
+--		top = p1;
+--		bottom = 0;
+--		
+--		while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
+--			middle := floor((top + bottom)/2);
+--			answer = isJToAInIToPe(I1, curPower + middle, J1, d1);
+--			print "Here we are";
+--			print (bottom, top);
+--			if (answer == false) then bottom = middle else top = middle
+--			--print "Here we are"
+--		);
+--	--	print (bottom, top, curPower);
+--		curPower = curPower + bottom;
+--		myList#(d1-1) = curPower;
+--		curPower = curPower*p1;
+--	);
+--	toList myList
+--)
+--
+--nuList(Ideal, ZZ) := (I1, e1) -> (
+--    nuList(I1,ideal(first entries vars ring I1), e1)
+--    )
+--
+--nuList(RingElement,ZZ) := (f,e) -> nuList(ideal(f),e)
+--
+--nu = method()
+--
+--nu(Ideal, Ideal, ZZ) := (I1, J1, e1) -> ( --this does a fast nu computation
+--	p1 := char ring I1;
+--	local top;--for the binary search
+--	local bottom1;--for the binary search
+--	local middle;--for the binary search
+--	local answer; --a boolean for determining if we go up, or down 
+--	N := 0;
+--	myList := new MutableList;
+--	curPower := 0;
+--	
+--	bottom1 = 0;
+--	top = p1^e1;		
+--	while (top - 1 > bottom1) do (--the bottom value is always not in m, the top is always in m
+--		middle = floor((top + bottom1)/2);
+--		answer = isJToAInIToPe(I1, middle, J1, e1);
+--		if (answer == false) then bottom1 = middle else top = middle;
+--	);
+--	bottom1
+--)
+--
+--nu(Ideal, ZZ) := (I1, e1) -> (
+--    nu(I1,ideal(first entries vars ring I1), e1)
+--    )
+--
+--nu(RingElement, ZZ) := (f,e) -> nu(ideal(f),e)
+--
+--Approximates the F-pure Threshold
+--Gives a list of nu_I(p^d)/p^d for d=1,...,e
+--FPTApproxList = method();
+--FPTApproxList (Ideal,ZZ) := (I,e) ->
+--(
+--     p := char ring I;
+--     apply(#nuList(I,e), i->((nuList(I,e))#i)/p^(i+1)) 
+--)
+--FPTApproxList (RingElement,ZZ) := (f,e) -> FPTApproxList(ideal(f),e)
+--
+--Approximates the F-Threshold with respect to an ideal J
+--More specifically, this gives a list of nu_I^J(p^d)/p^d for d=1,...,e
+--
+--FTApproxList = method();
+--
+--FTApproxList(Ideal,Ideal,ZZ) := (I1,J1,e1) ->
+--(
+--    if isSubset(I1, radical(J1))==false then (print "Error: F-Threshold Undefined")
+--    else(
+--     p1 := char ring I1;
+--     apply(#nuList(I1,J1,e1), i->((nuList(I1,J1,e1))#i)/p1^(i+1)))
+--)
+--
+--FTApproxList (RingElement,Ideal,ZZ) := (f1,J1,e1) -> FTApproxList(ideal(f1),J1,e1)
+--
+
+---------------------------------------------------------------
+--***********************************************************--
+--Functions for computing \nuHat_I(p^e), \nHatu_f(p^e), and  --
+--using these to compute estimates of FThat's.                        --
+--***********************************************************--
+---------------------------------------------------------------
+
+-- Computes the list of values of \(nuHat_I)^J(p^d) for d=1,..., e
+
+nuHatList = method()
+
+nuHatList(Ideal, Ideal,  ZZ) := (I1, J1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
+	d1 := 0;
+	p1 := char ring I1;
+	local top;--for the binary search
+	local bottom;--for the binary search
+ 	local middle;--for the binary search
+	local answer; --a boolean for determining if we go up, or down
+    	if isSubset(I1, radical(J1))==false then (print "Error: NuHat Undefined")
+	else(
+	myList := new MutableList;
+	nuPrev := effRad(I1,J1);
+--	N = numgens(trim(J1));
+	top =nuPrev*p1;
+	bottom = 0;
+	
+	
+	for d1 from 1 to e1 do (
+		while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
+			middle := floor((top + bottom)/2);
+			answer = isSubset(genFrobeniusPower(I1,middle), frobeniusPower(J1,d1));
+			if (answer == false) then bottom = middle else top = middle;
+		);
+		nuPrev = bottom;
+		myList#(d1-1) = bottom;
+		top = p1*(nuPrev+1);
+		bottom = p1*nuPrev;
+	);
+	toList myList)
+)
+
+-- Computes the list of values of \(nuHat_I)^J(p^d) for d=1,..., e
+-- when for J=maximal ideal
+
+nuHatList (Ideal, ZZ) := (I1, e1) -> (
+    nuHatList(I1,ideal(first entries vars ring I1), e1)
+    )
+
+-- Computes the list of values of \(nuHat_I)^J(p^d) for d=1,..., e
+-- when I=(f) is a principal ideal
+
+nuHatList(RingElement,Ideal, ZZ):= (f1, J, e1) -> ( nuList(f1,J, e1) 
+    )
+
+-- Computes the list of values of \(nuHat_I)^J(p^d) for d=1,..., e
+-- when I=(f) is a pricipal ideal and J=maximal ideal
+ 
+nuHatList(RingElement, ZZ):= (f1,e1) -> ( nuList(f1,ideal( first entries vars ring ideal(f1)), e1) 
+    )
+
+
+-- Computes values of \(nuHat_I)^J(p^e)
+
+nuHat = method()
+
+nuHat (Ideal, Ideal, ZZ) := (I1, J1, e1) -> ( --this does a fast nu computation
+	p1 := char ring I1;
+	local top;--for the binary search
+	local bottom;--for the binary search
+	local middle;--for the binary search
+	local answer; --a boolean for determining if we go up, or down
+    	if isSubset(I1, radical(J1))==false then (print "Error: NuHat Undefined")
+	else(
+	myList := new MutableList;
+	nuPrev := effRad(I1,J1);
+--	N = numgens(trim(J1));
+	top = nuPrev*p1^e1;
+	bottom = 0;
+			
+	while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
+		middle = floor((top + bottom)/2);
+		answer = isSubset(genFrobeniusPower(I1, middle), frobeniusPower(J1,e1));
+		if (answer == false) then bottom = middle else top = middle;
+	);
+	bottom)
+)
+
+
+-- Computes values of \(nuHat_I)^J(p^e)
+-- when J=maximal ideal
+
+nuHat (Ideal, ZZ) := (I1, e1) -> (
+    nuHat(I1,ideal(first entries vars ring I1), e1)
+    )
+
+
+-- Computes  values of \(nuHat_I)^J(p^e)
+-- when I=(f) is a principal ideal
+
+nuHat(RingElement,Ideal, ZZ):= (f1,J,e1) -> ( nu(f1,J, e1)
+    )
+
+
+-- Computes  values of \(nuHat_I)^J(p^e)
+-- when I=(f) is a principal ideal 
+-- and J=maximal ideal 
+
+nuHat(RingElement, ZZ):= (f1, e1) -> ( nu(f1,ideal( first entries vars ring ideal(f1)), e1)
+    )
+
+--Aproximates the F-Threshold with respects to an ideal J
+
+FTHatApproxList = method();
+
+FTHatApproxList(Ideal,Ideal,ZZ) := (I1,J1,e1) ->
+(
+    if isSubset(I1, radical(J1))==false then (print "Error: F-Threshold Undefined")
+    else(
+     p1 := char ring I1;
+     apply(#nuHatList(I1,J1,e1), i->((nuHatList(I1,J1,e1))#i)/p1^(i+1)))
+)
+
+FTHatApproxList (RingElement,Ideal,ZZ) := (f1,J1,e1) -> FTHatApproxList(ideal(f1),J1,e1)
 
 
 ---------------------------------------------------------------------
@@ -2270,6 +2634,27 @@ paraTestModule ={AscentCount=>false} >> o -> (fk, t1) -> ( --maintained by Karl
 --************************************************************--
 ----------------------------------------------------------------
 
+-- Given an ideal I of polynomial ring R
+-- this uses Fedder's Criterion to check if R/I is F-pure
+-- Recall that this involves checking if I^[p]:I is in m^[p]
+-- Note:  We first check if I is generated by a regular sequence.
+
+isFPure = I1->(
+    maxIdeal:= monomialIdeal(first entries vars ring I1);
+    local answer;
+    local cond;
+    p1:=char ring I1;
+    if codim(I1)==numgens(I1) then(
+	L:=flatten entries gens I1;
+	cond = isSubset(ideal(product(#L, l-> fastExp(L#l, p1-1))),frobeniusPower(maxIdeal,1));
+	if(cond==false) then answer=true else answer=false;
+	)
+    else(
+	cond = isSubset((frobeniusPower(I1,1)):I1,frobeniusPower(maxIdeal,1));
+	if(cond==false) then answer=true else answer=false;
+	);
+    answer
+)
 
 isFRegularPoly = method();
 
@@ -2743,472 +3128,19 @@ doc ///
 
 doc ///
      Key
-     	isFPTPoly 
+     	aPower
      Headline
-        Checks whether a given number is the FPT
+        Finds the largest power of p dividing x.
      Usage
-     	  isFPTPoly(f,t,Verbose=>V,Origin=>W)  
-     Inputs
-         	f:RingElement
-	 	t:ZZ
-		W:Boolean
-		W:Origin
+     	 aPower(x,p)
+     Inputs 
+		x:ZZ
+		p:ZZ
      Outputs
-        :Boolean
-     Description
-     	Text
-	     Returns true if t is the FPT, otherwise it returns false.  If Origin is true, it only checks it at ideal(vars ring f).
-///
-
-doc ///
-     Key
-     	isFJumpingNumberPoly 
-     Headline
-        Checks whether a given number is the FPT
-     Usage
-     	  isFJumpingNumberPoly(f,t,Verbose=>V)  
-     Inputs
-         	f:RingElement
-	 	t:ZZ
-		W:Boolean
-     Outputs
-        :Boolean
-     Description
-     	Text
-	     Returns true if t is an F-jumping number, otherwise it returns false.
-///
-
-
-doc ///
-     Key
-     	basePExp 
-     Headline
-        Base p Expansion of an integer N
-     Usage
-     	  basePExp(N,p) 
-     Inputs
-         N:ZZ
-	 p:ZZ
-     Outputs
-        :List
-     Description
-     	Text
-	     Given an integer N and a prime p, outputs the digits of the base p expansion of N in base p.
-///
-
-doc ///
-     Key
-     	fastExp 
-     Headline
-        Computes powers of elements in rings of characteristic p>0 quickly.
-     Usage
-     	  fastExp(f,N) 
-     Inputs
-     	 f:RingElement
-         N:ZZ
-     Outputs
-        :RingElement
+         :ZZ
      Description
 	Text
-	     In prime characteristic p > 0, raising a sum (a+b) to a power is more quickly done by simply computing a^p and b^p and adding them.  The basic strategy is to break up the exponent into its base p expansion, and then use the exponent rules.  For example, (x+y)^(3*p^2 + 5*p+2) = ((x+y)^3)^(p^2)*((x+y)^5)^p*(x+y)^2.
-///
-
-doc ///
-     Key
-     	 frobeniusPower
-     Headline
-        The following raises an ideal to the $p^e$th power.
-     Usage
-     	  frobeniusPower(I,e) 
-     Inputs
-     	 I:Ideal
-         e:ZZ
-     Outputs
-        :Ideal
-     Description
-	Text
-	     If I = ideal(x1, ..., xn), then frobeniusPower(I,e) outputs ideal(x1^(p^e), ..., xn^(p^e)) where p is the characteristic of the ring.
-///
-
-
-doc ///
-     Key
-     	guessFPT 
-     Headline
-        Tries to guess the FPT in a really naive way (this should be improved).
-     Usage
-     	  guessFPT(f,e,d) 
-     Inputs
-     	 f:RingElement
-         e:ZZ
-	 d:ZZ
-     Outputs
-        :List
-     Description
-	Text
-	     This tries to guess the FPT.  In particular, it computes the number nu such that nu/(p^e - 1) <= FPT < (nu+1)/p^e.  It then outputs a list of all rational numbers with denominators less than or equal to d, which lie in that range.  WARNING:  There are several improvements which should be made to this function to rule out many of the possibilies.
-///
-
-
-doc ///
-     Key
-     	 nu
-	 (nu,Ideal,ZZ)
-	 (nu,RingElement,ZZ)
-     Headline
-        Gives $\nu_I(p^e)$.
-     Usage
-     	  nu(I,e)
-	  nu(f,e) 
-     Inputs
-     	 I:Ideal
-	 f:RingElement
-         e:ZZ
-     Outputs
-        :ZZ
-     Description
-	Text
-	    Given an ideal I in a polynomial ring k[x1, ..., xn], this function outputs the smallest integer nu such that I^nu is not in ideal(x1^(p^e), ..., xn^(p^e) ).  If a RingElement is passed, it computes nu of the principal ideal generated by this element. This is used frequently to compute the F-pure threshold.
-///
-
-doc ///
-     Key
-     	 nuList
-	 (nuList,Ideal,ZZ)
-	 (nuList,RingElement,ZZ)
-     Headline
-        Lists $\nu_I(p^d)$ for d = 1,...,e.
-     Usage
-     	  nuList(I,e)
-	  nuList(f,e) 
-     Inputs
-     	 I:Ideal
-	 f:RingElement
-         e:ZZ
-     Outputs
-        :List
-     Description
-	Text
-	     Given an ideal I in a polynomial ring k[x1,...,xn], this function computes nu(I,d) for d = 1,...,e.
-///
-
-doc ///
-     Key
-     	 FPTApproxList
-	 (FPTApproxList,Ideal,ZZ)
-	 (FPTApproxList,RingElement,ZZ)
-     Headline
-        Gives a list of nu_I(p^d)/p^d for d=1,...,e.
-     Usage
-     	  FPTApproxList(I,e)
-	  FPTApproxList(f,e) 
-     Inputs
-     	 I:Ideal
-	 f:RingElement
-         e:ZZ
-     Outputs
-         :List
-     Description
-	Text 
- 	     This returns a list of nu_I(p^d)/p^d for d = 1, ..., e.  The {nu_I(p^d)/p^d} converge to the F-pure threshold.	     
-///
-
-doc ///
-     Key
-     	 FTApproxList
-	 (FTApproxList,Ideal,Ideal, ZZ)
-	 (FTApproxList,RingElement,Ideal,ZZ)
-     Headline
-        Gives a list of nu_I^J(p^d)/p^d for d=1,...,e.
-     Usage
-     	  FPTApproxList(I,J,e)
-	  FPTApproxList(f,J,e) 
-     Inputs
-     	 I:Ideal
-	 J:Ideal
-	 f:RingElement
-         e:ZZ
-     Outputs
-         :List
-     Description
-	Text 
- 	     This returns a list of nu_I^J(p^d)/p^d for d = 1, ..., e.  The {nu_I^J(p^d)/p^d} converge to the F-threshold.	     
-///
-
-doc ///
-     Key
-     	digit
-	(digit,ZZ,QQ,ZZ)
-	(digit,ZZ,List,ZZ)
-     Headline
-        Gives the e-th digit of the base p expansion 
-     Usage
-     	 d=digit(e,x,p), D=digit(e,X,p)
-     Inputs
-	e:ZZ
-	x:QQ
-	p:ZZ
-	X:List
-	   consisting of rational numbers
-     Outputs
-        d:ZZ
-	    which is the e-th digit of the non-terminating base p expansion of x
-	D:List
-	    which contains the e-th digits of the entries of the list X
-     Description
-	Text
-	     Gives the e-th digit, to the right of the decimal point, of the non-terminating base p expansion of x in [0,1]; threads over lists of rational numbers. 
-///
-
-
-doc ///
-     Key
-     	 ethRoot
-     Headline
-        Computes $I^{[1/p^e]}$ in a polynomial ring over a perfect field
-     Usage
-     	  ethRoot(I,e) 
-     Inputs
-     	 I:Ideal
-         e:ZZ
-     Outputs
-        :Ideal
-     Description
-	Text
-	     In a polynomial ring k[x1, ..., xn], I^{[1/p^e]} is the smallest ideal J such that J^{[p^e]} = FrobeniusPower(J,e) \supseteq I.  This function computes it.
-///
-
-doc ///
-     Key
-     	 tauPoly
-     Headline
-        Computes the test ideal of $(R, f^t)$.
-     Usage
-     	  tauPoly(f,t) 
-     Inputs
-     	 f:RingElement
-         t:QQ
-     Outputs
-        :Ideal
-     Description
-	Text
-	     This computes the test ideal of (R, f^t) when R is a polynomial ring over a perfect field.  It is done as follows.  If t = a/(p^e - 1) then tau(R, f^t) is computed as a sum of (f^{\lceil t \rceil}*f^{\lceil t(p^e-1) \rceil})^{[1/p^e]} until the sum stabilizes.  For the more general case, we use the formula tau(R, f^t)^{[1/p^d]} = tau(R, f^{t/p^d}).
-///
-
-doc ///
-     Key
-     	 isFRegularPoly
-     Headline
-        Determines if a pair $(R, f^t)$ is F-regular when R is a polynomial ring. 
-     Usage
-     	  isFRegularPoly
-     Inputs
-     	 f:RingElement
-         t:QQ
-     Outputs
-        :Boolean
-     Description
-	Text
-	     This computes the test ideal.  The ring is F-regular if the test ideal is the whole ring, in which case this function returns true.  Otherwise, this function returns false.
-
-///
-doc ///
-
-     Key
-     	 fSig
-     Headline
-        Computes the F-signature for a specific value $a/p^e$.
-     Usage
-     	  fSig(f,a,e)
-     Inputs
-     	 f:RingElement
-	 a:ZZ
-         e:ZZ
-     Outputs
-        :QQ
-     Description
-	Text
-	     This computes the F-signature $s(R, f^{a/p^e})$ if R is a polynomial ring over a perfect field.
-///
-
-doc ///
-     Key
-     	 estFPT
-     Headline
-         Atempts to compute the F-pure threshold, where e is the max depth to search in.  
-     Usage
-     	  estFPT(f,e,finalCheck=>V,Verbose=>W)
-     Inputs
-     	 f:RingElement
-         e:ZZ
-	 V:Boolean
-	 W:Boolean
-     Outputs
-        L:List
-	Q:QQ
-     Description
-     	  Text 
-	      This tries to find an exact value for the fpt.  If it can, it returns that value.  Otherwise it should return a range of possible values (eventually).  It first checks to see if the ring is binonmial or diagonal.  In either case it uses methods of D. Hernandez.  Next it tries to estimate the range of the FPT using nu's.  Finally, it tries to use this to deduce the actual FPT via taking advantage of convexity of the F-signature function and a secant line argument.  finalCheck is a Boolean with default value True that determines whether the last isFRegularPoly is run (it is possibly very slow).  If FinalCheck is false, then a last time consuming check won't be tried.  If it is true, it will be.  Verbose set to true displays verbose output.
-///
-
-doc ///
-     Key
-     	 isSharplyFPurePoly
-     Headline
-        Checks whether (R, f^(a/(p^e - 1))) is F-pure at the prime ideal m.
-     Usage
-     	 isSharplyFPurePoly(f,a,e,m)
-     Inputs
-     	 f:RingElement
-	 a:ZZ
-         e:ZZ
-	 m:Ideal
-     Outputs
-         :Boolean
-     Description
-	Text
-	     This checks whether (R, f^(a/(p^e-1))) is F-pure at the prime ideal m at least in the case that R is a polynomial ring.
-///
-
-doc ///
-     Key
-     	findQGorGen
-     Headline
-        If R = S/I where S is a polynomial ring, returns the ring element with I^{[p^e]} : I = (f) + I^{[p^e]}.
-     Usage
-     	 findQGorGen(R, e)
-     Inputs
-     	 R:Ring
-     Outputs
-         :RingElement
-     Description
-	Text
-	     If R is Q-Gorenstein with index not divisible by p, then I^{[p^e]} : I = (f) + I^{[p^e]}.  For some e.  This function tries to find the f.  If the argument e is left out then e is assumed to be 1.
-///
-
-doc ///
-     Key
-     	tauQGorAmb
-     Headline
-        Computes tau(R) for a Q-Gorenstein ring with index not dividing p^e - 1.
-     Usage
-     	 tauQGorAmb(R,e)
-     Inputs
-     	 R:Ring
-	 e:ZZ
-     Outputs
-         :Ideal
-     Description
-	Text
-	     This computes the test ideal tau(R) for a Q-Gorenstein ring R with index dividing p^e - 1.  It uses the fact that if R is a quotient of a polynomial ring S, then tau(R) can be computed as a sort of test/adjoint ideal on S.  The function findQGorGen is used to find the map to use on S.  e is the index of the canonical divisor on R.
-///
-
-doc ///
-     Key
-     	tauGorAmb
-     Headline
-        Computes tau(R) for a Gorenstein ring.
-     Usage
-     	 tauGorAmb(R)
-     Inputs
-     	 R:Ring
-     Outputs
-         :Ideal
-     Description
-	Text
-	     This computes the test ideal tau(R) for a quasi-Gorenstein ring R.  It uses the fact that if R is a quotient of a polynomial ring S, then tau(R) can be computed as a sort of test/adjoint ideal on S.  The function findQGorGen is used to find the map to use on S. 
-///
-
-doc ///
-     Key
-     	tauQGor
-     Headline
-        Computes tau(R,f^t) for a Q-Gorenstein ring such that the index divides p^e-1.
-     Usage
-     	 tauQGor(R,e,f,t)
-     Inputs
-     	 R:Ring
-	 e:ZZ
-	 f:RingElement
-	 t:QQ
-     Outputs
-         :Ideal
-     Description
-	Text
-	     This computes the test ideal tau(R, f^t) for a Q-Gorenstein ring such that the index divides p^e -1.  First the test ideal of the ambient space is computed (and computed on a polynomial ring S of which R is a quotient).  Then writing t = a/(p^b-1)p^c we compute tau(R, f^{a/(p^b-1)}), or rather a preimage of it on S, by summing images of the map induced by f^{a/(p^b-1)}.  We then compute tau(R, f^t) by multiplying by the output of a findQGorGen on S, and taking [1/p^e]th roots on S.
-///
-
-doc ///
-     Key
-     	tauGor
-     Headline
-        Computes tau(R,f^t) for a Gorenstein ring such that the index divides p^e-1.
-     Usage
-     	 tauGor(R,f,t)
-     Inputs
-     	 R:Ring
-	 f:RingElement
-	 t:QQ
-     Outputs
-         :Ideal
-     Description
-	Text
-	     This computes the test ideal tau(R, f^t) for a Gorenstein ring.  First the test ideal of the ambient space is computed (and computed on a polynomial ring S of which R is a quotient).  Then writing t = a/(p^b-1)p^c we compute tau(R, f^{a/(p^b-1)}), or rather a preimage of it on S, by summing the images of the map induced by f^{a/(p^b-1)}.  We then compute tau(R, f^t) by multiplying by the output of a findQGorGen on S, and taking [1/p^e]th roots on S.
-///
-
-doc ///
-     Key
-     	basePExpMaxE
-     Headline
-        Computes non-terminating base-p expansion of N from digits zero to e-1.
-     Usage
-     	 basePExpMaxE(N,p,e)
-     Inputs
-     	 N:ZZ
-	 	 p:ZZ
-	 	 e:ZZ
-     Outputs
-         :List
-     Description
-	Text
-	     This computes the base p expansion of N, from digits 0 to e-1.  The digits are given in a list, and come with leading zeros.  If fewer than e digits are required, the list is padded with zeros.  If more digits are required, the final digit lists them.  Little endian is first.  For example, if p=5 and N = 16, the basePExpMaxE(16,5,4) will return {1,3,0,0} (1 one, 3 fives, 0 twentyfives, 0 onehundred twentyfives).
-///
-
-doc ///
-     Key
-     	ethRootSafe
-     Headline
-        Computes (f^a*I)^{[1/p^e]} in such a way that we don not blow exponent buffers.
-     Usage
-     	 ethRootSafe(f, I, a, e)
-     Inputs
-     	 f:RingElement
-	 I:Ideal
-	 a:ZZ
-	 e:ZZ
-     Outputs
-         :Ideal
-     Description
-	Text
-	     Computes the 1/p^e-th root of (f^a*I).  It does it while trying to minimize the power that f gets raised to (in case a is a large number).  This can either be faster or slower than ethRoot.
-///
-
-doc ///
-     Key
-     	tauAOverPEMinus1Poly
-     Headline
-        Computes the test ideal of f^(a/(p^e-1)) if f is in a polynomial ring.
-     Usage
-     	 tauAOverPEMinus1Poly(f, a, e)
-     Inputs
-     	 f:RingElement
-	 a:ZZ
-	 e:ZZ
-     Outputs
-         :Ideal
-     Description
-	Text
-	     Computes the test ideal tau(f^(a/(p^e-1)) ).  The basic idea first appeared in a paper of Mordechai Katzman.
+	    Returns the largest exponent e such that p^e divides x.
 ///
 
 doc ///
@@ -3246,6 +3178,676 @@ doc ///
      Description
 	Text
 	     Let phi be the p^(-e) linear map obtained by multiplying e-th Frobenius trace by h^a.  Then this function finds the smallest phi-stable ideal containing J.  The idea is to consider the ascending chain J, J+phi(J), J+phi(J)+phi^2(J), etc.  We return the stable value.  For instance, this can be used to compute the test ideal.  This method appared first in the work of Mordechai Katzman on star closure.  It differs from ascendIdeal in that it minimizes the exponents that h is raised to, this can make it faster or slower depending on the circumstances.
+///
+
+doc ///
+     Key
+     	basePExp 
+     Headline
+        Base p Expansion of an integer N
+     Usage
+     	  basePExp(N,p) 
+     Inputs
+         N:ZZ
+	 p:ZZ
+     Outputs
+        :List
+     Description
+     	Text
+	     Given an integer N and a prime p, outputs the digits of the base p expansion of N in base p.
+///
+
+doc ///
+     Key
+     	basePExpMaxE
+     Headline
+        Computes non-terminating base-p expansion of N from digits zero to e-1.
+     Usage
+     	 basePExpMaxE(N,p,e)
+     Inputs
+     	 N:ZZ
+	 	 p:ZZ
+	 	 e:ZZ
+     Outputs
+         :List
+     Description
+	Text
+	     This computes the base p expansion of N, from digits 0 to e-1.  The digits are given in a list, and come with leading zeros.  If fewer than e digits are required, the list is padded with zeros.  If more digits are required, the final digit lists them.  Little endian is first.  For example, if p=5 and N = 16, the basePExpMaxE(16,5,4) will return {1,3,0,0} (1 one, 3 fives, 0 twentyfives, 0 onehundred twentyfives).
+///
+
+doc ///
+     Key
+     	binomialFPT
+     Headline
+        Computes the F-pure threshold of a binomial polynomial.
+     Usage
+     	 binomialFPT(f)
+     Inputs 
+		f:RingElement
+     Outputs
+         :QQ
+     Description
+	Text
+	    Returns the F-pure threshold of a binomial in a polynomial ring.  This is based on the work of Daniel Hernandez.
+///
+
+doc ///
+     Key
+     	carryTest
+     Headline
+        Finds the number of digits we must check to see whether x and y add without carrying.
+     Usage
+     	 carryTest(w,p)
+     Inputs 
+		w:List
+	p:ZZ
+     Outputs
+         :ZZ
+     Description
+	Text
+	     Set w = {x,y} a list of rational numbers in [0,1].  This function finds the number of digit places we must check to see if x and y add without carrying.
+///
+
+doc ///
+     Key
+     	denom
+     	(denom,ZZ)
+     	(denom,QQ)
+     Headline
+        Returns the denominator of a rational number.
+     Usage
+     	 denom(x)
+     	 denom(y)
+     Inputs 
+		x:QQ
+		y:ZZ
+     Outputs
+         :ZZ
+     Description
+	Text
+	    Returns the denominator of a rational number or integer (in the latter case it returns 1).
+///
+
+doc ///
+     Key
+     	diagonalFPT
+     Headline
+        Computes the F-pure threshold of a diagonal polynomial.
+     Usage
+     	 diagonalFPT(f)
+     Inputs 
+		f:RingElement
+     Outputs
+         :QQ
+     Description
+	Text
+	    Returns the F-pure threshold of a diagonal hypersurface in a polynomial ring.  This is based on the work of Daniel Hernandez.
+///
+
+doc ///
+     Key
+     	digit
+	(digit,ZZ,QQ,ZZ)
+	(digit,ZZ,List,ZZ)
+     Headline
+        Gives the e-th digit of the base p expansion 
+     Usage
+     	 d=digit(e,x,p), D=digit(e,X,p)
+     Inputs
+	e:ZZ
+	x:QQ
+	p:ZZ
+	X:List
+	   consisting of rational numbers
+     Outputs
+        d:ZZ
+	    which is the e-th digit of the non-terminating base p expansion of x
+	D:List
+	    which contains the e-th digits of the entries of the list X
+     Description
+	Text
+	     Gives the e-th digit, to the right of the decimal point, of the non-terminating base p expansion of x in [0,1]; threads over lists of rational numbers. 
+///
+
+doc ///
+     Key
+     	divideFraction
+     Headline
+        Converts a rational number into something of the form (a/(p^b p^(c-1)).
+     Usage
+     	 divideFraction(t, p)
+     Inputs 
+		t:QQ
+	p:ZZ
+     Outputs
+         :List
+     Description
+	Text
+	     Given a rational number t and prime p, this function finds a list of integers {a,b,c} such that t= (a/(p^b p^(c-1)).
+///
+
+doc ///
+     Key
+     	 estFPT
+     Headline
+         Atempts to compute the F-pure threshold, where e is the max depth to search in.  
+     Usage
+     	  estFPT(f,e,finalCheck=>V,Verbose=>W)
+     Inputs
+     	 f:RingElement
+         e:ZZ
+	 V:Boolean
+	 W:Boolean
+     Outputs
+        L:List
+	Q:QQ
+     Description
+     	  Text 
+	      This tries to find an exact value for the fpt.  If it can, it returns that value.  Otherwise it should return a range of possible values (eventually).  It first checks to see if the ring is binonmial or diagonal.  In either case it uses methods of D. Hernandez.  Next it tries to estimate the range of the FPT using nu's.  Finally, it tries to use this to deduce the actual FPT via taking advantage of convexity of the F-signature function and a secant line argument.  finalCheck is a Boolean with default value True that determines whether the last isFRegularPoly is run (it is possibly very slow).  If FinalCheck is false, then a last time consuming check won't be tried.  If it is true, it will be.  Verbose set to true displays verbose output.
+///
+
+doc ///
+     Key
+     	 ethRoot
+     Headline
+        Computes $I^{[1/p^e]}$ in a polynomial ring over a perfect field
+     Usage
+     	  ethRoot(I,e) 
+     Inputs
+     	 I:Ideal
+         e:ZZ
+     Outputs
+        :Ideal
+     Description
+	Text
+	     In a polynomial ring k[x1, ..., xn], I^{[1/p^e]} is the smallest ideal J such that J^{[p^e]} = FrobeniusPower(J,e) \supseteq I.  This function computes it.
+///
+
+doc ///
+     Key
+     	ethRootSafe
+     Headline
+        Computes (f^a*I)^{[1/p^e]} in such a way that we don not blow exponent buffers.
+     Usage
+     	 ethRootSafe(f, I, a, e)
+     Inputs
+     	 f:RingElement
+	 I:Ideal
+	 a:ZZ
+	 e:ZZ
+     Outputs
+         :Ideal
+     Description
+	Text
+	     Computes the 1/p^e-th root of (f^a*I).  It does it while trying to minimize the power that f gets raised to (in case a is a large number).  This can either be faster or slower than ethRoot.
+///
+
+doc ///
+     Key
+     	fastExp 
+     Headline
+        Computes powers of elements in rings of characteristic p>0 quickly.
+     Usage
+     	  fastExp(f,N) 
+     Inputs
+     	 f:RingElement
+         N:ZZ
+     Outputs
+        :RingElement
+     Description
+	Text
+	     In prime characteristic p > 0, raising a sum (a+b) to a power is more quickly done by simply computing a^p and b^p and adding them.  The basic strategy is to break up the exponent into its base p expansion, and then use the exponent rules.  For example, (x+y)^(3*p^2 + 5*p+2) = ((x+y)^3)^(p^2)*((x+y)^5)^p*(x+y)^2.
+///
+
+doc ///
+     Key
+     	findQGorGen
+     Headline
+        If R = S/I where S is a polynomial ring, returns the ring element with I^{[p^e]} : I = (f) + I^{[p^e]}.
+     Usage
+     	 findQGorGen(R, e)
+     Inputs
+     	 R:Ring
+     Outputs
+         :RingElement
+     Description
+	Text
+	     If R is Q-Gorenstein with index not divisible by p, then I^{[p^e]} : I = (f) + I^{[p^e]}.  For some e.  This function tries to find the f.  If the argument e is left out then e is assumed to be 1.
+///
+
+doc ///
+     Key
+     	firstCarry
+     Headline
+        Finds the first spot where (the eth digit of x) + (the eth digit of y) >= p.
+     Usage
+     	 firstCarry(w,p)
+     Inputs 
+		w:List
+	p:ZZ
+     Outputs
+         :ZZ
+     Description
+	Text
+	     Set w = {x,y} a list of rational numbers in [0,1].  Finds the first place where (the eth digit of x) + (the eth digit of y) >= p, in other words where the numbers add with carrying.
+///
+
+doc ///
+     Key
+     	 FPTApproxList
+	 (FPTApproxList,Ideal,ZZ)
+	 (FPTApproxList,RingElement,ZZ)
+     Headline
+        Gives a list of nu_I(p^d)/p^d for d=1,...,e.
+     Usage
+     	  FPTApproxList(I,e)
+	  FPTApproxList(f,e) 
+     Inputs
+     	 I:Ideal
+	 f:RingElement
+         e:ZZ
+     Outputs
+         :List
+     Description
+	Text 
+ 	     This returns a list of nu_I(p^d)/p^d for d = 1, ..., e.  The {nu_I(p^d)/p^d} converge to the F-pure threshold.	     
+///
+
+doc ///
+     Key
+     	FPT2VarHomog
+	(FPT2VarHomog,RingElement)
+	(FPT2VarHomog,List,List)
+     Headline
+        F-pure threshold of a form in two variables
+     Usage
+     	  fpt=FPT2VarHomog(G), fpt=FPT2VarHomog(factors,multiplicities)
+     Inputs 
+	factors:List
+	    which contains the linear factors of a form G in two variables 
+	multiplicities:List
+	    which contains the multiplicities of those linear factors in G
+	G:RingElement
+	    a form in two variables
+     Outputs
+        fpt:QQ
+     Description
+	Text
+	    FPT2VarHomog computes the F-pure threshold of a homogeneous polynomial G
+	    	in two variables. 
+	    The polynomial G can be entered directly, or if the user knows a factorization
+	    	G=L1^(a1)...Ln^(an) into linear forms, that can be used for improved 
+		performance: FPT2VarHomog({L1,...,Ln},{a1,...,an}).
+///
+
+doc ///
+     Key
+     	 frobeniusPower
+     Headline
+        The following raises an ideal to the $p^e$th power.
+     Usage
+     	  frobeniusPower(I,e) 
+     Inputs
+     	 I:Ideal
+         e:ZZ
+     Outputs
+        :Ideal
+     Description
+	Text
+	     If I = ideal(x1, ..., xn), then frobeniusPower(I,e) outputs ideal(x1^(p^e), ..., xn^(p^e)) where p is the characteristic of the ring.
+///
+
+doc ///
+
+     Key
+     	 fSig
+     Headline
+        Computes the F-signature for a specific value $a/p^e$.
+     Usage
+     	  fSig(f,a,e)
+     Inputs
+     	 f:RingElement
+	 a:ZZ
+         e:ZZ
+     Outputs
+        :QQ
+     Description
+	Text
+	     This computes the F-signature $s(R, f^{a/p^e})$ if R is a polynomial ring over a perfect field.
+///
+
+doc ///
+     Key
+     	 FTApproxList
+	 (FTApproxList,Ideal,Ideal, ZZ)
+	 (FTApproxList,RingElement,Ideal,ZZ)
+     Headline
+        Gives a list of nu_I^J(p^d)/p^d for d=1,...,e.
+     Usage
+     	  FTApproxList(I,J,e)
+	  FTApproxList(f,J,e) 
+     Inputs
+     	 I:Ideal
+	 J:Ideal
+	 f:RingElement
+         e:ZZ
+     Outputs
+         :List
+     Description
+	Text 
+ 	     This returns a list of nu_I^J(p^d)/p^d for d = 1, ..., e.  The {nu_I^J(p^d)/p^d} converge to the F-threshold.	     
+///
+
+doc ///
+     Key
+     	 FTHatApproxList
+	 (FTHatApproxList,Ideal,Ideal, ZZ)
+	 (FTHatApproxList,RingElement,Ideal,ZZ)
+     Headline
+        Gives a list of nuHat_I^J(p^d)/p^d for d=1,...,e.
+     Usage
+     	  FTHatApproxList(I,J,e)
+	  FTHatApproxList(f,J,e) 
+     Inputs
+     	 I:Ideal
+	 J:Ideal
+	 f:RingElement
+         e:ZZ
+     Outputs
+         :List
+     Description
+	Text 
+ 	     This returns a list of nuHat_I^J(p^d)/p^d for d = 1, ..., e.  The {nuHat_I^J(p^d)/p^d} converge to the FHat-threshold.	     
+///
+
+doc ///
+     Key
+     	genFrobeniusPower 
+     Headline
+        Computes the generalized Frobenius power of an ideal
+     Usage
+     	  frobeniusPower(I1,e1)  
+     Inputs
+         	I1:Ideal
+	 	e1:ZZ
+     Outputs
+        :Ideal
+     Description
+     	Text
+	     Computes I^[N] for an ideal I and an integer N, where I^[N] is defined as follows. If N's base P-expansion is N=n_0+n_1P+...+n_eP^e then I^[N]=I^(n_0)*(I^(n_1))^[P]*...*(I^(n_e))^[P^e]. When P is prime I^[P^e] is the usual Frobenius power.
+ ///
+ 
+doc ///
+     Key
+     	guessFPT 
+     Headline
+        Tries to guess the FPT in a really naive way (this should be improved).
+     Usage
+     	  guessFPT(f,e,d) 
+     Inputs
+     	 f:RingElement
+         e:ZZ
+	 d:ZZ
+     Outputs
+        :List
+     Description
+	Text
+	     This tries to guess the FPT.  In particular, it computes the number nu such that nu/(p^e - 1) <= FPT < (nu+1)/p^e.  It then outputs a list of all rational numbers with denominators less than or equal to d, which lie in that range.  WARNING:  There are several improvements which should be made to this function to rule out many of the possibilies.
+///
+
+doc ///
+     Key
+     	isBinomial 
+     Headline
+        Checks whether a polynomial is binomial.
+     Usage
+     	 isBinomial(f)
+     Inputs 
+		f:RingElement
+     Outputs
+         :Boolean
+     Description
+	Text
+	    Returns true if f is a binomial, otherwise returns false.
+///
+
+doc ///
+     Key
+     	isDiagonal 
+     Headline
+        Checks whether a polynomial is diagonal.
+     Usage
+     	 isDiagonal(f)
+     Inputs 
+		f:RingElement
+     Outputs
+         :Boolean
+     Description
+	Text
+	    Returns true if f is a diagonal, otherwise returns false.  Recall f is called diagonal if it is of the form x_1^(a_1)+...+x_n^(a_n) up to renumbering of the variables.
+///
+
+doc ///
+     Key
+     	isFJumpingNumberPoly 
+     Headline
+        Checks whether a given number is the FPT
+     Usage
+     	  isFJumpingNumberPoly(f,t,Verbose=>V)  
+     Inputs
+         	f:RingElement
+	 	t:ZZ
+		W:Boolean
+     Outputs
+        :Boolean
+     Description
+     	Text
+	     Returns true if t is an F-jumping number, otherwise it returns false.
+///
+
+doc ///
+     Key
+     	isFPTPoly 
+     Headline
+        Checks whether a given number is the FPT
+     Usage
+     	  isFPTPoly(f,t,Verbose=>V,Origin=>W)  
+     Inputs
+         	f:RingElement
+	 	t:ZZ
+		W:Boolean
+		W:Origin
+     Outputs
+        :Boolean
+     Description
+     	Text
+	     Returns true if t is the FPT, otherwise it returns false.  If Origin is true, it only checks it at ideal(vars ring f).
+///
+
+doc ///
+     Key
+     	 isFPure 
+     Headline
+         Tests for a given ideal I, if R/I is F-pure. 
+     Usage
+     	 isFPure(I)
+     Inputs
+     	 I:Ideal
+     Outputs
+         :Boolean
+     Description
+	Text 
+	    In the case where I is a complete intersection,this function applies Fedder's Criterion.
+	    Otherwise, checks if I^[p]:I is contained in m^[p]. 
+ 	   
+///
+
+doc ///
+     Key
+     	 isFRegularPoly
+     Headline
+        Determines if a pair $(R, f^t)$ is F-regular when R is a polynomial ring. 
+     Usage
+     	  isFRegularPoly
+     Inputs
+     	 f:RingElement
+         t:QQ
+     Outputs
+        :Boolean
+     Description
+	Text
+	     This computes the test ideal.  The ring is F-regular if the test ideal is the whole ring, in which case this function returns true.  Otherwise, this function returns false.
+
+///
+
+doc ///
+     Key
+     	isFRegularQGor
+	 (isFRegularQGor, ZZ, RingElement, QQ)
+	 (isFRegularQGor, ZZ, RingElement, QQ, Ideal)
+	 (isFRegularQGor, Ring, ZZ)
+	 (isFRegularQGor, Ring, ZZ, Ideal)
+     Headline
+        Checks whether a ring or a pair is Q-Gorenstein.
+     Usage
+     	 isFRegularQGor(e,f,t)
+     	 isFRegularQGor(e,f,t,Q)
+     	 isFRegularQGor(R,e)
+     	 isFRegularQGor(R,e,Q)
+     Inputs 
+		R:Ring
+	 f:RingElement
+	 e:ZZ
+	 t:QQ
+	 Q:Ideal
+     Outputs
+         :Boolean
+     Description
+	Text
+	     Checks whether R, or the pair (R, f^t),  is strongly F-regular at Q (respectively the origin).  It assumes the Q-Gorenstein index divides (p^e - 1).
+///
+
+doc ///
+     Key
+     	 isSharplyFPurePoly
+     Headline
+        Checks whether (R, f^(a/(p^e - 1))) is F-pure at the prime ideal m.
+     Usage
+     	 isSharplyFPurePoly(f,a,e,m)
+     Inputs
+     	 f:RingElement
+	 a:ZZ
+         e:ZZ
+	 m:Ideal
+     Outputs
+         :Boolean
+     Description
+	Text
+	     This checks whether (R, f^(a/(p^e-1))) is F-pure at the prime ideal m at least in the case that R is a polynomial ring.
+///
+
+doc ///
+     Key
+     	 nu
+	 (nu,Ideal,Ideal,ZZ)
+	 (nu,Ideal,ZZ)
+	 (nu, RingElement,Ideal, ZZ)
+	 (nu, RingElement, ZZ)
+     Headline
+        Gives $\(nu_I)^J(p^e)$ or $\(nu_f)^J(p^e)$
+     Usage
+     	  nu(I,J,e)
+	  nu(I,e)
+	  nu(f,J,e)
+	  nu(f,e) 
+     Inputs
+     	 I:Ideal
+	 J:Ideal
+	 f:RingElement
+         e:ZZ
+     Outputs
+        :ZZ
+     Description
+	Text
+	    Given an ideal I in a polynomial ring k[x1, ..., xn], this function outputs the maximal integer nu such that I^nu is not in ideal J^[p^e].  If the input is (Ideal,ZZ) then the function computes the maximal integer nu such that I^nu in not in (x_1, ...,x_n)^[p^e]. If a RingElement is passed, it computes nu of the principal ideal generated by this element.This is used frequently to compute the F-pure threshold.
+///
+
+doc ///
+     Key
+     	 nuList
+	 (nuList, Ideal,Ideal,ZZ)
+	 (nuList, Ideal, ZZ)
+	 (nuList, RingElement, Ideal, ZZ)
+	 (nuList, RingElement, ZZ)
+     Headline
+        Lists $\(nu_I)^J(p^d)$ for d = 1,...,e.
+     Usage
+     	  nuList(I,J,e)
+	  nuList(I,e)
+	  nuList(f,J,e)
+	  nuList(f,e) 
+     Inputs
+     	 I:Ideal
+	 J:Ideal
+	 f:RingElement
+         e:ZZ
+     Outputs
+        :List
+     Description
+	Text
+	     Given an ideal I in a polynomial ring k[x1,...,xn], this function computes nu(I,d) for d = 1,...,e. If a RingElement is passed, it computes nu of the principal ideal generated by this element for d=1,...,e
+///
+
+doc ///
+     Key
+     	 nuHat
+	 (nuHat,Ideal,Ideal,ZZ)
+	 (nuHat,Ideal,ZZ)
+	 (nuHat, RingElement,Ideal, ZZ)
+	 (nuHat, RingElement, ZZ)
+     Headline
+        Gives $\hat(nu_I)^J(p^e)$ or $\hat(nu_f)^J(p^e)$
+     Usage
+     	  nuHat(I,J,e)
+	  nuHat(I,e)
+	  nuHat(f,J,e)
+	  nuHat(f,e) 
+     Inputs
+     	 I:Ideal
+	 J:Ideal
+	 f:RingElement
+         e:ZZ
+     Outputs
+        :ZZ
+     Description
+	Text
+	    Given an ideal I in a polynomial ring k[x1, ..., xn], this function outputs the maximal integer nu such that I^[nu] is not in ideal J^[p^e].  If the input is (Ideal,ZZ) then the function computes the maximal integer nu such that I^[nu] in not in (x_1, ...,x_n)^[p^e]. If a RingElement is passed, it computes nuHat of the principal ideal generated by this element.This is used frequently to compute the generalized F-pure threshold.
+///
+
+doc ///
+     Key
+     	 nuHatList
+	 (nuHatList, Ideal,Ideal,ZZ)
+	 (nuHatList, Ideal, ZZ)
+	 (nuHatList, RingElement, Ideal, ZZ)
+	 (nuHatList, RingElement, ZZ)
+     Headline
+        Lists $\hat(nu_I)^J(p^d)$ for d = 1,...,e.
+     Usage
+     	  nuHatList(I,J,e)
+	  nuHatList(I,e)
+	  nuHatList(f,J,e)
+	  nuHatList(f,e) 
+     Inputs
+     	 I:Ideal
+	 J:Ideal
+	 f:RingElement
+         e:ZZ
+     Outputs
+        :List
+     Description
+	Text
+	     Given an ideal I in a polynomial ring k[x1,...,xn], this function computes nuHat(I,d) for d = 1,...,e. If a RingElement is passed, it computes nuHat of the principal ideal generated by this element for d=1,...,e
 ///
 
 doc ///
@@ -3307,98 +3909,107 @@ doc ///
 
 doc ///
      Key
-     	isFRegularQGor
-	 (isFRegularQGor, ZZ, RingElement, QQ)
-	 (isFRegularQGor, ZZ, RingElement, QQ, Ideal)
-	 (isFRegularQGor, Ring, ZZ)
-	 (isFRegularQGor, Ring, ZZ, Ideal)
+     	tauAOverPEMinus1Poly
      Headline
-        Checks whether a ring or a pair is Q-Gorenstein.
+        Computes the test ideal of f^(a/(p^e-1)) if f is in a polynomial ring.
      Usage
-     	 isFRegularQGor(e,f,t)
-     	 isFRegularQGor(e,f,t,Q)
-     	 isFRegularQGor(R,e)
-     	 isFRegularQGor(R,e,Q)
-     Inputs 
-		R:Ring
-	 f:RingElement
+     	 tauAOverPEMinus1Poly(f, a, e)
+     Inputs
+     	 f:RingElement
+	 a:ZZ
 	 e:ZZ
+     Outputs
+         :Ideal
+     Description
+	Text
+	     Computes the test ideal tau(f^(a/(p^e-1)) ).  The basic idea first appeared in a paper of Mordechai Katzman.
+///
+
+doc ///
+     Key
+     	tauGor
+     Headline
+        Computes tau(R,f^t) for a Gorenstein ring such that the index divides p^e-1.
+     Usage
+     	 tauGor(R,f,t)
+     Inputs
+     	 R:Ring
+	 f:RingElement
 	 t:QQ
-	 Q:Ideal
      Outputs
-         :Boolean
+         :Ideal
      Description
 	Text
-	     Checks whether R, or the pair (R, f^t),  is strongly F-regular at Q (respectively the origin).  It assumes the Q-Gorenstein index divides (p^e - 1).
+	     This computes the test ideal tau(R, f^t) for a Gorenstein ring.  First the test ideal of the ambient space is computed (and computed on a polynomial ring S of which R is a quotient).  Then writing t = a/(p^b-1)p^c we compute tau(R, f^{a/(p^b-1)}), or rather a preimage of it on S, by summing the images of the map induced by f^{a/(p^b-1)}.  We then compute tau(R, f^t) by multiplying by the output of a findQGorGen on S, and taking [1/p^e]th roots on S.
 ///
 
 doc ///
      Key
-     	divideFraction
+     	tauGorAmb
      Headline
-        Converts a rational number into something of the form (a/(p^b p^(c-1)).
+        Computes tau(R) for a Gorenstein ring.
      Usage
-     	 divideFraction(t, p)
-     Inputs 
-		t:QQ
-	p:ZZ
+     	 tauGorAmb(R)
+     Inputs
+     	 R:Ring
      Outputs
-         :List
+         :Ideal
      Description
 	Text
-	     Given a rational number t and prime p, this function finds a list of integers {a,b,c} such that t= (a/(p^b p^(c-1)).
+	     This computes the test ideal tau(R) for a quasi-Gorenstein ring R.  It uses the fact that if R is a quotient of a polynomial ring S, then tau(R) can be computed as a sort of test/adjoint ideal on S.  The function findQGorGen is used to find the map to use on S. 
 ///
 
 doc ///
      Key
-     	firstCarry
+     	 tauPoly
      Headline
-        Finds the first spot where (the eth digit of x) + (the eth digit of y) >= p.
+        Computes the test ideal of $(R, f^t)$.
      Usage
-     	 firstCarry(w,p)
-     Inputs 
-		w:List
-	p:ZZ
+     	  tauPoly(f,t) 
+     Inputs
+     	 f:RingElement
+         t:QQ
      Outputs
-         :ZZ
+        :Ideal
      Description
 	Text
-	     Set w = {x,y} a list of rational numbers in [0,1].  Finds the first place where (the eth digit of x) + (the eth digit of y) >= p, in other words where the numbers add with carrying.
+	     This computes the test ideal of (R, f^t) when R is a polynomial ring over a perfect field.  It is done as follows.  If t = a/(p^e - 1) then tau(R, f^t) is computed as a sum of (f^{\lceil t \rceil}*f^{\lceil t(p^e-1) \rceil})^{[1/p^e]} until the sum stabilizes.  For the more general case, we use the formula tau(R, f^t)^{[1/p^d]} = tau(R, f^{t/p^d}).
 ///
 
 doc ///
      Key
-     	carryTest
+     	tauQGorAmb
      Headline
-        Finds the number of digits we must check to see whether x and y add without carrying.
+        Computes tau(R) for a Q-Gorenstein ring with index not dividing p^e - 1.
      Usage
-     	 carryTest(w,p)
-     Inputs 
-		w:List
-	p:ZZ
+     	 tauQGorAmb(R,e)
+     Inputs
+     	 R:Ring
+	 e:ZZ
      Outputs
-         :ZZ
+         :Ideal
      Description
 	Text
-	     Set w = {x,y} a list of rational numbers in [0,1].  This function finds the number of digit places we must check to see if x and y add without carrying.
+	     This computes the test ideal tau(R) for a Q-Gorenstein ring R with index dividing p^e - 1.  It uses the fact that if R is a quotient of a polynomial ring S, then tau(R) can be computed as a sort of test/adjoint ideal on S.  The function findQGorGen is used to find the map to use on S.  e is the index of the canonical divisor on R.
 ///
 
 doc ///
      Key
-     	truncationBaseP
+     	tauQGor
      Headline
-        Gives the first e digits of the non-terminating base p expansion of x.
+        Computes tau(R,f^t) for a Q-Gorenstein ring such that the index divides p^e-1.
      Usage
-     	 truncationBaseP(e,x,p)
-     Inputs 
-		e:ZZ
-	x:QQ
-	p:ZZ
+     	 tauQGor(R,e,f,t)
+     Inputs
+     	 R:Ring
+	 e:ZZ
+	 f:RingElement
+	 t:QQ
      Outputs
-         :List
+         :Ideal
      Description
 	Text
-	     Gives the first e digits of the non-terminating base p expansion of x in [0,1], as a list.
+	     This computes the test ideal tau(R, f^t) for a Q-Gorenstein ring such that the index divides p^e -1.  First the test ideal of the ambient space is computed (and computed on a polynomial ring S of which R is a quotient).  Then writing t = a/(p^b-1)p^c we compute tau(R, f^{a/(p^b-1)}), or rather a preimage of it on S, by summing images of the map induced by f^{a/(p^b-1)}.  We then compute tau(R, f^t) by multiplying by the output of a findQGorGen on S, and taking [1/p^e]th roots on S.
 ///
 
 doc ///
@@ -3428,132 +4039,21 @@ doc ///
 
 doc ///
      Key
-     	denom
-     	(denom,ZZ)
-     	(denom,QQ)
+     	truncationBaseP
      Headline
-        Returns the denominator of a rational number.
+        Gives the first e digits of the non-terminating base p expansion of x.
      Usage
-     	 denom(x)
-     	 denom(y)
+     	 truncationBaseP(e,x,p)
      Inputs 
-		x:QQ
-		y:ZZ
+		e:ZZ
+	x:QQ
+	p:ZZ
      Outputs
-         :ZZ
+         :List
      Description
 	Text
-	    Returns the denominator of a rational number or integer (in the latter case it returns 1).
+	     Gives the first e digits of the non-terminating base p expansion of x in [0,1], as a list.
 ///
-
-doc ///
-     Key
-     	binomialFPT
-     Headline
-        Computes the F-pure threshold of a binomial polynomial.
-     Usage
-     	 binomialFPT(f)
-     Inputs 
-		f:RingElement
-     Outputs
-         :QQ
-     Description
-	Text
-	    Returns the F-pure threshold of a binomial in a polynomial ring.  This is based on the work of Daniel Hernandez.
-///
-
-doc ///
-     Key
-     	diagonalFPT
-     Headline
-        Computes the F-pure threshold of a diagonal polynomial.
-     Usage
-     	 diagonalFPT(f)
-     Inputs 
-		f:RingElement
-     Outputs
-         :QQ
-     Description
-	Text
-	    Returns the F-pure threshold of a diagonal hypersurface in a polynomial ring.  This is based on the work of Daniel Hernandez.
-///
-
-doc ///
-     Key
-     	isBinomial 
-     Headline
-        Checks whether a polynomial is binomial.
-     Usage
-     	 isBinomial(f)
-     Inputs 
-		f:RingElement
-     Outputs
-         :Boolean
-     Description
-	Text
-	    Returns true if f is a binomial, otherwise returns false.
-///
-
-doc ///
-     Key
-     	isDiagonal 
-     Headline
-        Checks whether a polynomial is diagonal.
-     Usage
-     	 isDiagonal(f)
-     Inputs 
-		f:RingElement
-     Outputs
-         :Boolean
-     Description
-	Text
-	    Returns true if f is a diagonal, otherwise returns false.  Recall f is called diagonal if it is of the form x_1^(a_1)+...+x_n^(a_n) up to renumbering of the variables.
-///
-
-doc ///
-     Key
-     	aPower
-     Headline
-        Finds the largest power of p dividing x.
-     Usage
-     	 aPower(x,p)
-     Inputs 
-		x:ZZ
-		p:ZZ
-     Outputs
-         :ZZ
-     Description
-	Text
-	    Returns the largest exponent e such that p^e divides x.
-///
-
-doc ///
-     Key
-     	FPT2VarHomog
-	(FPT2VarHomog,RingElement)
-	(FPT2VarHomog,List,List)
-     Headline
-        F-pure threshold of a form in two variables
-     Usage
-     	  fpt=FPT2VarHomog(G), fpt=FPT2VarHomog(factors,multiplicities)
-     Inputs 
-	factors:List
-	    which contains the linear factors of a form G in two variables 
-	multiplicities:List
-	    which contains the multiplicities of those linear factors in G
-	G:RingElement
-	    a form in two variables
-     Outputs
-        fpt:QQ
-     Description
-	Text
-	    FPT2VarHomog computes the F-pure threshold of a homogeneous polynomial G
-	    	in two variables. 
-	    The polynomial G can be entered directly, or if the user knows a factorization
-	    	G=L1^(a1)...Ln^(an) into linear forms, that can be used for improved 
-		performance: FPT2VarHomog({L1,...,Ln},{a1,...,an}).
-///
-
 
 end
 
