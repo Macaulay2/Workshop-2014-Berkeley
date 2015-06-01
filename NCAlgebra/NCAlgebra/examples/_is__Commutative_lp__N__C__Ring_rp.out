@@ -12,7 +12,7 @@ o2 = false
 
 i3 : B = skewPolynomialRing(QQ,(-1)_QQ,{x,y,z})
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-21959-0/0.init -on-error exit --silent > /tmp/M2-21959-0/3.ter ... Complete!
+--running: bergman -i /tmp/M2-5851-0/0.init -on-error exit --silent > /tmp/M2-5851-0/3.ter ... Complete!
 
 o3 = B
 
@@ -24,7 +24,7 @@ o4 = false
 
 i5 : C = skewPolynomialRing(QQ,1_QQ,{x,y,z})
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-21959-0/5.init -on-error exit --silent > /tmp/M2-21959-0/8.ter ... Complete!
+--running: bergman -i /tmp/M2-5851-0/5.init -on-error exit --silent > /tmp/M2-5851-0/8.ter ... Complete!
 
 o5 = C
 
@@ -36,7 +36,7 @@ o6 = true
 
 i7 : D = toNCRing(QQ[x,y,SkewCommutative=>true])
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-21959-0/10.init -on-error exit --silent > /tmp/M2-21959-0/13.ter ... Complete!
+--running: bergman -i /tmp/M2-5851-0/10.init -on-error exit --silent > /tmp/M2-5851-0/13.ter ... Complete!
 
 o7 = D
 

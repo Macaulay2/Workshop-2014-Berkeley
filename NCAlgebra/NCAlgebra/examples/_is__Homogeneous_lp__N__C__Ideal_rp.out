@@ -40,7 +40,7 @@ o7 = true
 
 i8 : B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-22635-0/0.init -on-error exit --silent > /tmp/M2-22635-0/3.ter ... Complete!
+--running: bergman -i /tmp/M2-6527-0/0.init -on-error exit --silent > /tmp/M2-6527-0/3.ter ... Complete!
 
 o8 = B
 

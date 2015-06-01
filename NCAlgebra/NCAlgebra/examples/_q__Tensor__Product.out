@@ -8,7 +8,7 @@ o1 : NCPolynomialRing
 
 i2 : B = skewPolynomialRing(QQ,(-1)_QQ, {a,b})
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-21563-0/0.init -on-error exit --silent > /tmp/M2-21563-0/3.ter ... Complete!
+--running: bergman -i /tmp/M2-5452-0/0.init -on-error exit --silent > /tmp/M2-5452-0/3.ter ... Complete!
 
 o2 = B
 
@@ -16,9 +16,9 @@ o2 : NCQuotientRing
 
 i3 : C = qTensorProduct(A,B,-1_QQ)
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-21563-0/5.init -on-error exit --silent > /tmp/M2-21563-0/8.ter ... Complete!
+--running: bergman -i /tmp/M2-5452-0/5.init -on-error exit --silent > /tmp/M2-5452-0/8.ter ... Complete!
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-21563-0/10.init -on-error exit --silent > /tmp/M2-21563-0/13.ter ... Complete!
+--running: bergman -i /tmp/M2-5452-0/10.init -on-error exit --silent > /tmp/M2-5452-0/13.ter ... Complete!
 
 o3 = C
 
@@ -32,9 +32,9 @@ o4 : NCIdeal
 
 i5 : D = A ** B
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-21563-0/15.init -on-error exit --silent > /tmp/M2-21563-0/18.ter ... Complete!
+--running: bergman -i /tmp/M2-5452-0/15.init -on-error exit --silent > /tmp/M2-5452-0/18.ter ... Complete!
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-21563-0/20.init -on-error exit --silent > /tmp/M2-21563-0/23.ter ... Complete!
+--running: bergman -i /tmp/M2-5452-0/20.init -on-error exit --silent > /tmp/M2-5452-0/23.ter ... Complete!
 
 o5 = D
 

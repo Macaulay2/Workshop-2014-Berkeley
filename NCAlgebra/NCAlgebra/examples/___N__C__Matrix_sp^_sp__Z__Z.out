@@ -43,7 +43,7 @@ o5 : NCMatrix
 
 i6 : B = A/ncIdeal{y*z + z*y - x^2, x*z + z*x - y^2, z^2 - x*y - y*x}
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-21471-0/0.init -on-error exit --silent > /tmp/M2-21471-0/3.ter ... Complete!
+--running: bergman -i /tmp/M2-5360-0/0.init -on-error exit --silent > /tmp/M2-5360-0/3.ter ... Complete!
 
 o6 = B
 

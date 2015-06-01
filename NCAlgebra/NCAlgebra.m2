@@ -2601,9 +2601,9 @@ threeDimSklyanin (Ring, List) := opts -> (R, varList) -> (
    threeDimSklyanin(R,{random(QQ),random(QQ), random(QQ)}, varList)
 )
 
-oreIdeal = method()
+oreIdeal = method(Options => {Degree => 1})
 oreIdeal (NCRing,NCRingMap,NCRingMap,NCRingElement) := 
-oreIdeal (NCRing,NCRingMap,NCRingMap,Symbol) := (B,sigma,delta,X) -> (
+oreIdeal (NCRing,NCRingMap,NCRingMap,Symbol) := opts -> (B,sigma,delta,X) -> (
    -- This version assumes that the derivation is zero on B
    -- Don't yet have multiple rings with the same variables names working yet.  Not sure how to
    -- get the symbol with the same name as the variable.
@@ -2615,29 +2615,30 @@ oreIdeal (NCRing,NCRingMap,NCRingMap,Symbol) := (B,sigma,delta,X) -> (
    fromBtoC := ncMap(C,B,drop(gens C, -1));
    fromAtoC := ncMap(C,A,drop(gens C, -1));
    X = value X;
+   setWeights(C,degrees A | {opts.Degree});
    ncIdeal (apply(gens B.ideal, f -> fromAtoC promote(f,A)) |
             apply(gens B, x -> X*(fromBtoC x) - (fromBtoC sigma x)*X - (fromBtoC delta x)))
 )
 
 oreIdeal (NCRing,NCRingMap,Symbol) := 
-oreIdeal (NCRing,NCRingMap,NCRingElement) := (B,sigma,X) -> (
+oreIdeal (NCRing,NCRingMap,NCRingElement) := opts -> (B,sigma,X) -> (
    zeroMap := ncMap(B,B,toList ((numgens B):promote(0,B)));
-   oreIdeal(B,sigma,zeroMap,X)
+   oreIdeal(B,sigma,zeroMap,X,opts)
 )
 
-oreExtension = method()
+oreExtension = method(Options => options oreIdeal)
 oreExtension (NCRing,NCRingMap,NCRingMap,Symbol) := 
-oreExtension (NCRing,NCRingMap,NCRingMap,NCRingElement) := (B,sigma,delta,X) -> (
+oreExtension (NCRing,NCRingMap,NCRingMap,NCRingElement) := opts -> (B,sigma,delta,X) -> (
    X = baseName X;
-   I := oreIdeal(B,sigma,delta,X);
+   I := oreIdeal(B,sigma,delta,X,opts);
    C := ring I;
    C/I
 )
 
 oreExtension (NCRing,NCRingMap,Symbol) := 
-oreExtension (NCRing,NCRingMap,NCRingElement) := (B,sigma,X) -> (
+oreExtension (NCRing,NCRingMap,NCRingElement) := opts -> (B,sigma,X) -> (
    X = baseName X;
-   I := oreIdeal(B,sigma,X);
+   I := oreIdeal(B,sigma,X,opts);
    C := ring I;
    C/I
 )

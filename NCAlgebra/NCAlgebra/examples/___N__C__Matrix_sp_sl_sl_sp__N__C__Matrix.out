@@ -2,7 +2,7 @@
 
 i1 : B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-22563-0/0.init -on-error exit --silent > /tmp/M2-22563-0/3.ter ... Complete!
+--running: bergman -i /tmp/M2-6455-0/0.init -on-error exit --silent > /tmp/M2-6455-0/3.ter ... Complete!
 
 o1 = B
 
@@ -30,7 +30,7 @@ o4 : NCIdeal
 
 i5 : B' = A/J -- Factor of sklyanin
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-22563-0/5.init -on-error exit --silent > /tmp/M2-22563-0/8.ter ... Complete!
+--running: bergman -i /tmp/M2-6455-0/5.init -on-error exit --silent > /tmp/M2-6455-0/8.ter ... Complete!
 
 o5 = B'
 
@@ -50,17 +50,17 @@ o7 : NCRingMap
 
 i8 : M = BprimeToB rightKernelBergman rightKernelBergman k  -- second syzygy of k over B
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-22563-0/10.init -on-error exit --silent > /tmp/M2-22563-0/13.ter ... Complete!
+--running: bergman -i /tmp/M2-6455-0/10.init -on-error exit --silent > /tmp/M2-6455-0/13.ter ... Complete!
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-22563-0/14.init -on-error exit --silent > /tmp/M2-22563-0/17.ter ... Complete!
+--running: bergman -i /tmp/M2-6455-0/14.init -on-error exit --silent > /tmp/M2-6455-0/17.ter ... Complete!
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-22563-0/18.init -on-error exit --silent > /tmp/M2-22563-0/21.ter ... Complete!
+--running: bergman -i /tmp/M2-6455-0/18.init -on-error exit --silent > /tmp/M2-6455-0/21.ter ... Complete!
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-22563-0/22.init -on-error exit --silent > /tmp/M2-22563-0/25.ter ... Complete!
+--running: bergman -i /tmp/M2-6455-0/22.init -on-error exit --silent > /tmp/M2-6455-0/25.ter ... Complete!
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-22563-0/26.init -on-error exit --silent > /tmp/M2-22563-0/29.ter ... Complete!
+--running: bergman -i /tmp/M2-6455-0/26.init -on-error exit --silent > /tmp/M2-6455-0/29.ter ... Complete!
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-22563-0/30.init -on-error exit --silent > /tmp/M2-22563-0/33.ter ... Complete!
+--running: bergman -i /tmp/M2-6455-0/30.init -on-error exit --silent > /tmp/M2-6455-0/33.ter ... Complete!
 
      |               2           |
 o8 = | -z    yz    -y    -yx-2xy |
@@ -95,7 +95,7 @@ i10 : assignDegrees(gId,{2,2,2,3},{5,5,5,6});
 
 i11 : M' = gId // M
 --Calling Bergman for NCGB calculation.
---running: bergman -i /tmp/M2-22563-0/34.init -on-error exit --silent > /tmp/M2-22563-0/37.ter ... Complete!
+--running: bergman -i /tmp/M2-6455-0/34.init -on-error exit --silent > /tmp/M2-6455-0/37.ter ... Complete!
 
       |              2           3 |
 o11 = | -2yx   0  -2y +2xz  yxz+x  |
