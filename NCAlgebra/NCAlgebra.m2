@@ -1,6 +1,6 @@
 newPackage("NCAlgebra",
      Headline => "Data types for Noncommutative algebras",
-     Version => "0.99",
+     Version => "0.999",
      Date => "October 29, 2013",
      Authors => {
 	  {Name => "Frank Moore",
@@ -492,7 +492,7 @@ net NCQuotientRing := B -> (
 
 ideal NCQuotientRing := NCIdeal => B -> B.ideal;
 ambient NCQuotientRing := B -> B.ambient;
-
+ambient NCPolynomialRing := identity
 
 quadraticClosure = method()
 quadraticClosure NCQuotientRing := B -> (
