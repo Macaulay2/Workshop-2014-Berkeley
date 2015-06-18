@@ -1098,7 +1098,7 @@ coordinates List := opts -> L -> (
       bas := opts#Basis;
       R := ring bas#0;
       d := degree bas#0;
-      if not all(L, m-> (isHomogeneous(m) and ((degree m)== d))) then 
+      if not all(L, m-> (isHomogeneous(m) and ((degree m) == d or m == 0))) then
 	error "Expected homogeneous elements of the same degree.";
       mons := flatten entries basis(d,R);
       M := sparseCoeffs(bas, Monomials=>mons);
@@ -2867,9 +2867,9 @@ NCMatrix % NCGroebnerBasis := (M,ncgb) -> (
    maxDeg := max(entriesM / degree);
    maxSize := max(entriesM / size);
    -- this code does not yet handle zero entries correctly when sending them to the bergman interface.
-   entriesMNF := if (rowsM*colsM > MAXSIZE) or
-                    (maxDeg > MAXDEG or maxSize > MAXSIZE) or
-                    (coeffRing === QQ and coeffRing === ZZ/(char coeffRing)) then 
+   entriesMNF := if ((rowsM*colsM > MAXSIZE) or
+                     (maxDeg > MAXDEG or maxSize > MAXSIZE)) or
+                     (coeffRing === QQ and coeffRing === ZZ/(char coeffRing)) then 
    		    normalFormBergman(entriesM, ncgb)
                  else
                     apply(entriesM, f -> f % ncgb);
