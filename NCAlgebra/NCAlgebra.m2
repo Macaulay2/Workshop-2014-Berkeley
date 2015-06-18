@@ -1120,6 +1120,37 @@ sparseCoeffs NCRingElement := opts -> f -> (
 
 sparseCoeffs List := opts -> L -> (
   d := if all(L, m -> m == 0) then 0 else L#(position(L,m->m!=0));
+  -- trying to fix to allow for inhomogeneous input.
+  --if not all(L, m-> (isHomogeneous(m) and (m == 0 or (degree m)==(degree d)))) then 
+  --	error "Expected homogeneous elements of the same degree.";
+  B := (L#0).ring;
+  R := coefficientRing B;
+  mons := if opts#Monomials === null then (
+              unique flatten apply(L, e-> flatten entries monomials e)) 
+          else opts#Monomials;
+  
+  m := #mons;
+  
+  mons =  (mons / (m -> first keys m.terms));
+  mons =  hashTable apply(m, i -> (mons#i,i));
+   
+  termsF := pairs (L#0).terms;
+  
+  coeffs := if (L#0)!=0 then (apply(termsF, (k,v) -> if v!=0 then (mons#k,0) => promote(v,R))) else {};
+
+  l:=length L;
+  if l>1 then
+     for i from 1 to l-1 do (
+        --if not isHomogeneous L#i then error "Expected a homogeneous element.";
+        if (L#i) !=0 then (
+        termsF = pairs (L#i).terms;
+        newCoeffs := (apply(termsF, (k,v) -> if v!=0 then
+            if not mons#?k then error "Expected polynomial to be in span of input monomials."
+            else (mons#k,i) => promote(v,R)));
+	coeffs = coeffs | newCoeffs;);
+     ); 
+  map(R^m , R^l, coeffs)
+{*  d := if all(L, m -> m == 0) then 0 else L#(position(L,m->m!=0));
   if not all(L, m-> (isHomogeneous(m) and (m == 0 or (degree m)==(degree d)))) then 
 	error "Expected homogeneous elements of the same degree.";
   B := (L#0).ring;
@@ -1147,7 +1178,7 @@ sparseCoeffs List := opts -> L -> (
        
 	coeffs = coeffs | newCoeffs;);
      ); 
-   map(R^m , R^l, coeffs)
+   map(R^m , R^l, coeffs)*}
 )
 
 monomials NCRingElement := opts -> f -> (
