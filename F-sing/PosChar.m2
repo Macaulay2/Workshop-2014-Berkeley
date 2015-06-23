@@ -1079,15 +1079,15 @@ getNumAndDenom = method()
 
 getNumAndDenom (List) := u -> 
 (
-    den := lcm apply(u,n->denom n);
-    a := apply(u,n->lift(n*den,ZZ));
-    (a,den)        
+    den := lcm apply( u, denom );
+    a := apply( u, n-> lift( n*den, ZZ ) );
+    ( a, den )        
 )
 
 --Computes the taxicab norm of a vector.
 taxicabNorm = method()
 
-taxicabNorm (List) := u -> sum(u,x->abs(x))
+taxicabNorm (List) := u -> sum( u, abs )
 
 -- multOrder(a,b) finds the multiplicative order of a modulo b
 multOrder = method()
@@ -1111,11 +1111,7 @@ multOrder (ZZ,ZZ) := (a,b) ->
 --{factor,multiplicity}.
 factorList = method()
 
-factorList (RingElement) := F ->  
-(
-    prod := factor F;
-    apply(#prod, i -> {(prod#i)#0,(prod#i)#1}) 
-)
+factorList (RingElement) := F -> apply( toList( factor(F) ), toList )
 
 --splittingField returns the splittingField of a polynomial over a finite field
 splittingField = method()
