@@ -1,6 +1,6 @@
 newPackage("NCAlgebra",
      Headline => "Data types for Noncommutative algebras",
-     Version => "0.99",
+     Version => "0.999",
      Date => "October 29, 2013",
      Authors => {
 	  {Name => "Frank Moore",
@@ -10,10 +10,11 @@ newPackage("NCAlgebra",
 	   HomePage => "http://www.stmarys-ca.edu/math-and-computer-science/faculty?facid=142546",
 	   Email => "abc12@stmarys-ca.edu"},
 	  {Name => "Courtney Gibbons",
-	   HomePage => "http://courtneygibbons.org/",
+	   HomePage => "http://people.hamilton.edu/cgibbons/index.html",
 	   Email => "crgibbon@hamilton.edu"}},
      AuxiliaryFiles => true,
-     DebuggingMode => true
+     DebuggingMode => true,
+     CacheExampleOutput =>true
      )
 
 
@@ -66,7 +67,8 @@ export { NCRing, NCQuotientRing, NCPolynomialRing,
 	 gddKernel,
 	 freeProduct,
 	 qTensorProduct,
-	 envelopingAlgebra
+	 envelopingAlgebra,
+	 NCChainComplex
 }
 
 
@@ -92,15 +94,11 @@ protect CumulativeBasis
 MAXDEG = 40
 MAXSIZE = 1000
 
--- Andy's bergman path
--- bergmanPath = "/usr/local/bergman1.001"
--- Andy's other bergman path
--- bergmanPath = "/cygdrive/d/userdata/Desktop/bergman1.001"
--- bergmanPath = "/usr/local/bergman1.001"
--- Frank's bergman path
-bergmanPath = "~/bergman"
--- Courtney's bergman path
---bergmanPath = "/Users/crgibbon/Downloads/bergman1.001"
+-- This manner of locating the bergman source code is deprecated.
+-- bergmanPath = "~/bergman"
+
+-- the environment variable BERGMANPATH must be set to the root directory of the bergman source
+bergmanPath = getenv "BERGMANPATH"
 
 NCRing = new Type of Ring
 NCQuotientRing = new Type of NCRing
@@ -494,7 +492,7 @@ net NCQuotientRing := B -> (
 
 ideal NCQuotientRing := NCIdeal => B -> B.ideal;
 ambient NCQuotientRing := B -> B.ambient;
-
+ambient NCPolynomialRing := identity
 
 quadraticClosure = method()
 quadraticClosure NCQuotientRing := B -> (
@@ -1100,7 +1098,7 @@ coordinates List := opts -> L -> (
       bas := opts#Basis;
       R := ring bas#0;
       d := degree bas#0;
-      if not all(L, m-> (isHomogeneous(m) and ((degree m)== d))) then 
+      if not all(L, m-> (isHomogeneous(m) and ((degree m) == d or m == 0))) then
 	error "Expected homogeneous elements of the same degree.";
       mons := flatten entries basis(d,R);
       M := sparseCoeffs(bas, Monomials=>mons);
@@ -1122,6 +1120,37 @@ sparseCoeffs NCRingElement := opts -> f -> (
 
 sparseCoeffs List := opts -> L -> (
   d := if all(L, m -> m == 0) then 0 else L#(position(L,m->m!=0));
+  -- trying to fix to allow for inhomogeneous input.
+  --if not all(L, m-> (isHomogeneous(m) and (m == 0 or (degree m)==(degree d)))) then 
+  --	error "Expected homogeneous elements of the same degree.";
+  B := (L#0).ring;
+  R := coefficientRing B;
+  mons := if opts#Monomials === null then (
+              unique flatten apply(L, e-> flatten entries monomials e)) 
+          else opts#Monomials;
+  
+  m := #mons;
+  
+  mons =  (mons / (m -> first keys m.terms));
+  mons =  hashTable apply(m, i -> (mons#i,i));
+   
+  termsF := pairs (L#0).terms;
+  
+  coeffs := if (L#0)!=0 then (apply(termsF, (k,v) -> if v!=0 then (mons#k,0) => promote(v,R))) else {};
+
+  l:=length L;
+  if l>1 then
+     for i from 1 to l-1 do (
+        --if not isHomogeneous L#i then error "Expected a homogeneous element.";
+        if (L#i) !=0 then (
+        termsF = pairs (L#i).terms;
+        newCoeffs := (apply(termsF, (k,v) -> if v!=0 then
+            if not mons#?k then error "Expected polynomial to be in span of input monomials."
+            else (mons#k,i) => promote(v,R)));
+	coeffs = coeffs | newCoeffs;);
+     ); 
+  map(R^m , R^l, coeffs)
+{*  d := if all(L, m -> m == 0) then 0 else L#(position(L,m->m!=0));
   if not all(L, m-> (isHomogeneous(m) and (m == 0 or (degree m)==(degree d)))) then 
 	error "Expected homogeneous elements of the same degree.";
   B := (L#0).ring;
@@ -1149,7 +1178,7 @@ sparseCoeffs List := opts -> L -> (
        
 	coeffs = coeffs | newCoeffs;);
      ); 
-   map(R^m , R^l, coeffs)
+   map(R^m , R^l, coeffs)*}
 )
 
 monomials NCRingElement := opts -> f -> (
@@ -2146,7 +2175,7 @@ normalElements (NCQuotientRing, ZZ, Symbol, Symbol) := (R,n,x,y) -> (
 rightKernel = method(Options=>{NumberOfBins => 1, Verbosity=>0})
 rightKernel(NCMatrix,ZZ):= opts -> (M,deg) -> (
    -- Assume (without checking) that the entries of M are homogeneous of the same degree n
-   -- This function takes a NCMatrix M and a degree deg and returns the left kernel in degree deg over the tensor algebra. 
+   -- This function takes a NCMatrix M and a degree deg and returns the right kernel in degree deg
    -- Increasing bins can provide some memory savings if the degree deg part of the ring is large. Optimal bin size seems to be in the 1000-2000 range.
    bins := opts#NumberOfBins;
    rows := # entries M;
@@ -2198,7 +2227,10 @@ rightKernel(NCMatrix,ZZ):= opts -> (M,deg) -> (
       return 0
    else
       if opts#Verbosity > 0 then << "Kernel computed. Reverting to ring elements." << endl;
-   ncMatrix apply(toList(0..(cols-1)), k-> {bas*submatrix(gens Kscalar,{k*fromDim..(k*fromDim+fromDim-1)},)})
+   retVal := ncMatrix apply(toList(0..(cols-1)), k-> {bas*submatrix(gens Kscalar,{k*fromDim..(k*fromDim+fromDim-1)},)});
+   --- now need to assign degrees.
+   assignDegrees(retVal,M.source, toList ((#(first entries retVal)):((first M.source)+deg)));
+   retVal
 )
 
 isLeftRegular = method()
@@ -2600,9 +2632,9 @@ threeDimSklyanin (Ring, List) := opts -> (R, varList) -> (
    threeDimSklyanin(R,{random(QQ),random(QQ), random(QQ)}, varList)
 )
 
-oreIdeal = method()
+oreIdeal = method(Options => {Degree => 1})
 oreIdeal (NCRing,NCRingMap,NCRingMap,NCRingElement) := 
-oreIdeal (NCRing,NCRingMap,NCRingMap,Symbol) := (B,sigma,delta,X) -> (
+oreIdeal (NCRing,NCRingMap,NCRingMap,Symbol) := opts -> (B,sigma,delta,X) -> (
    -- This version assumes that the derivation is zero on B
    -- Don't yet have multiple rings with the same variables names working yet.  Not sure how to
    -- get the symbol with the same name as the variable.
@@ -2614,29 +2646,30 @@ oreIdeal (NCRing,NCRingMap,NCRingMap,Symbol) := (B,sigma,delta,X) -> (
    fromBtoC := ncMap(C,B,drop(gens C, -1));
    fromAtoC := ncMap(C,A,drop(gens C, -1));
    X = value X;
+   setWeights(C,degrees A | {opts.Degree});
    ncIdeal (apply(gens B.ideal, f -> fromAtoC promote(f,A)) |
             apply(gens B, x -> X*(fromBtoC x) - (fromBtoC sigma x)*X - (fromBtoC delta x)))
 )
 
 oreIdeal (NCRing,NCRingMap,Symbol) := 
-oreIdeal (NCRing,NCRingMap,NCRingElement) := (B,sigma,X) -> (
+oreIdeal (NCRing,NCRingMap,NCRingElement) := opts -> (B,sigma,X) -> (
    zeroMap := ncMap(B,B,toList ((numgens B):promote(0,B)));
-   oreIdeal(B,sigma,zeroMap,X)
+   oreIdeal(B,sigma,zeroMap,X,opts)
 )
 
-oreExtension = method()
+oreExtension = method(Options => options oreIdeal)
 oreExtension (NCRing,NCRingMap,NCRingMap,Symbol) := 
-oreExtension (NCRing,NCRingMap,NCRingMap,NCRingElement) := (B,sigma,delta,X) -> (
+oreExtension (NCRing,NCRingMap,NCRingMap,NCRingElement) := opts -> (B,sigma,delta,X) -> (
    X = baseName X;
-   I := oreIdeal(B,sigma,delta,X);
+   I := oreIdeal(B,sigma,delta,X,opts);
    C := ring I;
    C/I
 )
 
 oreExtension (NCRing,NCRingMap,Symbol) := 
-oreExtension (NCRing,NCRingMap,NCRingElement) := (B,sigma,X) -> (
+oreExtension (NCRing,NCRingMap,NCRingElement) := opts -> (B,sigma,X) -> (
    X = baseName X;
-   I := oreIdeal(B,sigma,X);
+   I := oreIdeal(B,sigma,X,opts);
    C := ring I;
    C/I
 )
@@ -2669,6 +2702,7 @@ freeProduct (NCRing,NCRing) := (A,B) -> (
 )
 
 qTensorProduct = method()
+qTensorProduct (NCRing, NCRing, ZZ) :=
 qTensorProduct (NCRing, NCRing, QQ) :=
 qTensorProduct (NCRing, NCRing, RingElement) := (A,B,q) -> (
    -- this is the q-commuting tensor product of rings
@@ -2700,12 +2734,12 @@ envelopingAlgebra (NCRing, Symbol) := (A,x) -> (
    R := coefficientRing A;
    Aop := oppositeRing A;
    B := R apply(#gens A, g-> x_g);  -- remove # once indexing works without printing ( ) 
-   if class A === NCPolynomialRing then (B ** A) 
+   if class A === NCPolynomialRing then (A ** B) 
    else (
       A' := ambient Aop;   
       f := ncMap(B,A',gens B);
       J := ncIdeal (gens ideal Aop / f);
-      (B/J) ** A
+      A ** (B/J)
    )
 )
 
@@ -2864,9 +2898,9 @@ NCMatrix % NCGroebnerBasis := (M,ncgb) -> (
    maxDeg := max(entriesM / degree);
    maxSize := max(entriesM / size);
    -- this code does not yet handle zero entries correctly when sending them to the bergman interface.
-   entriesMNF := if (rowsM*colsM > MAXSIZE) or
-                    (maxDeg > MAXDEG or maxSize > MAXSIZE) or
-                    (coeffRing === QQ and coeffRing === ZZ/(char coeffRing)) then 
+   entriesMNF := if ((rowsM*colsM > MAXSIZE) or
+                     (maxDeg > MAXDEG or maxSize > MAXSIZE)) or
+                     (coeffRing === QQ and coeffRing === ZZ/(char coeffRing)) then 
    		    normalFormBergman(entriesM, ncgb)
                  else
                     apply(entriesM, f -> f % ncgb);
@@ -3033,6 +3067,46 @@ transpose NCMatrix := M -> (
        Mtrans := ncMatrix transpose M.matrix;
        assignDegrees(Mtrans,-M.source,-M.target);
        Mtrans)
+)
+
+--NCMatrix ** Matrix := 
+--Matrix ** NCMatrix := 
+-- what does this matrix represent?
+NCMatrix ** NCMatrix := (M,N) -> (
+   entriesM := entries M;
+   MtensN := ncMatrix applyTable(entriesM, e -> e*N);
+   --- now we must assignDegrees to make make them compatible
+   --- with the maps M and N
+   newSource := flatten apply(#(M.source), i ->
+         apply(#(N.source), j -> ((M.source)#i)+((N.source)#j)));
+   newTarget := flatten apply(#(M.target), i ->
+         apply(#(N.target), j -> ((M.target)#i)+((N.target)#j)));
+   assignDegrees(MtensN,newTarget,newSource)
+)
+
+NCMatrix ++ NCMatrix := (M,N) -> (
+   B := ring M;
+   Mtar := M.target;
+   Msrc := M.source;
+   Ntar := N.target;
+   Nsrc := N.source;
+   urZero := zeroMap(Mtar,Nsrc,B);
+   lrZero := zeroMap(Ntar,Msrc,B);
+   -- this is a hack until ncMatrix can take lists of empty matrices
+   if Msrc == {} and Mtar == {} then N
+   else if Msrc == {} and Nsrc == {} then ncMatrix(B,Mtar|Ntar,{})
+   else if Msrc == {} and Ntar == {} then urZero
+   else if Msrc == {} then ncMatrix{{urZero},{N}}
+   else if Mtar == {} and Nsrc == {} then lrZero
+   else if Mtar == {} and Ntar == {} then ncMatrix(B,{},Msrc|Nsrc)
+   else if Mtar == {} then ncMatrix{{lrZero,N}}
+   else if Nsrc == {} and Ntar == {} then M
+   else if Nsrc == {} then ncMatrix{{M},{lrZero}}
+   else if Ntar == {} then ncMatrix{{M,urZero}}
+   else (
+      ds := ncMatrix {{M,urZero},{lrZero,N}};
+      assignDegrees(ds,M.target | N.target, M.source | N.source)
+   )
 )
 
 --- flag an entire matrix as having reduced entries
@@ -3215,13 +3289,13 @@ betti NCChainComplex := opts -> C -> (
     len := #C;
     firstbettis := flatten apply(
     	keys (tally (C#0).target), 
-    	i -> {(0,(C#0).target,i) => (tally (C#0).target)_i}
+    	i -> {(0,{i},i) => (tally (C#0).target)_i}
     );
     if C#(len-1) == 0 then len = len - 1;
     lastbettis := flatten flatten apply(len, j -> 
 	apply(
     	    keys (tally (C#j).source), 
-    	    i -> {(j+1,(C#j).source,i) => (tally (C#j).source)_i}
+    	    i -> {(j+1,{i},i) => (tally (C#j).source)_i}
 	    )
 	);
     L := firstbettis | lastbettis;
@@ -3430,17 +3504,16 @@ load (currentFileDirectory | "NCAlgebra/NCAlgebraDoc.m2")
 
 end
 
+---- installing and loading the package
 restart
 uninstallPackage "NCAlgebra"
 installPackage "NCAlgebra"
 needsPackage "NCAlgebra"
 viewHelp "NCAlgebra"
 
---- arithmetic benchmark
-restart
-needsPackage "NCAlgebra"
-A = QQ{x,y,z}
-f = x+y+z
-time(f^12);
-time(f^6*f^6);
+---- checking the package
+
+loadPackage "UnitTestsNCA"
+check UnitTestsNCA
+
 

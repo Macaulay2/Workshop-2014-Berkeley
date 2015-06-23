@@ -679,7 +679,7 @@ subQuotientAsCokernel(M,N)
 ///
 
 TEST ///
---- a serious 'production' example of a Hom computation
+--- a 'production' example of a Hom computation
 restart
 needsPackage "NCAlgebra"
 needsPackage "NCAlgebraV2"

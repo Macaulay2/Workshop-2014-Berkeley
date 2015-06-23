@@ -6,18 +6,22 @@ undocumented {(net,NCGroebnerBasis),
 	      (net,NCRingElement),
 	      (net,NCMatrix),
 	      (net,NCRingMap),
+	      (net,NCChainComplex),
 	      (expression, NCMatrix),
 	      (net,NCQuotientRing),
 	      functionHash,
 	      (NewFromMethod,NCPolynomialRing,List),
 	      (NewFromMethod,NCQuotientRing,List),
+	      (symbol ?, NCMatrix, NCMatrix),
+	      (symbol ?, NCRingMap, NCRingMap),
 	      CacheBergmanGB,
 	      MakeMonic,
 	      Derivation,
 	      NumModuleVars,
 	      InstallGB,
 	      ReturnIdeal,
-	      NumberOfBins}
+	      NumberOfBins,
+	      Basis}
 
 beginDocumentation()
 
@@ -34,6 +38,7 @@ doc ///
       commands contain calls to the existing noncommutative algebra package Bergman.
   Subnodes
     "Basic operations on noncommutative algebras"
+    "General setup information"
     "Using the Bergman interface"
 ///
 
@@ -422,6 +427,7 @@ doc ///
    Key
       ncMatrix
       (ncMatrix,List)
+      (ncMatrix,NCRing,List,List)
    Headline
       Create an NCMatrix
    Usage
@@ -435,6 +441,9 @@ doc ///
          This command creates an NCMatrix.  As with the @ TO matrix @ command, the user
 	 may provide this matrix as a doubly nested list of NCRingElements, or as a
 	 doubly nested list of NCMatrices.
+      
+        The ncMatrix(NCRing,List,List) constructor is used only when creating maps to and from
+	the zero free module.
       Example
          A = QQ{a,b,c,d}
 	 M = ncMatrix {{a,b,c,d}}
@@ -1987,8 +1996,9 @@ doc ///
 doc ///
    Key
       (ring, NCIdeal)
+      (ring, NCGroebnerBasis)
    Headline
-      Returns the ring of an NCIdeal
+      Returns the ring of an NCIdeal or NCGroebnerBasis
    Usage
       A = ring I
    Inputs
@@ -2287,6 +2297,7 @@ doc ///
 doc ///
    Key
       rightKernelBergman
+      rightKernelDegreeLimit
       (rightKernelBergman,NCMatrix)
       [rightKernelBergman,DegreeLimit]
    Headline
@@ -2317,7 +2328,9 @@ doc ///
 	 by the user, the default maximum degree is 10. The method returns a minimal 
 	 set of generators for the kernel in these degrees.
 	 
-	
+	 The results of this command are cached in the input matrix M in M.cache#rightKernel,
+	 and the maximum degree used in this computation is in M.cache#rightKernelDegreeLimit.
+	 
       Example
 	 B = threeDimSklyanin(QQ,{1,1,-1},{x,y,z})
          A = ambient B
@@ -2585,18 +2598,22 @@ doc ///
    Key
       leftMultiplicationMap
       (leftMultiplicationMap,NCRingElement,ZZ)
+      (leftMultiplicationMap,NCRingElement,ZZ,ZZ)
       (leftMultiplicationMap,NCRingElement,List,List)
       rightMultiplicationMap
       (rightMultiplicationMap,NCRingElement,ZZ)
+      (rightMultiplicationMap,NCRingElement,ZZ,ZZ)
       (rightMultiplicationMap,NCRingElement,List,List)
    Headline
       Computes a matrix for left or right multiplication by a homogeneous element
    Usage
-      leftMultiplicationMap(r,n) or leftMultiplicationMap(r,fromBasis,toBasis)
+      leftMultiplicationMap(r,n) or leftMultiplicationMap(r,n,m) or leftMultiplicationMap(r,fromBasis,toBasis)
    Inputs
       r : NCRingElement
       n : ZZ
           the homogeneous degree for the source of the map
+      m : ZZ
+      	  the homogeneous degree for the target of the map
       fromBasis : List
                 a list of monomials of the same homogeneous degree
       toBasis : List
@@ -2733,6 +2750,7 @@ doc ///
 doc ///
    Key
       homogDual
+      (homogDual,Ring)
       (homogDual,NCIdeal)
       (homogDual,NCQuotientRing)
    Headline
@@ -2742,6 +2760,7 @@ doc ///
    Inputs
       I : NCIdeal
           or an @ TO NCQuotientRing @
+	  or a @ TO Ring @.
    Outputs
       : NCIdeal
            or an @ TO NCQuotientRing @
@@ -2771,6 +2790,7 @@ doc ///
       coordinates
       (coordinates, NCRingElement)
       (coordinates, List)
+      [coordinates,Basis]
    Headline
       Computes coordinates relative to a given basis
    Usage
@@ -2801,7 +2821,7 @@ doc ///
 	 is given by "orbit sums" of basis monomials. Here we work in homogeneous degree 3.
       Example
 	 g = ncMap(A,A,{y,z,x})
-	 gList = {g, g@@g, g@@g@@g}
+	 gList = {g, g^2, g^3}
 	 a = sum apply(3,i-> (gList#i)(x^3))
 	 b = sum apply(3,i-> (gList#i)(x^2*y))
 	 c = sum apply(3,i-> (gList#i)(x*y^2))
@@ -4031,14 +4051,12 @@ doc ///
       "General setup information"
 ///
 
-
-
 doc ///
    Key
       "General setup information"
    Description
       Text
-         We recommend using the NCAlgebra packaage with the most recent version of Macaulay2. 
+         We recommend using the NCAlgebra package with the most recent version of Macaulay2. 
       Text 
          Many of the methods in the NCAlgebra package rely on J. Backelin's
 	 noncommutative Groebner basis program Bergman. In the future, we may
@@ -4048,61 +4066,319 @@ doc ///
          Bergman is free, open-source software available at
 	 http://servus.math.su.se/bergman/. We suggest users download the "current"
 	 version. You will find that Bergman can be compiled in several ways.
-	 The NCAlgebra package assumes Bergman is installed under Common LISP
-	 (CLISP). CLISP is available at http://clisp.sourceforge.net/.
+	 We have found that as of March of 2015, Bergman does not run on the version
+	 of Common Lisp that installs via homebrew on Mac OS X versions 10.9 or newer.
+      	 We give detailed instructions for installing Bergman and having it work
+	 with the NCAlgebra package below in the case of an Ubuntu installation.
       Text
-         Once Bergman is successfully installed, you will need to edit the 
-	 variable "bergmanPath" in the NCAlgebra.m2 file. The entry should be path to
-	 the top-level Bergman folder. This step is necessary
-	 for NCAlgebra to access a certain library file in the Bergman distribution.
-	 Having the correct directory in your \$PATH is not sufficient; do not omit
-	 this step. You can test whether bergmanPath is set correctly by 
-	 running the examples in @ TO normalFormBergman @.
+         First, install Common Lisp using the command
+      CannedExample
+      	 sudo apt-get install clisp
       Text
-         While you're editing bergmanPath, you may wish to note the variables
-	 MAXDEG and MAXSIZE. These are tolerance values beyond which Bergman is
-	 called for normal form reductions. See @ TO "Using the Bergman interface" @
-	 for more information.
+         Next, download the bergman source and un-tar it.  You'll need M2 to see the source
+	 even after it is built so remember where you left it.  Next, change to the
+	 directory <bergmanRoot>/scripts/clisp/unix.  In this directory is a file called
+	 mkbergman that is basically the makefile for the common lisp build.  From within
+	 that directory, execute the command
+      CannedExample
+         ./mkbergman -auto
+      Text
+      	 The -auto parameter can be left off in place of -i (for interactive) if you would
+	 like to specify non-default answers to some of the build parameters.  When this command
+	 has been completed, the location of the bergman executable will be reported to you.
+      Text
+         Next, add bergman to your path.  This can be achieved, for example, by symlinking the bergman executable to
+	 a directory on your path using the command:
+      CannedExample
+         ln -s <bergmanExecutableLocation> /usr/bin/bergman
+      Text
+      	 Next, you need to set it up so that the environment variable BERGMANPATH is set upon entering a terminal
+	 by editing, for example, your .bashrc file.  It should contain the location of the root of the bergman
+	 source code.  This can be achieved with adding the following line to your .bashrc file (or course, assuming your source code is located
+	 at "~/bergman"):
+      CannedExample
+         export BERGMANPATH="~/bergman"
+      Text
+         There are also two global variables present (MAXDEG and MAXSIZE) in NCAlgebra.m2 which are
+	 tolerance values beyond which Bergman is called for normal form reductions.
+	 See @ TO "Using the Bergman interface" @ for more information.
    SeeAlso
       "Using the Bergman interface"
-
-
 ///
 
--- NCAlgebra Documentation to-do
+doc ///
+  Key
+    kernelComponent
+    (kernelComponent, ZZ, NCRingMap)
+  Headline
+    Computes a basis of the kernel of a ring map in a specified degree.
+  Usage
+    kern = kernelComponent(n,phi)
+  Inputs
+    n : ZZ
+    phi : NCRingMap
+  Outputs
+    kern : NCMatrix
+  Description
+    Text
+       This function returns a basis of the kernel of a ring map in a specified degree.
+    Example
+       A = QQ{x,y,z}
+       B = skewPolynomialRing(QQ,(-1)_QQ, {a,b,c})
+       phi = ncMap(B,A,{a,b,c})
+       kernelComponent(2,phi)
+///
 
---warning: symbol has no documentation: NCAlgebra :: rightKernelDegreeLimit
---warning: symbol has no documentation: NCAlgebra :: Basis
---warning: method has no documentation: NCAlgebra :: leftMultiplicationMap(NCRingElement,ZZ,ZZ), key: (leftMultiplicationMap,NCRingElement,ZZ,ZZ)
---warning: method has no documentation: NCAlgebra :: homogDual(Ring), key: (homogDual,Ring)
---warning: method has no documentation: NCAlgebra :: rightMultiplicationMap(NCRingElement,ZZ,ZZ), key: (rightMultiplicationMap,NCRingElement,ZZ,ZZ)
---warning: symbol has no documentation: NCAlgebra :: kernelComponent
---warning: method has no documentation: NCAlgebra :: kernelComponent(ZZ,NCRingMap), key: (kernelComponent,ZZ,NCRingMap)
---warning: symbol has no documentation: NCAlgebra :: gddKernel
---warning: method has no documentation: NCAlgebra :: gddKernel(ZZ,NCRingMap), key: (gddKernel,ZZ,NCRingMap)
---warning: method has no documentation: NCAlgebra :: ncMatrix(NCRing,List,List), key: (ncMatrix,NCRing,List,List)
---warning: symbol has no documentation: NCAlgebra :: envelopingAlgebra
---warning: method has no documentation: NCAlgebra :: envelopingAlgebra(NCRing,Symbol), key: (envelopingAlgebra,NCRing,Symbol)
---warning: symbol has no documentation: NCAlgebra :: freeProduct
---warning: method has no documentation: NCAlgebra :: freeProduct(NCRing,NCRing), key: (freeProduct,NCRing,NCRing)
---warning: symbol has no documentation: NCAlgebra :: qTensorProduct
---warning: method has no documentation: NCAlgebra :: qTensorProduct(NCRing,NCRing,QQ), key: (qTensorProduct,NCRing,NCRing,QQ)
---warning: method has no documentation: NCAlgebra :: qTensorProduct(NCRing,NCRing,RingElement), key: (qTensorProduct,NCRing,NCRing,RingElement)
---warning: 17 warning(s) occurred in documentation for package NCAlgebra
---making info file in ../../../.Macaulay2/local/share/info/NCAlgebra.info.tmp
---warning: tag has no documentation: NCAlgebra :: Hom(ZZ,NCMatrix,NCMatrix), key (Hom,ZZ,NCMatrix,NCMatrix)
---warning: tag has no documentation: NCAlgebra :: NCMatrix ? NCMatrix, key (symbol ?,NCMatrix,NCMatrix)
---warning: tag has no documentation: NCAlgebra :: NCMatrix _ ZZ, key (symbol _,NCMatrix,ZZ)
---warning: tag has no documentation: NCAlgebra :: NCMatrix Array, key (symbol SPACE,NCMatrix,Array)
---warning: tag has no documentation: NCAlgebra :: NCRing ** NCRing, key (symbol **,NCRing,NCRing)
---warning: tag has no documentation: NCAlgebra :: NCRingMap + NCRingMap, key (symbol +,NCRingMap,NCRingMap)
---warning: tag has no documentation: NCAlgebra :: NCRingMap ? NCRingMap, key (symbol ?,NCRingMap,NCRingMap)
---warning: tag has no documentation: NCAlgebra :: NCRingMap ^ ZZ, key (symbol ^,NCRingMap,ZZ)
---warning: tag has no documentation: NCAlgebra :: NCRingMap NCGroebnerBasis, key (symbol SPACE,NCRingMap,NCGroebnerBasis)
---warning: tag has no documentation: NCAlgebra :: NCRingMap NCIdeal, key (symbol SPACE,NCRingMap,NCIdeal)
---warning: tag has no documentation: NCAlgebra :: QQ * NCRingMap, key (symbol *,QQ,NCRingMap)
+doc ///
+  Key
+    gddKernel
+    (gddKernel, ZZ, NCRingMap)
+  Headline
+    Computes a homogeneous generating set of the kernel of a ring map.
+  Usage
+    kern = gddKernel(n,phi)
+  Inputs
+    n : ZZ
+    phi : NCRingMap
+  Outputs
+    kern : List
+  Description
+    Text
+       This function returns a generating set of the kernel of a
+       ring map up to a specified degree.
+    Example
+       A = QQ{x,y,z}
+       B = skewPolynomialRing(QQ,(-1)_QQ, {a,b,c})
+       phi = ncMap(B,A,{a,b,c})
+       gddKernel(4,phi)
+///
+
+doc ///
+  Key
+    envelopingAlgebra
+    (envelopingAlgebra, NCRing, Symbol)
+  Headline
+    Create the enveloping algebra
+  Usage
+    Ae = envelopingAlgebra(A,x)
+  Inputs
+    A : NCRing
+    x : Symbol
+  Outputs
+    Ae : NCRing
+  Description
+    Text
+       This function returns the enveloping algebra A ** Aop.  The symbol
+       argument is used to define the variables in Aop.
+    Example
+       B = skewPolynomialRing(QQ,(-1)_QQ, {a,b,c})
+       envelopingAlgebra(B,v)
+///
+
+doc ///
+  Key
+    freeProduct
+    (freeProduct, NCRing, NCRing)
+  Headline
+    Define the free product of two algebras
+  Usage
+    C = freeProduct(A,B)
+  Inputs
+    A : NCRing
+    B : NCRing
+  Outputs
+    C : NCRing
+  Description
+    Text
+       This function returns the free product of the algebras A and B.
+    Example
+       A = QQ{x,y,z}
+       B = skewPolynomialRing(QQ,(-1)_QQ, {a,b,c})
+       C = freeProduct(A,B)
+///
+
+doc ///
+  Key
+    qTensorProduct
+    (qTensorProduct,NCRing,NCRing,ZZ)
+    (qTensorProduct,NCRing,NCRing,QQ)
+    (qTensorProduct,NCRing,NCRing,RingElement)
+    (symbol **, NCRing, NCRing)
+  Headline
+    Define the (q-)commuting tensor product
+  Usage
+    C = qTensorProduct(A,B,q)
+  Inputs
+    A : NCRing
+    B : NCRing
+    q : RingElement
+  Outputs
+    C : NCRing
+  Description
+    Text
+       This function returns the algebra that contains A and
+       B as a subalgebra, with the commutation law on the 
+       images of A and B given by a*b = q*b*a for all a in A and b in B.
+       In the case of A ** B, q = 1.
+    Example
+       A = QQ{x,y}
+       B = skewPolynomialRing(QQ,(-1)_QQ, {a,b})
+       C = qTensorProduct(A,B,-1_QQ)
+       ideal C
+       D = A ** B
+       ideal D
+///
+
+doc ///
+  Key
+    (Hom,ZZ,NCMatrix,NCMatrix)
+  Headline
+    Compute a graded component of Hom(M,N)
+  Usage
+    homs = Hom(n,M,N)
+  Inputs
+    n : ZZ
+    M : NCMatrix
+    N : NCMatrix
+  Outputs
+    homs : List
+  Description
+    Text
+      This function computes a generating set of the degree n component
+      of Hom(M,N) as a module over the coefficient ring of A = ring M.
+///
+
+doc ///
+  Key
+     (symbol _, NCMatrix, ZZ)
+  Headline
+    Induced map in homogeneous degree n
+  Usage
+    m = M_n
+  Inputs
+    M : NCMatrix
+    n : ZZ
+  Outputs
+    m : Matrix
+  Description
+    Text
+      If we regard M as defining a map of graded right free modules,
+      then M_n returns the induced map of underlying R-modules in degree
+      n, where R is the coefficient ring of ring M.
+///
+
+doc ///
+  Key
+    (symbol SPACE, NCMatrix, Array)
+  Headline
+    Graded shift of an NCMatrix.
+  Usage
+    N = M x
+  Inputs
+    M : NCMatrix
+    x : Array
+  Outputs
+    N : NCMatrix
+  Description
+    Text
+      Shifts the source and target in degrees by n if x = [n].
+///
+
+doc ///
+  Key
+    (symbol +, NCRingMap, NCRingMap)
+    (symbol *, ZZ, NCRingMap)
+    (symbol *, QQ, NCRingMap)
+    (symbol *, RingElement, NCRingMap)
+    (symbol ^, NCRingMap, ZZ)
+  Headline
+    Basic operations with NCRingMaps
+  Usage
+    h = f + g or r*f
+  Inputs
+    f : NCRingMap
+    g : NCRingMap
+  Outputs
+    h : NCRingMap
+  Description
+    Text
+      Defines the sum of NCRingMaps.  Though a linear combination of
+      ring maps is not a ring map in general, this routine is useful in
+      constructing ring maps programmatically.  The sum is defined only on generators of
+      the common source of f and g, while for higher degree monomials m,
+      one no longer has f(m) + g(m) = h(m) (so it is only the sum on words
+      of length 1).
+    Example
+      A = QQ{x,y}
+      f = ncMap(A,A,{x,y})
+      g = ncMap(A,A,{y,x})
+      h = 3*f + 4*g
+      matrix h
+      k = h^3
+      matrix k      
+///
+
+doc ///
+  Key
+    (symbol SPACE, NCRingMap, NCIdeal)
+    (symbol SPACE, NCRingMap, NCGroebnerBasis)
+  Headline
+    Apply a ring map to the generators of an ideal
+  Usage
+    J = f I
+  Inputs
+    f : NCRingMap
+    I : NCIdeal
+        or @ TO NCGroebnerBasis @
+  Outputs
+    J : NCIdeal
+        or @ TO NCGroebnerBasis @
+  Description
+    Text
+      This function applies the ring map f to the generators of the ideal
+      or noncommutative Groebner basis that is passed in.
+    Example
+      A = QQ{x,y}
+      g = ncMap(A,A,{y,x})
+      I = ncIdeal {x^2*y+y*x^2}
+      g I
+///
+
+doc ///
+  Key
+    (resolution, NCMatrix)
+    NCChainComplex
+    (betti,NCChainComplex)
+  Headline
+    Compute the resolution of coker M as a map of free right modules
+  Usage
+    res M
+  Inputs
+    M : NCMatrix
+    LengthLimit => ZZ 
+       The length of the resolution.  This defaults to the number
+       of variables of ring M.
+  Outputs
+    : NCChainComplex
+  Description
+    Text
+      This function computes a minimal graded free resolution
+      of the cokernel of M, considered as a map of graded right
+      free modules.  M must be homogeneous for this command to work.
+      
+      As of this version, NCChainComplex (the return type) is still
+      quite simple, though @ TO betti @ still works on them.
+    Example
+      A = skewPolynomialRing(QQ,(-1)_QQ,{x,y,z})
+      M = ncMatrix {{x,y,z}}
+      Mres = res M
+      Mres#0
+      Mres#1
+      Mres#2
+      betti Mres
+  SeeAlso
+    resolution
+///
+
 --warning: tag has no documentation: NCAlgebra :: resolution(NCMatrix), key (resolution,NCMatrix)
 --warning: tag has no documentation: NCAlgebra :: ring(NCGroebnerBasis), key (ring,NCGroebnerBasis)
---warning: tag has no documentation: NCAlgebra :: RingElement * NCRingMap, key (symbol *,RingElement,NCRingMap)
---warning: tag has no documentation: NCAlgebra :: ZZ * NCRingMap, key (symbol *,ZZ,NCRingMap)
---warning: tag has no documentation: NCAlgebra :: coordinates(..., Basis => ...), key [coordinates,Basis]

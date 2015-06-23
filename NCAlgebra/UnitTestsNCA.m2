@@ -394,7 +394,7 @@ assert(isHomogeneous fId)
 -- now factor through g*id
 M' = fId // M
 assert(M*M' == fId)
-assert(M'*M == fId)
+assert(M'*M == fId[3])
 ///
 
 {*
