@@ -1,5 +1,7 @@
 newPackage( "PosChar",
-Version => "0.2a", Date => "May 30th, 2015", Authors => {
+Version => "0.2a", 
+Date => "May 30th, 2015", 
+Authors => {
      {Name => "Erin Bela",
      Email=> "ebela@nd.edu",
      },
@@ -34,7 +36,10 @@ Version => "0.2a", Date => "May 30th, 2015", Authors => {
      HomePage => "http://math.umn.edu/~ewitt/"
      }
 },
-Headline => "A package for calculations of singularities in positive characteristic", DebuggingMode => true, Reload => true )
+Headline => "A package for calculations of singularities in positive characteristic", 
+DebuggingMode => true, 
+Reload => true 
+)
 export{
     "aPower",
     "ascendIdeal", 
@@ -288,14 +293,14 @@ findNumberBetween = (myInterv, maxDenom)->(
 )
 
 
---Computes the non-terminating base p expansion of an integer
+--Computes the terminating base p expansion of an integer
 basePExp = (N,p) ->
 (
     if N < p then return {N};
     prepend( N % p, basePExp( N // p, p ))
 )
 
---Computes the non-terminating base p expansion of an integer 
+--Computes the terminating base p expansion of an integer 
 --from digits zero to e-1 (little-endian first)
 basePExpMaxE = (N,p,e1) ->
 (
@@ -1260,10 +1265,6 @@ isInUpperRegion = method()
 
 isInUpperRegion (List,ZZ,FTData) := (a,q,S) -> 
 (
---    p:=S#"char";
---    try e:=lift(log_p q,ZZ) else error "isInUpperRegion: expected second entry to be a power of the characteristic.";
---    frob:=frobeniusPower(S#"ideal",e);
--- **** Had to modify this, because M2 thinks, e.g., that log_5 125 is not an integer.
     frob:=ideal apply(S#"gens",f->f^q);
     F:=product(S#"polylist",a,(f,i)->fastExp(f,i));
     (F % frob) == 0
@@ -1465,6 +1466,14 @@ taxicabNorm = method()
 
 taxicabNorm (List) := u -> sum( u, abs )
 
+-- floorlog(b,x) computes floor(log_b x), correcting problems due to rounding
+floorlog = (b,x) -> 
+(
+    flog := floor( log_b x ); -- first approximation (assumed to be <= correct value)
+    while b^flog <= x do flog = flog + 1;
+    flog - 1       
+)
+
 -- multOrder(a,b) finds the multiplicative order of a modulo b
 multOrder = method()
 
@@ -1500,7 +1509,7 @@ splittingField (RingElement) := F ->
     ord:=(coefficientRing(ring F))#order;
     factors:=first transpose factorList(F);
     deg:=lcm select(flatten apply(factors,degree),i->i>0);
-    GF(p,deg*floor(log_p ord))
+    GF(p,deg*floorlog(p,ord))
 )
 
 -- Some tests
@@ -1685,7 +1694,7 @@ ethRootInternal = (I,e) -> (
      if (q > p) then 
      (
 	 a:=(gens kk)#0;
-	 e0:=floor(log(p,q)); 
+	 e0:=floorlog(p,q); 
 	 root:=a^(p^(e0-(e%e0)));
      	 L=apply(L,t->substitute(t,a=>root));
 	     -- substitute generator of kk with its p^e-th root
@@ -3103,6 +3112,7 @@ answer
 --****************************************************--
 
 beginDocumentation()
+
 doc ///
    Key
       PosChar 
@@ -3188,7 +3198,7 @@ doc ///
      Key
      	basePExpMaxE
      Headline
-        Computes non-terminating base-p expansion of N from digits zero to e-1.
+        Computes the base-p expansion of N from digits zero to e-1.
      Usage
      	 basePExpMaxE(N,p,e)
      Inputs
