@@ -604,11 +604,14 @@ nu(RingElement, ZZ) := (f1, e1) -> (
 --Approximates the F-pure Threshold
 --Gives a list of nu_I(p^d)/p^d for d=1,...,e
 FPTApproxList = method();
+
 FPTApproxList (Ideal,ZZ) := (I,e) ->
 (
      p := char ring I;
-     apply(#nuList(I,e), i->((nuList(I,e))#i)/p^(i+1)) 
+     nus := nuList(I,e);
+     apply( nus, 1..e, (n,k) -> n/p^k )
 )
+
 FPTApproxList (RingElement,ZZ) := (f,e) -> FPTApproxList(ideal(f),e)
 
 --Approximates the F-Threshold with respect to an ideal J
@@ -616,12 +619,12 @@ FPTApproxList (RingElement,ZZ) := (f,e) -> FPTApproxList(ideal(f),e)
 
 FTApproxList = method();
 
-FTApproxList(Ideal,Ideal,ZZ) := (I1,J1,e1) ->
+FTApproxList (Ideal,Ideal,ZZ) := (I,J,e) ->
 (
-    if isSubset(I1, radical(J1))==false then (print "Error: F-Threshold Undefined")
-    else(
-     p1 := char ring I1;
-     apply(#nuList(I1,J1,e1), i->((nuList(I1,J1,e1))#i)/p1^(i+1)))
+    if not isSubset( I, radical(J) ) then error "F-threshold undefined.";
+     p := char ring I;
+     nus := nuList(I,J,e);
+     apply( nus, 1..e, (n,k) -> n/p^k )
 )
 
 FTApproxList (RingElement,Ideal,ZZ) := (f1,J1,e1) -> FTApproxList(ideal(f1),J1,e1)
@@ -850,12 +853,12 @@ nuHat(RingElement, ZZ):= (f1, e1) -> ( nu(f1,ideal( first entries vars ring idea
 
 FTHatApproxList = method();
 
-FTHatApproxList(Ideal,Ideal,ZZ) := (I1,J1,e1) ->
+FTHatApproxList (Ideal,Ideal,ZZ) := (I,J,e) ->
 (
-    if isSubset(I1, radical(J1))==false then (print "Error: F-Threshold Undefined")
-    else(
-     p1 := char ring I1;
-     apply(#nuHatList(I1,J1,e1), i->((nuHatList(I1,J1,e1))#i)/p1^(i+1)))
+    if not isSubset( I, radical(J) ) then error "F-threshold undefined.";
+     p := char ring I;
+     nus := nuHatList(I,J,e);
+     apply( nus, 1..e, (n,k) -> n/p^k )
 )
 
 FTHatApproxList (RingElement,Ideal,ZZ) := (f1,J1,e1) -> FTHatApproxList(ideal(f1),J1,e1)
