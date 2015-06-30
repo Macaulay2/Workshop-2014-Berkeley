@@ -61,6 +61,7 @@ export{
     "estFPT",
     "ethRoot",
     "ethRootSafe", 		--MK
+    "ethRootSafeList",    
     "factorList",
     "fancyEthRoot",		--MK
     "fastExp",
@@ -99,7 +100,7 @@ export{
     "isFRegularQGor",
     "isInLowerRegion",
     "isInUpperRegion",
-    "isJToAInIToPe",
+--    "isJToAInIToPe",
     "isSharplyFPurePoly",
     "isMapSplit",
     "MaxExp",
@@ -110,10 +111,13 @@ export{
     "nonFInjectiveLocus",   --MK
     "Nontrivial",
     "nu",
+    "nuAlt",
     "NuCheck",
     "nuHat",
     "nuHatList",
     "nuList",
+    "nuListAlt",
+    "nuListAlt1",
     "num",
     "Origin",
     "OutputRange",
@@ -629,115 +633,86 @@ FTApproxList (Ideal,Ideal,ZZ) := (I,J,e) ->
 
 FTApproxList (RingElement,Ideal,ZZ) := (f1,J1,e1) -> FTApproxList(ideal(f1),J1,e1)
 
----------------------------------------------------------------
 --***********************************************************--
---This seems wrong becuase the top bound is incorrect for    --
---ideals that are not principal. (5/29/15)-Boise
+--Some new functions for computing nus
 --***********************************************************--
---Functions for computing \nu_I(p^e), \nu_f(p^e), and using  --
---these to compute estimates of FPTs.                        --
---***********************************************************--
----------------------------------------------------------------
 
---isJToAInIToPe = (J1, a1, I1, e1) -> (--checks whether or not f1^a1 is in I1^(p^e1).  It seems to be much faster than raising f1 to a power
---	root := ethRoot(J1, a1, e1); 
---	
---	isSubset(root, I1)
---)
---
---nuList = method()
---
---nuList(Ideal, Ideal,  ZZ) := (I1, J1, e1) -> ( --this is a faster nuList computation, it tries to do a smart nu list computation
---	d1 := 0;
---	p1 := char ring I1;
---	local top;--for the binary search
---	local bottom;--for the binary search
---	local middle;--for the binary search
---	local answer; --a boolean for determining if we go up, or down
---	N := 0;
---	myList := new MutableList;
---	curPower := 0;
-	
---	for d1 from 1 to e1 do (
---		if (curPower == 0) then curPower = 1 else curPower = p1^(d1-1)*curPower;
---		top = p1;
---		bottom = 0;
---		
---		while (top - 1 > bottom) do (--the bottom value is always not in m, the top is always in m
---			middle := floor((top + bottom)/2);
---			answer = isJToAInIToPe(I1, curPower + middle, J1, d1);
---			print "Here we are";
---			print (bottom, top);
---			if (answer == false) then bottom = middle else top = middle
---			--print "Here we are"
---		);
---	--	print (bottom, top, curPower);
---		curPower = curPower + bottom;
---		myList#(d1-1) = curPower;
---		curPower = curPower*p1;
---	);
---	toList myList
---)
---
---nuList(Ideal, ZZ) := (I1, e1) -> (
---    nuList(I1,ideal(first entries vars ring I1), e1)
---    )
---
---nuList(RingElement,ZZ) := (f,e) -> nuList(ideal(f),e)
---
---nu = method()
---
---nu(Ideal, Ideal, ZZ) := (I1, J1, e1) -> ( --this does a fast nu computation
---	p1 := char ring I1;
---	local top;--for the binary search
---	local bottom1;--for the binary search
---	local middle;--for the binary search
---	local answer; --a boolean for determining if we go up, or down 
---	N := 0;
---	myList := new MutableList;
---	curPower := 0;
---	
---	bottom1 = 0;
---	top = p1^e1;		
---	while (top - 1 > bottom1) do (--the bottom value is always not in m, the top is always in m
---		middle = floor((top + bottom1)/2);
---		answer = isJToAInIToPe(I1, middle, J1, e1);
---		if (answer == false) then bottom1 = middle else top = middle;
---	);
---	bottom1
---)
---
---nu(Ideal, ZZ) := (I1, e1) -> (
---    nu(I1,ideal(first entries vars ring I1), e1)
---    )
---
---nu(RingElement, ZZ) := (f,e) -> nu(ideal(f),e)
---
---Approximates the F-pure Threshold
---Gives a list of nu_I(p^d)/p^d for d=1,...,e
---FPTApproxList = method();
---FPTApproxList (Ideal,ZZ) := (I,e) ->
---(
---     p := char ring I;
---     apply(#nuList(I,e), i->((nuList(I,e))#i)/p^(i+1)) 
---)
---FPTApproxList (RingElement,ZZ) := (f,e) -> FPTApproxList(ideal(f),e)
---
---Approximates the F-Threshold with respect to an ideal J
---More specifically, this gives a list of nu_I^J(p^d)/p^d for d=1,...,e
---
---FTApproxList = method();
---
---FTApproxList(Ideal,Ideal,ZZ) := (I1,J1,e1) ->
---(
---    if isSubset(I1, radical(J1))==false then (print "Error: F-Threshold Undefined")
---    else(
---     p1 := char ring I1;
---     apply(#nuList(I1,J1,e1), i->((nuList(I1,J1,e1))#i)/p1^(i+1)))
---)
---
---FTApproxList (RingElement,Ideal,ZZ) := (f1,J1,e1) -> FTApproxList(ideal(f1),J1,e1)
---
+-- isJToAInIToPe checks whether or not J^a is in I^(p^e).
+-- It seems to be much faster than raising J to a power.
+-- Allows tests with ridiculously large exponents
+isJToAInIToPe = ( J, a, I, e ) -> isSubset( ethRoot( J, a, e ), I )
+
+-- binarySearch(I, J, e, int) searches for (nu_I)^J(p^e) in the interval int = {a,b}.
+-- It is assumed that a<=nu<b.
+binarySearch = ( I, J, e, int ) -> 
+(
+    a := int#0;
+    b := int#1;
+    if b <= a+1 then return a;
+    c := floor( (a+b)/2 );
+    if isJToAInIToPe( I, c, J, e ) 
+        then binarySearch( I, J, e, { a, c } ) 
+	else binarySearch( I, J, e, { c, b } )
+)
+
+-- This is essentially the old nuList command, which uses pth roots, 
+-- fixed and slightly streamlined 
+nuListAlt = method(); 
+
+nuListAlt( Ideal, Ideal, ZZ ) := ( I, J, n ) -> 
+( 
+    theList := { };
+    p := char ring I;
+    nu := effRad( I, J ) - 1; -- nu(p^0)
+    N := min( numgens( trim( I ) ), numgens( trim( J ) ) );
+    scan( 1..n, e -> 
+	(
+	    nu = binarySearch( I, J, e, { p*nu, (nu+1)*(N*p-N+1) } );
+    	    theList = append( theList, nu );
+    	)
+    );
+    theList	    
+)
+
+nuListAlt( RingElement, Ideal, ZZ ) := ( f, J, n ) -> 
+( 
+    theList := { };
+    p := char ring f;
+    nu := effPolyRad( f, J ) - 1;  -- nu(p^0)
+    scan( 1..n, e -> 
+	(
+	    nu = binarySearch( f, J, e, { p*nu, p*(nu+1) } );
+    	    theList = append( theList, nu );
+    	)
+    );
+    theList	    
+)
+
+nuAlt = method();
+
+nuAlt( Ideal, Ideal, ZZ ) := ( I, J, e ) -> last nuListAlt( I, J, e )
+
+nuAlt( RingElement, Ideal, ZZ ) := ( f, J, e ) -> last nuListAlt( f, J, e )
+
+-- This is a different approach to nuList, that uses colon ideals. 
+nuListAlt1 = method();
+
+nuListAlt1( RingElement, Ideal, ZZ ) := ( f, J, n ) ->  
+(
+    p := char ring f;
+    nu := effPolyRad( f, J ) - 1;  -- nu(p^0)
+    theList := { nu };
+    I := J;
+    scan( 1..n, e ->
+	(
+	    I = I: ideal( f^nu );
+	    nu = binarySearch( f, I, 1, { 0, p } );
+	    theList = append( theList, p*(last theList) + nu );
+	    I = frobeniusPower( I, 1 ); 
+	)
+    );
+    theList
+)    
 
 ---------------------------------------------------------------
 --***********************************************************--
@@ -1583,7 +1558,9 @@ ethRoot(Ideal,ZZ) := (Im,e) -> (
 
 --This tries to compute (f^a*I)^{[1/p^e]} in such a way that we don't blow exponent buffers.  It can be much faster as well.
 --We should probably just use it.  It relies on the fact that (f^(ap+b))^{[1/p^2]} = (f^a(f^b)^{[1/p]})^{[1/p]}.
-ethRootSafe = (f, I, a, e) -> (
+ethRootSafe = method(); 
+
+ethRootSafe( RingElement, Ideal, ZZ, ZZ ) := ( f, I, a, e ) -> (
 	R1 := ring I;
 	p1 := char R1;
 	
@@ -1607,8 +1584,13 @@ ethRootSafe = (f, I, a, e) -> (
 	IN1*ideal(f^(aQuot))
 )
 
+ethRootSafe( RingElement, ZZ, ZZ ) := ( f, a, e ) -> 
+    ethRootSafe( f, ideal( 1_(ring f) ), a, e )
+
 --This tries to compute (f1^a1*f2^a2*...fk^ak*I)^{[1/p^e]} in such a way that we don't blow exponent buffers.  It can be much faster as well.
-ethRootSafeList = (elmtList, I1, aList, e1) -> (
+ethRootSafeList = method();
+
+ethRootSafeList( List, Ideal, List, ZZ ) := ( elmtList, I1, aList, e1 ) -> (
 	   R1 := ring I1;
         p1 := char R1;
         
@@ -1633,6 +1615,9 @@ ethRootSafeList = (elmtList, I1, aList, e1) -> (
         IN1*ideal(fold(times, aPowerList))
 )
 
+ethRootSafeList( List, List, ZZ ) := ( F, a, e ) ->
+    ethRootSafeList( F, ideal( 1_( ring( F#0 ) ) ), a, e )
+	
 ethRoot(RingElement, Ideal, ZZ, ZZ) := (f, I, a, e) -> ethRootSafe (f, I, a, e) ---MK
 
 ethRootInternalOld = (Im,e) -> (
@@ -1790,7 +1775,7 @@ fancyEthRoot = (I,m,e) ->
 
 ethRoot (Ideal, ZZ, ZZ) := (I,m,e) -> fancyEthRoot (I,m,e)  --- MK
 
-
+ethRoot( RingElement, ZZ, ZZ ) := ( f, a, e ) -> ethRoot( ideal( f ), a, e )
 
 --Computes I^{[1/p^e]}, we must be over a perfect field. and working with a polynomial ring
 --This is a slightly stripped down function due to Moty Katzman, with some changes to avoid the
