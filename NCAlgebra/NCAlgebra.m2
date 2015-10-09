@@ -1,7 +1,7 @@
 newPackage("NCAlgebra",
      Headline => "Data types for Noncommutative algebras",
-     Version => "0.999",
-     Date => "October 29, 2013",
+     Version => "0.9999",
+     Date => "October 9, 2015",
      Authors => {
 	  {Name => "Frank Moore",
 	   HomePage => "http://www.math.wfu.edu/Faculty/Moore.html",
@@ -1008,17 +1008,20 @@ net NCRingElement := f -> (
    
    firstTerm := true;
    myNet := net "";
+   isZp := (class coefficientRing ring f === QuotientRing and ambient coefficientRing ring f === ZZ);
    for t in sort pairs f.terms do (
       tempNet := net t#1;
       printParens := ring t#1 =!= QQ and
-                     ring t#1 =!= ZZ and
+  		     ring t#1 =!= ZZ and
+                     not isZp and
 		     (size t#1 > 1 or (isField ring t#1 and 
 			               numgens coefficientRing ring t#1 > 0 and
 				       size sub(t#1, coefficientRing ring t#1) > 1));
       myNet = myNet |
-              (if not firstTerm and t#1 > 0 then
+              (if isZp and tempNet#0#0 != "-" and not firstTerm then net "+"
+	       else if not firstTerm and t#1 > 0 then
                  net "+"
-              else 
+               else 
                  net "") |
               (if printParens then net "(" else net "") | 
               (if t#1 != 1 and t#1 != -1 then
@@ -1035,16 +1038,18 @@ net NCRingElement := f -> (
 toStringMaybeSort := method(Options => {Sort => false})
 toStringMaybeSort NCRingElement := opts -> f -> (
    sortFcn := if opts#Sort then sort else identity;
+   isZp := (class coefficientRing ring f === QuotientRing and ambient coefficientRing ring f === ZZ);
    if #(f.terms) == 0 then "0" else (
       firstTerm := true;
       myNet := "";
       for t in sortFcn pairs f.terms do (
          tempNet := toString t#1;
-         printParens := ring t#1 =!= QQ and ring t#1 =!= ZZ and size t#1 > 1;
+         printParens := ring t#1 =!= QQ and ring t#1 =!= ZZ and not isZp and size t#1 > 1;
          myNet = myNet |
-                 (if not firstTerm and t#1 > 0 then
+                 (if isZp and tempNet#0#0 != "-" and not firstTerm then "+"
+		  else if not firstTerm and t#1 > 0 then
                     "+"
-                 else 
+                  else 
                     "") |
                  (if printParens then "(" else "") |
                  (if t#1 != 1 and t#1 != -1 and t#0#monList =!= {} then
