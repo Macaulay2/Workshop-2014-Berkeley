@@ -2336,7 +2336,7 @@ tauNonPrincipalAOverPEPoly = {Verbose=> false}>> o -> (I1, a1, e1) -> ( -- compu
 			
 			myDirectImage := HH_0(directImageComplex(IRees^(a1*p1^(i1-e1))*newKer, Regularity=>(10+a1))); 	
  	
-		 	directIdeal := module2Ideal(myDirectImage, R1);
+		 	directIdeal := moduleToIdeal(myDirectImage, R1);
  			if ( codim(directIdeal)==1) then error "This function produced a codimension 1 ideal.";
  	
  			descend = ethRoot(directIdeal, i1);
@@ -2987,9 +2987,10 @@ isFJumpingNumberPoly ={Verbose=> false}>> o -> (f1, t1) -> (
 findGeneratingMorphisms = (I) ->
 (
 	local i;
+	R1 := ring I;
 	Ip:=frobeniusPower(I,1);
-	M:=coker I;
-	Mp:=coker Ip;
+	M:=R1^1/I;
+	Mp:=R1^1/Ip;
 	resM:=res M;
 	resMp:=res Mp;
 	f:=inducedMap(M,Mp);
