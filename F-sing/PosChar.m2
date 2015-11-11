@@ -3,18 +3,18 @@ Version => "0.2a",
 Date => "May 30th, 2015", 
 Authors => {
      {Name => "Erin Bela",
-     Email=> "ebela@nd.edu",
+     Email=> "ebela@nd.edu"
      },
      {Name => "DJ Bruce",
-     Email=> "djbruce@math.wic.edu",
+     Email => "djbruce@math.wisc.edu",
      HomePage => "http://www.math.wisc.edu/~djbruce/"
      },
      {Name => "Daniel Hernandez",
-     Email=> "dhernan@math.utah.edu",
-     HomePage=> "http://www.math.utah.edu/~dhernan/"
+     Email => "dhernan@math.utah.edu",
+     HomePage => "http://math.utah.edu/~dhernan/"
      },
      {Name => "Zhibek Kadyrsizova",
-     Email=> "zhikadyr@umich.edu",
+     Email => "zhikadyr@umich.edu"
      },
      {Name => "Mordechai Katzman",
      Email=> "m.katzman@sheffield.ac.uk",
@@ -1798,7 +1798,7 @@ ethRoot(Ideal,ZZ) := (Im,e) -> (
 -- This is an implementation of the algorithm described in
 -- Moty Katzman and Karl Schwede's paper 
 -- "An algorithm for computing compatibly Frobenius split subvarieties"
--- J. Symbolic Comput. 47 (2012), no. 8, 996–1008. 
+-- J. Symbolic Comput. 47 (2012), no. 8, 996\961008. 
 
 ----------------------------------------------------------------------------------------
 
@@ -3946,7 +3946,7 @@ doc ///
         :Ideal
      Description
 	Text
-	     This computes the test ideal of (R, f^t) when R is a polynomial ring over a perfect field.  It is done as follows.  If t = a/(p^e - 1) then tau(R, f^t) is computed as a sum of (f^{\lceil t \rceil}*f^{\lceil t(p^e-1) \rceil})^{[1/p^e]} until the sum stabilizes.  For the more general case, we use the formula tau(R, f^t)^{[1/p^d]} = tau(R, f^{t/p^d}).
+	     This computes the test ideal of (R, f^t) when R is a polynomial ring over a perfect field.  It is done as follows.  If t = a/(p^e - 1) then tau(R, f^t) is computed as a sum of (f^{lceil t rceil}*f^{lceil t(p^e-1) rceil})^{[1/p^e]} until the sum stabilizes.  For the more general case, we use the formula tau(R, f^t)^{[1/p^d]} = tau(R, f^{t/p^d}).
 ///
 
 doc ///
