@@ -1103,7 +1103,8 @@ coordinates List := opts -> L -> (
    else
       bas := opts#Basis;
       R := ring bas#0;
-      d := degree bas#0;
+      firstNonzero := select(1,bas,b -> b != 0);
+      d := if firstNonzero == {} then 0 else degree first firstNonzero;
       if not all(L, m-> (isHomogeneous(m) and ((degree m) == d or m == 0))) then
 	error "Expected homogeneous elements of the same degree.";
       mons := flatten entries basis(d,R);
