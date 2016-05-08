@@ -1,0 +1,10 @@
+--*************************************************
+--*************************************************
+--This file is used for doing the [1/p^e] operation
+--in the sense of Blickle-Mustata-Smith.
+--This operation is also called I_e in Katzman or 
+--simply the image of 
+--M \subseteq \Hom_R(R^{1/p^e}, R) -> R
+--under evaluation at 1.
+--*************************************************
+--*************************************************
