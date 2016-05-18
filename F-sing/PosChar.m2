@@ -1375,7 +1375,7 @@ FPT2VarHomogInternal (List,FTData) := opt -> (a,S) ->
     S1:=setFTData(ideals_e0,polys);
     cp:=findCPBelow(dgt/p,S1); 
     	--if some coordinate of cp is 0, its magnification may not be a CP
-    while product(cp)==0 do 
+    while ( ( product(cp) == 0 ) and ( e0 > 0 ) ) do 
     (
 	e0=e0-1;
         -- zoom out one step and look for CP again
