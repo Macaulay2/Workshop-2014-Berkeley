@@ -3474,6 +3474,52 @@ doc ///
 
 doc ///
    Key
+      fourDimSklyanin
+      (fourDimSklyanin,Ring,List)
+      (fourDimSklyanin,Ring,List,List)
+   Headline
+      Defines a four-dimensional Sklyanin with given parameters
+   Usage
+      fourDimSklyanin(R,params,varList)
+   Inputs
+      R       : Ring
+      params  : List
+      varList : List
+      DegreeLimit => ZZ
+   Outputs
+      : NCRing
+   Description
+      Text
+         This method constructs a three dimensional Sklyanin algebra with parameters from
+	 the params list, and variables from varList (see @ HREF{"http:////arxiv.org//abs//1108.1552","here"} @).
+	 If either list is not the appropriate length, then an error is thrown.  The generic 
+	 such algebra has a fairly complicated Groebner basis, so the optional parameter
+	 DegreeLimit has been defaulted to 5.  If only one list is provided, it is used
+	 for the variable names, and a random choice for each parameter is chosen.
+      
+      	 In order to not get a degenerate example, one should ensure that the
+	 parameters provided satisfy \alpha + \beta + \gamma + \alpha\beta\gamma = 0.
+	 This method does not check this condition, since the degenerate examples are
+	 of interest as well.  If no parameters are provided, however a generic choice
+	 of \alpha,\beta and \gamma satisfying the equation above are selected.
+      Example
+         C = fourDimSklyanin(QQ,{a,b,c,d})
+	 ncGroebnerBasis ideal C
+      Text
+         In all nondegenerate cases, there is are two central elements of degree two which form
+	 a regular sequence on the four dimensional Sklyanin (this was proven by Paul
+	 Smith and Toby Stafford in a paper in Compositio.
+      Example
+         centralElements(C,2)
+      Text
+         These algebras also all AS-regular and as such have the same Hilbert
+	 series as a commutative polynomial algebra in four variables, as we can see here:
+      Example
+         hilbertBergman(C, DegreeLimit => 6)
+///
+
+doc ///
+   Key
       toM2Ring
       (toM2Ring,NCRing)
       [toM2Ring,SkewCommutative]

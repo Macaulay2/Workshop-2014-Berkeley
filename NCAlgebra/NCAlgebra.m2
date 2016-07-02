@@ -1,7 +1,7 @@
 newPackage("NCAlgebra",
      Headline => "Data types for Noncommutative algebras",
-     Version => "0.9999",
-     Date => "October 9, 2015",
+     Version => "1.0",
+     Date => "July 2, 2016",
      Authors => {
 	  {Name => "Frank Moore",
 	   HomePage => "http://www.math.wfu.edu/Faculty/Moore.html",
@@ -57,6 +57,7 @@ export { "NCRing", "NCQuotientRing", "NCPolynomialRing",
          "minimizeRelations",
          "skewPolynomialRing",
 	 "threeDimSklyanin",
+	 "fourDimSklyanin",
 	 "oppositeRing",
          "quadraticClosure",
 	 "homogDual",
@@ -2636,6 +2637,38 @@ threeDimSklyanin (Ring, List, List) := opts -> (R, params, varList) -> (
 threeDimSklyanin (Ring, List) := opts -> (R, varList) -> (
    if char R =!= 0 then error "For random Sklyanin, QQ coefficients are required.";
    threeDimSklyanin(R,{random(QQ),random(QQ), random(QQ)}, varList)
+)
+
+fourDimSklyanin = method(Options => {DegreeLimit => 5})
+fourDimSklyanin (Ring, List, List) := opts -> (R, params, varList) -> (
+   if #params != 3 or #varList != 4 then error "Expected three parameters and four variables.";
+   if instance(varList#0, R) or instance(varList#0,ZZ) or instance(varList#0,QQ) then
+      error "Expected list of variables in third argument.";
+   A := R varList;
+   gensA := gens A;
+   varList = gens A;
+   f1 := (varList#0*varList#1 - varList#1*varList#0) - params#0*(varList#2*varList#3 + varList#3*varList#2);
+   f2 := (varList#0*varList#2 - varList#2*varList#0) - params#1*(varList#3*varList#1 + varList#1*varList#3);
+   f3 := (varList#0*varList#3 - varList#3*varList#0) - params#2*(varList#1*varList#2 + varList#2*varList#1);
+   g1 := (varList#0*varList#1 + varList#1*varList#0) - (varList#2*varList#3 - varList#3*varList#2);
+   g2 := (varList#0*varList#2 + varList#2*varList#0) - (varList#3*varList#1 - varList#1*varList#3);
+   g3 := (varList#0*varList#3 + varList#3*varList#0) - (varList#1*varList#2 - varList#2*varList#1);
+
+   I := ncIdeal {f1,f2,f3,g1,g2,g3};
+   installGB := not (A#BergmanRing or bergmanCoefficientRing gens I =!= null);
+   Igb := ncGroebnerBasis(I, InstallGB=>installGB, DegreeLimit=>opts#DegreeLimit);
+   B := A/I;
+   B
+)
+fourDimSklyanin (Ring, List) := opts -> (R, varList) -> (
+   if char R != 0 and char R < 100 then error "For random Sklyanin, QQ coefficients or characteristic larger than 100 are required.";
+   --- generate a generic four dimensional Sklyanin that is AS regular
+   alpha := random(QQ);
+   while (alpha == 0) do alpha = random(QQ);
+   beta := random(QQ);
+   while (beta == 0 or (1 + alpha*beta) == 0) do beta = random(QQ);
+   gamma := (-alpha-beta)/(1 + alpha*beta);
+   fourDimSklyanin(R,{alpha,beta,gamma}, varList)
 )
 
 oreIdeal = method(Options => {Degree => 1})
