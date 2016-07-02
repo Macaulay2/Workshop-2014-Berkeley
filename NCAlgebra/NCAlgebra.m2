@@ -3540,7 +3540,8 @@ wallTiming = f -> (
 ------------------------------------------------------------
 
 --- include the documentation
-load (currentFileDirectory | "NCAlgebra/NCAlgebraDoc.m2")
+-- load (currentFileDirectory | "NCAlgebra/NCAlgebraDoc.m2")
+load "./NCAlgebra/NCAlgebraDoc.m2"
 
 end
 
