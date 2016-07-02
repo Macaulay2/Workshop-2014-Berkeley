@@ -3,18 +3,18 @@ Version => "0.2a",
 Date => "May 30th, 2015", 
 Authors => {
      {Name => "Erin Bela",
-     Email=> "ebela@nd.edu",
+     Email=> "ebela@nd.edu"
      },
      {Name => "DJ Bruce",
-     Email=> "djbruce@math.wic.edu",
+     Email => "djbruce@math.wisc.edu",
      HomePage => "http://www.math.wisc.edu/~djbruce/"
      },
      {Name => "Daniel Hernandez",
-     Email=> "dhernan@math.utah.edu",
-     HomePage=> "http://www.math.utah.edu/~dhernan/"
+     Email => "dhernan@math.utah.edu",
+     HomePage => "http://math.utah.edu/~dhernan/"
      },
      {Name => "Zhibek Kadyrsizova",
-     Email=> "zhikadyr@umich.edu",
+     Email => "zhikadyr@umich.edu"
      },
      {Name => "Mordechai Katzman",
      Email=> "m.katzman@sheffield.ac.uk",
@@ -29,7 +29,7 @@ Authors => {
      },
      {Name => "Pedro Teixeira",
      Email => "pteixeir@knox.edu",
-     HomePage => "http://www.knox.edu/academics/faculty/teixeira-pedro.html"
+     HomePage => "http://www.knox.edu/academics/majors-and-minors/mathematics/faculty/teixeira-pedro"
      },
      {Name=> "Emily Witt",
      Email=> "ewitt@umn.edu",
@@ -1375,7 +1375,7 @@ FPT2VarHomogInternal (List,FTData) := opt -> (a,S) ->
     S1:=setFTData(ideals_e0,polys);
     cp:=findCPBelow(dgt/p,S1); 
     	--if some coordinate of cp is 0, its magnification may not be a CP
-    while product(cp)==0 do 
+    while ( ( product(cp) == 0 ) and ( e0 > 0 ) ) do 
     (
 	e0=e0-1;
         -- zoom out one step and look for CP again
@@ -1798,7 +1798,7 @@ ethRoot(Ideal,ZZ) := (Im,e) -> (
 -- This is an implementation of the algorithm described in
 -- Moty Katzman and Karl Schwede's paper 
 -- "An algorithm for computing compatibly Frobenius split subvarieties"
--- J. Symbolic Comput. 47 (2012), no. 8, 996–1008. 
+-- J. Symbolic Comput. 47 (2012), no. 8, 996\961008. 
 
 ----------------------------------------------------------------------------------------
 
@@ -2336,7 +2336,7 @@ tauNonPrincipalAOverPEPoly = {Verbose=> false}>> o -> (I1, a1, e1) -> ( -- compu
 			
 			myDirectImage := HH_0(directImageComplex(IRees^(a1*p1^(i1-e1))*newKer, Regularity=>(10+a1))); 	
  	
-		 	directIdeal := module2Ideal(myDirectImage, R1);
+		 	directIdeal := moduleToIdeal(myDirectImage, R1);
  			if ( codim(directIdeal)==1) then error "This function produced a codimension 1 ideal.";
  	
  			descend = ethRoot(directIdeal, i1);
@@ -2987,9 +2987,10 @@ isFJumpingNumberPoly ={Verbose=> false}>> o -> (f1, t1) -> (
 findGeneratingMorphisms = (I) ->
 (
 	local i;
+	R1 := ring I;
 	Ip:=frobeniusPower(I,1);
-	M:=coker I;
-	Mp:=coker Ip;
+	M:=R1^1/I;
+	Mp:=R1^1/Ip;
 	resM:=res M;
 	resMp:=res Mp;
 	f:=inducedMap(M,Mp);
@@ -3945,7 +3946,7 @@ doc ///
         :Ideal
      Description
 	Text
-	     This computes the test ideal of (R, f^t) when R is a polynomial ring over a perfect field.  It is done as follows.  If t = a/(p^e - 1) then tau(R, f^t) is computed as a sum of (f^{\lceil t \rceil}*f^{\lceil t(p^e-1) \rceil})^{[1/p^e]} until the sum stabilizes.  For the more general case, we use the formula tau(R, f^t)^{[1/p^d]} = tau(R, f^{t/p^d}).
+	     This computes the test ideal of (R, f^t) when R is a polynomial ring over a perfect field.  It is done as follows.  If t = a/(p^e - 1) then tau(R, f^t) is computed as a sum of (f^{lceil t rceil}*f^{lceil t(p^e-1) rceil})^{[1/p^e]} until the sum stabilizes.  For the more general case, we use the formula tau(R, f^t)^{[1/p^d]} = tau(R, f^{t/p^d}).
 ///
 
 doc ///
