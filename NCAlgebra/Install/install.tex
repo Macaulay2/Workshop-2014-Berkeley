@@ -8,6 +8,7 @@
 \usepackage{latexsym,amsfonts,amssymb}
 \usepackage[all]{xy} \SelectTips{eu}{} \SilentMatrices
 \usepackage[colorlinks=true,linkcolor=black,urlcolor=blue]{hyperref}
+\usepackage[margin=1in]{geometry}
 
 \newcommand{\bergroot}{\texttt{<bergmanroot>}}
 
@@ -34,6 +35,7 @@ On a Mac, one must first install homebrew.  Instructions for installing homebrew
 are on their webpage \url{brew.sh}.  This installation may also require you to install
 the XCode Command Line Developer Tools.  Instructions how to accomplish this are located
 \href{http://osxdaily.com/2014/02/12/install-command-line-tools-mac-os-x/}{here}.
+Once homebrew is installed, simply execute \texttt{brew install clisp} at a command prompt.
 
 \item Download the Bergman system \href{http://servus.math.su.se/bergman/}{here}.
 Extract the \texttt{tar.gz} file to a directory accessible by all the users that wish
@@ -53,7 +55,10 @@ Edit the file \texttt{bmtail-cl.lsp} in a text editor.  You will see the lines
 in the file.  In Common Lisp, \verb.;;. indicates a comment.  Switch the lines that are commented;
 that is, place \verb.;;. on the front of the second line and take the \verb.;;. off the first line.
 Save your changes.
-\item Now go to the \bergroot/scripts/clisp2.29/unix/ directory and execute the command \texttt{./mkbergman -auto}.
+\item Change to the \bergroot/scripts/clisp2.29/unix/ directory and execute the command:
+
+\begin{center}\texttt{./mkbergman -auto}\end{center}
+
 \item Finally, change directory to \bergroot/bin/clisp/unix.  In a text editor edit the \texttt{bergman} file there.
 This is a shell script which loads the necessary files to start the bergman executable.  However, there
 is a change that must be made to this file as well.  Here, \# denotes a comment.  By default
@@ -61,15 +66,28 @@ the third line is active and the second is commented.  Switch these around by un
 line and commenting out the third line.  This ends the `special steps' required to install Bergman on a Mac.
 \end{itemize}
 \item \label{nextStep} Add a symbolic link from the path to the bergman executable script to /usr/local/bin.
+This command should look something like
+
+\begin{center}
+\texttt{ln -s \bergroot/bin/clisp/unix/bergman /usr/local/bin/bergman},
+\end{center}
+
+provided you followed the instructions above to generated the bergman executable.  Note that in the above command,
+the \emph{full} path (from the root directory) to \bergroot~must be given.
 \item Add the line \texttt{"export BERGMANPATH=\bergroot"} to your init file for your shell.
 \item Download NCAlgebra.m2 and NCAlgebraDoc.m2 from \href{http://users.wfu.edu/moorewf}{here} and place them in a fresh directory.  In this
 directory, create a directory called NCAlgebra, and move the NCAlgebraDoc.m2 file into the NCAlgebra directory.
-Alternatively, clone the git repository using the command \texttt{git clone https://github.com/Macaulay2/Workshop-2014-Berkeley.git}
-which contains the guaranteed most recent version. (If you are unfamiliar with github then it is probably best
+Alternatively, clone the git repository using the command
+
+\begin{center}
+\texttt{git clone https://github.com/Macaulay2/Workshop-2014-Berkeley.git}
+\end{center}
+
+which contains the guaranteed most recent version.  If you are unfamiliar with github then it is probably best
 to download the files from the website.
 \item Change to the directory containing NCAlgebra.m2, and start Macaulay2.  Run the command
 \texttt{installPackage "NCAlgebra"} at the Macaulay2 prompt.
-\item Test your installation by running the commands:
+\item Test your installation by running the following commands in Macaulay2:
 \begin{verbatim}
 needsPackage "NCAlgebra"
 R = fourDimSklyanin(QQ,{a,b,c,d})
