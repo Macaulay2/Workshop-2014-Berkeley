@@ -394,7 +394,8 @@ assert(isHomogeneous fId)
 -- now factor through g*id
 M' = fId // M
 assert(M*M' == fId)
-assert(M'*M == fId[3])
+assignDegrees(fId,{3,4,4,4},{6,7,7,7});
+assert(M'*(M[-3]) == fId)
 ///
 
 {*

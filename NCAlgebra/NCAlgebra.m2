@@ -17,7 +17,7 @@ newPackage("NCAlgebra",
      CacheExampleOutput =>true
      )
 
-export { "NCRing", "NCQuotientRing", "NCPolynomialRing",
+export { "NCRing", "NCQuotientRing", "NCFreeAlgebra", "NCPolynomialRing",
          "NCRingMap", "NCRingElement",
          "NCGroebnerBasis", "ncGroebnerBasis",
          "NCIdeal", "NCLeftIdeal", "NCRightIdeal",
@@ -104,7 +104,8 @@ bergmanPath = getenv "BERGMANPATH"
 
 NCRing = new Type of Ring
 NCQuotientRing = new Type of NCRing
-NCPolynomialRing = new Type of NCRing
+NCFreeAlgebra = new Type of NCRing
+NCPolynomialRing = new Type of NCQuotientRing
 NCRingElement = new Type of HashTable
 NCGroebnerBasis = new Type of HashTable
 NCMatrix = new Type of MutableHashTable
@@ -196,7 +197,7 @@ promoteHash = (termHash,A) -> (
 )
 
 isHomogeneous NCRing := A -> (
-   if instance(A,NCPolynomialRing) then true
+   if instance(A,NCFreeAlgebra) then true
    else isHomogeneous ideal A
 )
 
@@ -206,7 +207,7 @@ hilbertSeries NCRing := RingElement => opts -> A -> (
    deg := opts#Order;
    if A.BergmanRing and ((gens A) / degree // unique === {1}) and class A === NCQuotientRing then
       hilbertBergman A
-   else if class A === NCPolynomialRing then (
+   else if class A === NCFreeAlgebra then (
       -- use the known Hilbert series of the algebra
       -- Hilb(T(V)) = (1-Hilb(V))^(-1) where V is a graded vector space
       R := A.degreesRing;
@@ -226,17 +227,17 @@ hilbertSeries NCRing := RingElement => opts -> A -> (
 )
 
 -------------------------------------------
---- NCPolynomialRing methods --------------
+--- NCFreeAlgebra methods --------------
 -------------------------------------------
 
-new NCPolynomialRing from List := (NCPolynomialRing, inits) -> new NCPolynomialRing of NCRingElement from new HashTable from inits
+new NCFreeAlgebra from List := (NCFreeAlgebra, inits) -> new NCFreeAlgebra of NCRingElement from new HashTable from inits
 
 Ring List := (R, varList) -> (
    -- get the symbols associated to the list that is passed in, in case the variables have been used earlier.
    if #varList == 0 then error "Expected at least one variable.";
    if #varList == 1 and class varList#0 === Sequence then varList = toList first varList;
    varList = varList / baseName;
-   A := new NCPolynomialRing from {(symbol generators) => {},
+   A := new NCFreeAlgebra from {(symbol generators) => {},
                                    (symbol generatorSymbols) => varList,
                                    (symbol degreesRing) => degreesRing 1,
 				   (symbol CoefficientRing) => R,
@@ -362,7 +363,7 @@ net NCRing := A -> (
     else net A.CoefficientRing | net A.generators
 )
 
-ideal NCPolynomialRing := NCIdeal => A ->
+ideal NCFreeAlgebra := NCIdeal => A ->
    new NCIdeal from new HashTable from {(symbol ring) => A,
                                         (symbol generators) => {promote(0,A)},
                                         (symbol cache) => new CacheTable from {}}
@@ -375,7 +376,7 @@ ideal NCPolynomialRing := NCIdeal => A ->
 
 new NCQuotientRing from List := (NCQuotientRing, inits) -> new NCQuotientRing of NCRingElement from new HashTable from inits
 
-NCPolynomialRing / NCIdeal := (A, I) -> (
+NCFreeAlgebra / NCIdeal := (A, I) -> (
    ncgb := ncGroebnerBasis I;
    B := new NCQuotientRing from {(symbol generators) => {},
                                  (symbol generatorSymbols) => A.generatorSymbols,
@@ -494,7 +495,7 @@ net NCQuotientRing := B -> (
 
 ideal NCQuotientRing := NCIdeal => B -> B.ideal;
 ambient NCQuotientRing := B -> B.ambient;
-ambient NCPolynomialRing := identity
+ambient NCFreeAlgebra := identity
 
 quadraticClosure = method()
 quadraticClosure NCQuotientRing := B -> (
@@ -694,7 +695,7 @@ quadraticClosure NCIdeal := I -> (
 )
 
 homogDual NCIdeal := I -> (
-   if class I.ring =!= NCPolynomialRing then
+   if class I.ring =!= NCFreeAlgebra then
       error "Expected an ideal in the tensor algebra.";
    d:=degree I.generators_0;
    if not all(I.generators, g->(degree g)==d)
@@ -1448,7 +1449,7 @@ writeGBInitFile (String, String, String) := (tempInit, tempInput, tempOutput) ->
 gbFromOutputFile = method(Options => {ReturnIdeal => false,
                                       CacheBergmanGB => true,
                                       MakeMonic => true})
-gbFromOutputFile(NCPolynomialRing,String) := opts -> (A,tempOutput) -> (
+gbFromOutputFile(NCFreeAlgebra,String) := opts -> (A,tempOutput) -> (
    fil := openIn tempOutput;
    totalFile := get fil;
    fileLines := drop(select(lines totalFile, l -> l != "" and l != "Done"),-1);
@@ -1886,7 +1887,7 @@ rightMingens NCMatrix := M -> (
 )
 
 minimizeMatrixKerGens = method(Options => options rightKernelBergman)
-minimizeMatrixKerGens(NCPolynomialRing,NCMatrix,List) := opts -> (C,M,kerGens) -> (
+minimizeMatrixKerGens(NCFreeAlgebra,NCMatrix,List) := opts -> (C,M,kerGens) -> (
    -- first select only the generators that involve just the columns and the
    -- ring variables alone.
    B := ring M;
@@ -2574,7 +2575,7 @@ oppositeRing NCRing := B -> (
    gensB := gens B;
    R := coefficientRing B;
    oppA := R gensB;
-   if class B === NCPolynomialRing then return oppA;
+   if class B === NCFreeAlgebra then return oppA;
    idealB := gens ideal B;
    phi := ncMap(oppA,ambient B, gens oppA);
    oppIdealB := idealB / oppositeElement / phi // ncIdeal;
@@ -2726,8 +2727,8 @@ freeProduct (NCRing,NCRing) := (A,B) -> (
    I := gens ideal A;
    J := gens ideal B;
    
-   A' := if class A === NCPolynomialRing then A else ambient A;
-   B' := if class B === NCPolynomialRing then B else ambient B;
+   A' := if class A === NCFreeAlgebra then A else ambient A;
+   B' := if class B === NCFreeAlgebra then B else ambient B;
     
    C := R newgens;
    gensAinC := take(gens C, #gensA);
@@ -2754,7 +2755,7 @@ qTensorProduct (NCRing, NCRing, RingElement) := (A,B,q) -> (
    -- create the commutation relations among generators of A and B
    K := flatten apply( gensAinF, g-> apply( gensBinF, h-> h*g-q*g*h));
 
-   if class F === NCPolynomialRing then F/(ncIdeal K)
+   if class F === NCFreeAlgebra then F/(ncIdeal K)
    else (
       I := gens ideal F;
       C := ambient F;
@@ -2774,7 +2775,7 @@ envelopingAlgebra (NCRing, Symbol) := (A,x) -> (
    R := coefficientRing A;
    Aop := oppositeRing A;
    B := R apply(#gens A, g-> x_g);  -- remove # once indexing works without printing ( ) 
-   if class A === NCPolynomialRing then (A ** B) 
+   if class A === NCFreeAlgebra then (A ** B) 
    else (
       A' := ambient Aop;   
       f := ncMap(B,A',gens B);
